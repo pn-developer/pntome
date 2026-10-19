@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!--
+            Hermetic test DocumentsProvider used by FolderScannerInstrumentedTest (task 5.4).
+
+            Registering it here (in the androidTest manifest) installs it into the *test*
+            package so DocumentsContract queries against its tree URI resolve to it on the
+            device/emulator, exercising the real SAF enumeration + MediaMetadataRetriever path
+            in FolderScanner without relying on device media or a manual folder picker.
+
+            The authority is namespaced under the test application id (…​.test) to avoid any
+            collision with real providers on the device.
+        -->
+        <provider
+            android:name="dev.gsound.a.domain.scan.SeededDocumentsProvider"
+            android:authorities="dev.gsound.a.test.seededdocs"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+
+    </application>
+
+</manifest>

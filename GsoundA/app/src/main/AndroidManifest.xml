@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+         ============================================================================================
+         Permission policy (task 11.1, Req 9.2 — request only what is necessary)
+         ============================================================================================
+         GsoundA intentionally declares a minimal permission set. Each <uses-permission> below has a
+         one-line justification. Two deliberate NON-declarations are documented here because the
+         absence is itself a design decision (Req 9.2):
+
+         1. No broad storage permissions (READ_EXTERNAL_STORAGE / READ_MEDIA_AUDIO).
+            Folder access is granted per-tree through the Storage Access Framework. The user picks a
+            folder with ACTION_OPEN_DOCUMENT_TREE and we persist access with
+            ContentResolver.takePersistableUriPermission(...) at RUNTIME (task 4.1, Req 1.2). That
+            persisted URI grant is NOT a manifest permission, so no <uses-permission> is needed and
+            we never request device-wide media/storage access.
+
+         2. No Bluetooth permissions (BLUETOOTH_CONNECT / BLUETOOTH_SCAN / legacy BLUETOOTH*).
+            The Connect IQ Mobile SDK does not talk to the watch over Bluetooth from THIS process.
+            It routes control messages through the Garmin Connect Mobile app over an IPC binding
+            (see the SDK-contributed IQGarminBindingService + the <queries> entry for
+            com.garmin.android.apps.connectmobile in the merged manifest). Garmin Connect owns the
+            Bluetooth link and holds the Bluetooth permissions itself. Verified against the merged
+            manifest (app/build/.../merged_manifest/.../AndroidManifest.xml): the Connect IQ AAR
+            contributes NO Bluetooth <uses-permission> entries. We therefore request none, which
+            keeps the set minimal (Req 9.2) and avoids a BLUETOOTH_CONNECT runtime prompt the user
+            would not understand. If a future SDK revision requires direct BT access it will surface
+            via manifest merge and the ConnectionState.Error.Reason.BLUETOOTH_OFF path already exists
+            to degrade gracefully (Req 9.3).
+         ============================================================================================
+    -->
+
+    <!-- Resolve the active Wi-Fi/LAN address for the local HTTP server (task 8.1, Req 5.1/5.7). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Keep Wi-Fi up for the local server while a sync is active via a WifiLock (task 9.2, Req 8.3). -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- Foreground service that keeps the sync/server alive when backgrounded (task 9.2, Req 8.3).
+         FOREGROUND_SERVICE_DATA_SYNC is required on API 34+ for the dataSync service type. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Shows the sync progress notification (the foreground service posts it). API 33+ requires a
+         runtime grant: it is requested when the user starts a sync, with a rationale, and the sync
+         runs regardless of the outcome — if denied, only the shade progress is hidden (task 11.1,
+         Req 9.3). See ui/permissions/NotificationPermission.kt + its use in SyncScreen. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".GsoundApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GsoundA">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.GsoundA">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Keeps the sync coordination + local HTTP server alive when backgrounded (task 9.2,
+             Req 8.3). dataSync is the platform type for network data transfer (no mediaSync type
+             exists). Not exported: started only from within the app. -->
+        <service
+            android:name=".service.SyncForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+    </application>
+
+</manifest>

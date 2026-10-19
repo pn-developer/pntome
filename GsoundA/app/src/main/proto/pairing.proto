@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "dev.gsound.a.data.pairing";
+option java_multiple_files = true;
+
+// Persisted pairing with the watch peer (Req 4.5, 8.1). Mirrors the domain
+// PairingRecord. An empty/default message (pairing_id == "") means "not paired";
+// Unpair clears the store back to this default (Req 4.7).
+message PairingRecordProto {
+  string pairing_id = 1;    // UUID; echoed in every control message (Req 10.3)
+  string peer_name = 2;     // watch model/name shown to the user
+  string shared_secret = 3; // authenticates HTTP data-channel requests (Req 5.3); never logged (Req 8.4)
+  int64 created_at = 4;     // epoch millis when pairing completed
+}

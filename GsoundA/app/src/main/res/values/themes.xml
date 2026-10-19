@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      A minimal theme that participates in the Material 3 ecosystem. The actual UI colors
+      come from the Compose MaterialTheme (see ui/theme/Theme.kt); this XML theme only
+      needs to be a valid app/activity theme for the manifest.
+    -->
+    <style name="Theme.GsoundA" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

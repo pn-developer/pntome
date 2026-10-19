@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_package = "dev.gsound.a.data.sync";
+option java_multiple_files = true;
+
+// Persisted summary of the most recent sync (Req 6.3, 8.1). A default message
+// (last_sync_at == 0) means "no sync has completed yet".
+message SyncSummaryProto {
+  int32 synced_count = 1;
+  int32 skipped_count = 2;
+  int32 removed_count = 3;
+  int64 last_sync_at = 4; // epoch millis of the last completed sync; 0 => none
+  // has_error distinguishes "no error" from an empty error string, since proto3
+  // scalar strings cannot be null.
+  bool has_error = 5;
+  string error = 6;       // user-facing error message when has_error is true
+}

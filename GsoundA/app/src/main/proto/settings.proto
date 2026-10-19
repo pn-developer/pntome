@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option java_package = "dev.gsound.a.data.settings";
+option java_multiple_files = true;
+
+// Persisted application settings (Req 8.1). Audio format flags gate optional
+// non-mp3 formats (design §5.2/§5.5); mp3 is always required and not flagged.
+// server_port defaults to 8080 via the serializer's default instance (design §5.5).
+message AppSettingsProto {
+  bool allow_m4a_aac = 1; // include AAC/M4A files when scanning
+  bool allow_wav = 2;     // include WAV files when scanning
+  bool allow_flac = 3;    // include FLAC files when scanning
+  int32 server_port = 4;  // preferred HTTP server port (0 => use default 8080)
+}
