@@ -39,6 +39,15 @@ class FakeControlChannel(
     )
     override val incoming: Flow<ControlMessage> = _incoming.asSharedFlow()
 
+    /**
+     * Number of active collectors of [incoming]. A `SharedFlow` with `replay = 0` drops values
+     * emitted while there are no subscribers (the `extraBufferCapacity` buffer only absorbs
+     * back-pressure for *existing* subscribers). Tests must therefore wait for a collector to be
+     * present before [emitIncoming], otherwise the emission is lost and the collector parks
+     * forever. Expose the live subscription count so tests can await it deterministically.
+     */
+    val subscriptionCount: StateFlow<Int> = _incoming.subscriptionCount
+
     /** Every message handed to [send], in order, including scripted-failure attempts. */
     val sent: MutableList<ControlMessage> = mutableListOf()
 
@@ -75,8 +84,11 @@ class FakeControlChannel(
     /**
      * Push a [message] to [incoming] subscribers.
      *
-     * @return true if the message was delivered to the buffer (false only if no buffer space
-     *   and no active collector — not expected in tests that collect first).
+     * Because [incoming] has `replay = 0`, this only reaches a collector that is *already*
+     * subscribed; emit after awaiting [subscriptionCount] > 0 (see its doc). The
+     * `extraBufferCapacity` means `tryEmit` still succeeds when a subscriber is present but busy.
+     *
+     * @return true if the message was accepted into the buffer / delivered to a collector.
      */
     fun emitIncoming(message: ControlMessage): Boolean = _incoming.tryEmit(message)
 }

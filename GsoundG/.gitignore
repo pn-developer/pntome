@@ -1,0 +1,7 @@
+# Connect IQ build output
+build/
+*.prg
+*.prg.debug.xml
+*.iq
+bin/
+gen/

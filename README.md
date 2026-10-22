@@ -1,7 +1,8 @@
 # Gsound
 
 Gsound syncs music folders from your Android phone to a Garmin watch over your local
-Wi-Fi network. This repository contains **GsoundA**, the Android companion app.
+Wi-Fi network. This repository contains **GsoundA**, the Android companion app, and
+**GsoundG**, the Garmin Connect IQ watch app.
 
 - You pick music folders on the phone with the system folder picker.
 - You pair the phone with the watch app (GsoundG) using a 6-digit confirmation code.
@@ -23,10 +24,20 @@ pn_gsound/
 │   ├── docs/
 │   │   └── manual-e2e-checklist.md   # manual hardware test runbook
 │   ├── gradle/                   # version catalog + wrapper
-│   └── gradlew / gradlew.bat     # Gradle wrapper (Gradle 8.9)
-├── .kiro/specs/gsound-android/   # requirements, design, and tasks for the app
+│   ├── gradlew / gradlew.bat     # Gradle wrapper (Gradle 8.9)
+│   └── INSTALL.md                # build & run GsoundA (Ubuntu / Manjaro)
+├── GsoundG/                      # Garmin Connect IQ app (Monkey C, audio content provider)
+│   ├── manifest.xml              # app id, device list, permissions
+│   ├── monkey.jungle             # build config
+│   ├── source/ resources/        # Monkey C source + resources
+│   ├── build.sh                  # monkeyc wrapper (autodetects SDK + dev key)
+│   ├── run_in_simulator.sh       # build + run a .prg in the simulator (via container)
+│   ├── sim/                      # Ubuntu 22.04 webkit-4.0 container utility (Manjaro/Ubuntu)
+│   └── INSTALL.md                # build & run GsoundG (Ubuntu / Manjaro)
+├── .kiro/specs/gsound-android/   # requirements, design, and tasks for the Android app
+├── .kiro/specs/gsound-garmin/    # requirements, design, and tasks for the watch app
 ├── README.md                     # this file
-└── INSTALL.md                    # build & run instructions (Ubuntu / Manjaro)
+└── INSTALL.md                    # install index → links to GsoundA / GsoundG guides
 ```
 
 ## Features
@@ -71,8 +82,10 @@ cd GsoundA
 # APK at app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Full environment setup (JDK, Android SDK, command-line tools) for **Ubuntu** and
-**Manjaro** is in [INSTALL.md](INSTALL.md).
+Full environment setup for **Ubuntu** and **Manjaro** is split per app:
+[GsoundA/INSTALL.md](GsoundA/INSTALL.md) (Android) and
+[GsoundG/INSTALL.md](GsoundG/INSTALL.md) (Garmin). The top-level
+[INSTALL.md](INSTALL.md) is an index linking to both.
 
 ## Testing
 
@@ -91,8 +104,8 @@ end-to-end sync additionally requires:
 
 - **Garmin Connect Mobile** installed and signed in on the phone.
 - A paired Garmin watch, or the **Connect IQ simulator** with a device profile.
-- The **GsoundG** watch app (a separate project, not in this repo) installed on the
-  watch/simulator.
+- The **GsoundG** watch app (in this repo under `GsoundG/`, built per
+  [GsoundG/INSTALL.md](GsoundG/INSTALL.md)) installed on the watch/simulator.
 - The GsoundG app UUID wired into `app/src/main/java/dev/gsound/a/net/garmin/GsoundAppId.kt`.
   It currently holds a placeholder (`00000000000000000000000000000000`); until it matches
   the GsoundG manifest id, the SDK reports the app as not installed.

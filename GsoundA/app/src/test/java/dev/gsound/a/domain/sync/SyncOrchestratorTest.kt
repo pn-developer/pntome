@@ -359,9 +359,22 @@ class SyncOrchestratorTest {
     private fun CoroutineScope.startSyncAsync(): Deferred<SyncState> =
         async(Dispatchers.Default) { orchestrator.startSync() }
 
-    /** Await (with a wall-clock bound) until the first control message is recorded, and return it. */
+    /**
+     * Await (with a wall-clock bound) until the first control message is recorded, then until the
+     * orchestrator has actually subscribed to `incoming`, and return the recorded message.
+     *
+     * The subscription wait is essential: `startSync` records the `SYNC_MANIFEST` send *before*
+     * `collectStatuses` subscribes to the incoming status flow, which has `replay = 0`. Waiting
+     * only on `sent` and then emitting a status races the collector's subscription — under load
+     * the status is emitted first and dropped, so the collector parks forever and `run.await()`
+     * times out (this is what intermittently failed the cancel test). Gating on
+     * [FakeControlChannel.subscriptionCount] makes every status-driven test deterministic.
+     */
     private suspend fun awaitSent(): dev.gsound.a.net.garmin.messages.ControlMessage {
         awaitUntil("a control message to be sent") { channel.sent.isNotEmpty() }
+        awaitUntil("the orchestrator to subscribe to incoming statuses") {
+            channel.subscriptionCount.value > 0
+        }
         return channel.sent.first()
     }
 
