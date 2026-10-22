@@ -95,4 +95,4 @@ Build/verify with Gradle after each major group. Check off as completed.
 
 - [ ] 12. Verification
   - [x] 12.1 Run full unit + instrumented test suites; `./gradlew assembleDebug` clean.
-  - [~] 12.2 Deploy to phone via `adb`; smoke-test folder add → pair (simulator) → sync.
+  - [ ] 12.2 Deploy to phone via `adb`; smoke-test folder add → pair (simulator) → sync.

@@ -13,15 +13,14 @@ package dev.gsound.a.net.garmin
  * If this id does not match the watch manifest, the SDK will report the app as **not
  * installed** even when it is, surfacing as [ConnectionState.Error.Reason.APP_NOT_INSTALLED].
  *
- * TODO(gsound): replace [VALUE] with the real GsoundG app UUID once the watch app's
- *   `manifest.xml` id is finalized. The current value is a **placeholder** and will not match
- *   any real installed app. Keep this constant and the watch manifest in lockstep.
+ * This id is **finalized**. It MUST stay in lockstep with the `id` attribute of the
+ * `<iq:application>` element in GsoundG's `manifest.xml`. Do not change one without the other.
  */
 object GsoundAppId {
 
     /**
-     * Placeholder GsoundG Connect IQ app UUID (hex, no dashes — the format Connect IQ uses in
-     * `manifest.xml`). Must match the watch app's manifest id. See the TODO on [GsoundAppId].
+     * GsoundG Connect IQ app UUID (hex, no dashes — the format Connect IQ uses in
+     * `manifest.xml`). Must match the watch app's manifest id byte-for-byte. See [GsoundAppId].
      */
-    const val VALUE: String = "00000000000000000000000000000000"
+    const val VALUE: String = "0236dc0a39fd45f09a109f48fc8c7be2"
 }

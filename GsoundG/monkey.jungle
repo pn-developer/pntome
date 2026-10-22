@@ -1,0 +1,11 @@
+# GsoundG project jungle file.
+# Default source/ and resources/ roots are picked up automatically by the
+# Connect IQ build; declared here explicitly for clarity.
+
+project.manifest = manifest.xml
+
+# Source roots
+base.sourcePath = source
+
+# Resource roots
+base.resourcePath = resources

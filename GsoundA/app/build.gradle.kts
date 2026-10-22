@@ -154,9 +154,14 @@ dependencies {
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.ui.test.junit4)
     // ui-test-manifest declares the empty ComponentActivity that createComposeRule launches. It
-    // must merge into the debug app manifest (not the test classpath) so Robolectric can resolve
-    // the activity when running these as JVM unit tests against the debug variant.
+    // must merge into the app manifest (not the test classpath) so Robolectric can resolve the
+    // activity when running the Compose UI tests as JVM unit tests. `./gradlew build` runs
+    // testReleaseUnitTest, so the manifest contribution must be present for BOTH variants —
+    // contributing only to debug made testReleaseUnitTest fail with "Unable to resolve activity
+    // for Intent ... ComponentActivity". The activity is not exported and has no launcher filter,
+    // so it is inert even if it reaches a release build.
     debugImplementation(libs.androidx.ui.test.manifest)
+    releaseImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

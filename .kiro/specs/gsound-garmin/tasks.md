@@ -3,38 +3,38 @@
 Each task is incremental and references `requirements.md`. Iterate in the Connect IQ
 simulator; sideload to hardware for sync/playback validation. Check off as completed.
 
-- [ ] 1. Project scaffold & manifest
-  - [~] 1.1 Create Connect IQ project `GsoundG/` (`manifest.xml`, `monkey.jungle`, `resources/`,
+- [x] 1. Project scaffold & manifest
+  - [x] 1.1 Create Connect IQ project `GsoundG/` (`manifest.xml`, `monkey.jungle`, `resources/`,
         `source/`) for an `audio-content-provider-app`.
-  - [~] 1.2 Set `id` to the shared app UUID (matches GsoundA), `minApiLevel=3.0.0`, add the
+  - [x] 1.2 Set `id` to the shared app UUID (matches GsoundA), `minApiLevel=3.0.0`, add the
         `Communications` permission, and list music-capable products (fēnix 6 Pro variants,
         fēnix 8 ids from SDK device list).
-  - [~] 1.3 Add provider + launcher icons and base strings; build an empty `.prg` to confirm
+  - [x] 1.3 Add provider + launcher icons and base strings; build an empty `.prg` to confirm
         the toolchain.
   - _Reqs: 1.1–1.4_
 
-- [ ] 2. App entry & mode routing
-  - [~] 2.1 Implement `GsoundGApp extends AudioContentProviderApp` with `onStart`/`onStop`
+- [x] 2. App entry & mode routing
+  - [x] 2.1 Implement `GsoundGApp extends AudioContentProviderApp` with `onStart`/`onStop`
         loading/saving state via `Repo`.
-  - [~] 2.2 Implement mode hooks: `getInitialView`, `getSyncConfigurationView`,
+  - [x] 2.2 Implement mode hooks: `getInitialView`, `getSyncConfigurationView`,
         `getPlaybackConfigurationView`, `getContentDelegate`, `getSyncDelegate`,
         `getProviderIconInfo` returning stubs first.
-  - [~] 2.3 Verify in simulator that the app launches in each mode without crashing.
+  - [-] 2.3 Verify in simulator that the app launches in each mode without crashing.
   - _Reqs: 1.1, 7.2, 8.5_
 
-- [ ] 3. Storage layer (store/Repo.mc)
-  - [~] 3.1 Flat-key helpers for `pairing`, `stats`, `trk:<id>`, `idx`, `folders` respecting
+- [x] 3. Storage layer (store/Repo.mc)
+  - [x] 3.1 Flat-key helpers for `pairing`, `stats`, `trk:<id>`, `idx`, `folders` respecting
         the ~8 KB per-value limit (chunk `idx` if needed).
-  - [~] 3.2 Put/get/delete track entries; rebuild `folders` distinct list.
-  - [~] 3.3 Simulator test persisting + reloading across app restart.
+  - [x] 3.2 Put/get/delete track entries; rebuild `folders` distinct list.
+  - [x] 3.3 Simulator test persisting + reloading across app restart.
   - _Reqs: 7.1, 7.2_
 
 - [ ] 4. Protocol & control channel
-  - [~] 4.1 `protocol/Messages.mc` + `Protocol.mc`: type constants, build/parse dictionaries,
+  - [x] 4.1 `protocol/Messages.mc` + `Protocol.mc`: type constants, build/parse dictionaries,
         validate `v`/`type`/`pairingId`.
-  - [~] 4.2 `comm/ControlChannel.mc`: `registerForPhoneAppMessages`, dispatch by type,
+  - [x] 4.2 `comm/ControlChannel.mc`: `registerForPhoneAppMessages`, dispatch by type,
         `transmit` outgoing; drop unpaired-peer messages (except initial `PAIR_REQUEST`).
-  - [~] 4.3 Simulate inbound messages in the simulator (paste JSON) and verify dispatch + a
+  - [-] 4.3 Simulate inbound messages in the simulator (paste JSON) and verify dispatch + a
         `PONG` reply.
   - _Reqs: 2.6, 8.4; overview §5.1_
 

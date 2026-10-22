@@ -1,0 +1,15 @@
+<drawables xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!--
+        Task 1.3 assets.
+
+        LauncherIcon  — referenced by manifest.xml (launcherIcon="@Drawables.LauncherIcon").
+                        A single 65x65 PNG (the largest launcher size required across the 8
+                        target products); Connect IQ scales it down for the 40x40/60x60 devices.
+        ProviderIcon  — placeholder provider art so the resource exists. The actual
+                        audio-content-provider icon is supplied at runtime via
+                        getProviderIconInfo (task 2); dedicated provider art can replace this
+                        PNG later.
+    -->
+    <bitmap id="LauncherIcon" filename="launcher_icon.png"/>
+    <bitmap id="ProviderIcon" filename="launcher_icon.png"/>
+</drawables>
