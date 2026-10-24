@@ -1,6 +1,5 @@
 import Toybox.Lang;
 import Toybox.Communications;
-import Toybox.System; // [SCRATCH-4.3] for runtime-verification println — REMOVE after task 4.3.
 
 //! ControlChannel — the single phone<->watch control-message gateway
 //! (design.md §6; Req 2.6, 8.4; overview §5.1).
@@ -88,38 +87,13 @@ class ControlChannel {
     function onPhoneMessage(message as Communications.PhoneAppMessage) as Void {
         try {
             var msg = message.data;
-            // [SCRATCH-4.3] runtime-verification instrumentation — REMOVE after task 4.3.
-            System.println("[SCRATCH-4.3] onPhoneMessage: type=" + Protocol.typeOf(msg)
-                + " validate=" + Protocol.validate(msg));
             if (!accept(msg)) {
-                // [SCRATCH-4.3] REMOVE after task 4.3.
-                System.println("[SCRATCH-4.3] DROPPED (invalid or unpaired peer)");
                 return;
             }
-            // [SCRATCH-4.3] REMOVE after task 4.3.
-            System.println("[SCRATCH-4.3] ACCEPTED -> dispatch type=" + Protocol.typeOf(msg));
             dispatch(msg as Dictionary);
         } catch (ex) {
             // A bad payload or handler fault must never crash the message callback
             // (Req 8.4, 8.5). Swallow without logging contents (Req 7.3).
-        }
-    }
-
-    // [SCRATCH-4.3] runtime-verification entry: run a raw decoded-JSON dict
-    // through the exact inbound pipeline (validate -> pairing filter -> dispatch)
-    // without needing a real Communications.PhoneAppMessage. Mirrors
-    // onPhoneMessage body. REMOVE after task 4.3.
-    function selftestInbound(msg as Object?) as Void {
-        try {
-            System.println("[SCRATCH-4.3] onPhoneMessage: type=" + Protocol.typeOf(msg)
-                + " validate=" + Protocol.validate(msg));
-            if (!accept(msg)) {
-                System.println("[SCRATCH-4.3] DROPPED (invalid or unpaired peer)");
-                return;
-            }
-            System.println("[SCRATCH-4.3] ACCEPTED -> dispatch type=" + Protocol.typeOf(msg));
-            dispatch(msg as Dictionary);
-        } catch (ex) {
         }
     }
 

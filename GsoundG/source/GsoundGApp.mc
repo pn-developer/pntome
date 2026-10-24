@@ -4,7 +4,6 @@ import Toybox.WatchUi;
 import Toybox.Media;
 import Toybox.Communications;
 import Toybox.Graphics;
-import Toybox.System;
 
 //! GsoundGApp — Audio Content Provider application entry point.
 //!
@@ -67,12 +66,27 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! whole app lifetime and so handlers can transmit replies through it.
     private var _control as ControlChannel?;
 
+    //! The pairing state machine (pairing/PairingManager.mc). Created at app start
+    //! once the control channel exists and held for the app lifetime so its inbound
+    //! handlers (PAIR_REQUEST/PAIR_CONFIRM/UNPAIR) stay registered and the pairing
+    //! view (task 5.2) can read the current code through it (design.md §7; Req 2).
+    private var _pairingManager as PairingManager?;
+
+    //! The SYNC_MANIFEST intake controller (sync/SyncController.mc). Created at app
+    //! start once the control channel exists and held for the app lifetime so its
+    //! inbound SYNC_MANIFEST handler stays registered and the sync-config view
+    //! (task 7) can read the pending manifest through it (design.md §8.1; Req 3.1,
+    //! 7.1, 7.2).
+    private var _syncController as SyncController?;
+
     function initialize() {
         AudioContentProviderApp.initialize();
         _pairing = null;
         _stats = null;
         _index = [];
         _control = null;
+        _pairingManager = null;
+        _syncController = null;
     }
 
     //! Called on application start up. Restore persisted state via Repo so the app
@@ -97,70 +111,48 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         // setHandler in tasks 5/6/8. Wrapped so a comm-init problem can't crash
         // any launch mode (Req 8.5).
         try {
-            _control = new ControlChannel();
-            _control.setHandler(Messages.TYPE_PING, method(:onPing));
-            _control.register();
+            var control = new ControlChannel();
+            control.setHandler(Messages.TYPE_PING, method(:onPing));
+
+            // Bring up pairing: the PairingManager registers its own PAIR_REQUEST/
+            // PAIR_CONFIRM/UNPAIR handlers on the channel and drives the pairing
+            // state machine (design.md §7; Req 2). Built before register() so the
+            // handlers are in place for the first inbound message.
+            var pairingManager = new PairingManager(control);
+            pairingManager.registerHandlers();
+
+            // Bring up sync intake: the SyncController registers its own
+            // SYNC_MANIFEST handler on the channel and, on receipt, persists the
+            // pending manifest via Repo (design.md §8.1; Req 3.1, 7.1, 7.2). Built
+            // before register() so the handler is in place for the first inbound
+            // message, mirroring PairingManager.
+            var syncController = new SyncController(control);
+            syncController.registerHandlers();
+
+            control.register();
+            _control = control;
+            _pairingManager = pairingManager;
+            _syncController = syncController;
         } catch (ex) {
             _control = null;
-        }
-
-        selftest43();
-    }
-
-    //! [SCRATCH-4.3] Runtime verification of task 4.3 without the GUI phone-message
-    //! injector: seed a pairing so the pairing-identity filter accepts a PING, then
-    //! push a PING and a malformed message through the real inbound pipeline and
-    //! observe dispatch + PONG in the console. REMOVE after task 4.3 (also restores
-    //! the pre-test pairing so no test state is left persisted).
-    function selftest43() as Void {
-        var control = _control;
-        if (control == null) {
-            return;
-        }
-        try {
-            var saved = _pairing;
-            var testId = "pid-4-3-selftest";
-            var seed = {
-                Protocol.KEY_PAIRING_ID => testId,
-                "peerName" => "selftest",
-                "secret" => "x",
-                "createdAt" => 0
-            };
-            Repo.savePairing(seed);
-            _pairing = seed;
-
-            System.println("[SCRATCH-4.3] --- seeded pairing, sending PING ---");
-            control.selftestInbound({
-                Protocol.KEY_VERSION => Protocol.PROTOCOL_VERSION,
-                Protocol.KEY_TYPE => Messages.TYPE_PING,
-                Protocol.KEY_PAIRING_ID => testId
-            });
-
-            System.println("[SCRATCH-4.3] --- sending malformed message ---");
-            control.selftestInbound({ "junk" => true });
-
-            System.println("[SCRATCH-4.3] --- sending PING from unpaired peer ---");
-            control.selftestInbound({
-                Protocol.KEY_VERSION => Protocol.PROTOCOL_VERSION,
-                Protocol.KEY_TYPE => Messages.TYPE_PING,
-                Protocol.KEY_PAIRING_ID => "wrong-id"
-            });
-
-            // Restore pre-test pairing state so nothing is left persisted.
-            Repo.savePairing(saved);
-            _pairing = saved;
-            System.println("[SCRATCH-4.3] --- selftest done, pairing restored ---");
-        } catch (ex) {
-            System.println("[SCRATCH-4.3] selftest error");
+            _pairingManager = null;
+            _syncController = null;
         }
     }
 
-    //! PING handler: reply with a PONG carrying our stored pairingId (Req 5.3,
-    //! overview §5.1). Only reached for messages that already passed validation
-    //! and the pairing-identity filter in ControlChannel, so a stored pairing
-    //! exists and its pairingId matches the PING. If for any reason there is no
-    //! usable pairingId we simply don't reply (a PONG requires a pairingId per the
-    //! shared envelope). Never logs the secret (Req 7.3).
+    //! PING handler: reply with a PONG carrying our stored pairingId, then send a
+    //! STATS message alongside it so the phone always has current library stats
+    //! whenever it pings (Req 5.3, overview §5.1). Only reached for messages that
+    //! already passed validation and the pairing-identity filter in ControlChannel,
+    //! so a stored pairing exists and its pairingId matches the PING. If for any
+    //! reason there is no usable pairingId we simply don't reply (a PONG requires a
+    //! pairingId per the shared envelope).
+    //!
+    //! Ordering: the PONG goes out FIRST (it is the liveness reply the phone is
+    //! waiting on), then STATS is sent best-effort — a stats read/transmit failure
+    //! must never prevent the PONG or crash the PING handler / app (Req 8.5). The
+    //! STATS send uses the SAME pairingId the PONG carries. Never logs the secret
+    //! (Req 7.3).
     function onPing(msg as Dictionary) as Void {
         var control = _control;
         if (control == null) {
@@ -171,9 +163,34 @@ class GsoundGApp extends Application.AudioContentProviderApp {
             return;
         }
         var pong = Messages.buildPong(pairingId);
-        // [SCRATCH-4.3] runtime-verification instrumentation — REMOVE after task 4.3.
-        System.println("[SCRATCH-4.3] dispatched PING -> sending PONG pairingId=" + pairingId);
         control.transmit(pong, null, null);
+
+        // Best-effort STATS alongside the PONG — never let a failure here affect
+        // the PONG that already went out (Req 5.3, 8.5).
+        sendStats(control, pairingId);
+    }
+
+    //! Send a STATS message carrying the CURRENT persisted library stats to the
+    //! phone (Req 5.3). Unlike the after-sync path (Downloader.updateAndSendStats),
+    //! this does NOT recompute — a PING is not a sync — so it reads what the last
+    //! sync wrote via StatsStore.load() and its defensive accessors. Before the
+    //! first sync load() returns null, which yields fileCount/folderCount 0 and a
+    //! null lastSyncAt; Messages.buildStats omits lastSyncAt when null so the phone
+    //! shows "never synced" (Req 5.4). Wrapped so a stats read/transmit failure can
+    //! never crash the PING handler or the app (Req 8.5). Never logs the secret
+    //! (Req 7.3).
+    private function sendStats(control as ControlChannel, pairingId as String) as Void {
+        try {
+            var stats = StatsStore.load();
+            var fileCount = StatsStore.fileCountOf(stats);
+            var folderCount = StatsStore.folderCountOf(stats);
+            var lastSyncAt = StatsStore.lastSyncAtOf(stats);
+            var msg = Messages.buildStats(pairingId, fileCount, folderCount, lastSyncAt);
+            control.transmit(msg, null, null);
+        } catch (ex) {
+            // Best-effort — a stats read/transmit failure must not affect the PONG
+            // already sent, nor crash the PING handler (Req 8.5).
+        }
     }
 
     //! Resolve the pairingId to echo in the PONG: prefer the stored record's id,
@@ -206,33 +223,77 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     // crash the corresponding launch mode (Req 8.5). All currently return STUBS
     // (see StubViews.mc / StubDelegates.mc) to be replaced in tasks 7 and 9.
 
-    //! Sync-config mode: return the view that confirms the pending manifest and
-    //! triggers sync, paired with its input delegate. STUB: returns
-    //! [SyncConfigStubView, SyncConfigStubDelegate] until task 7's SyncConfigView.
-    //! Must return a [view, delegate] pair per the ACP contract.
+    //! Sync-config mode: return the view that shows the pending-sync count and,
+    //! on Confirm, triggers the system sync (Communications.startSync()), paired
+    //! with its input delegate (task 7.9's SyncConfigView/SyncConfigDelegate,
+    //! which replaced the stub pair). Must return a [view, delegate] pair per the
+    //! ACP contract (design §5). Wrapped so a construction failure can't crash the
+    //! sync-config launch mode — fall back to the throw-free stub so the mode
+    //! still shows something and routes input (Req 8.5).
     function getSyncConfigurationView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] {
-        return [new SyncConfigStubView(), new SyncConfigStubDelegate()];
+        try {
+            return [new SyncConfigView(), new SyncConfigDelegate()];
+        } catch (ex) {
+            // A view/delegate construction failure must not crash the sync-config
+            // launch mode: fall back to the throw-free SafeFallbackView + a plain
+            // BehaviorDelegate so the mode still shows something and routes input
+            // (Req 8.5).
+            return [new SafeFallbackView(), new WatchUi.BehaviorDelegate()];
+        }
     }
 
-    //! Playback-config mode: return the folder/track picker paired with its input
-    //! delegate. STUB: returns [FolderListStubView, FolderListStubDelegate] until
-    //! task 9's FolderListView / PlaybackConfigView.
-    //! Must return a [view, delegate] pair per the ACP contract.
+    //! Playback-config mode: return the folder picker paired with its input
+    //! delegate (task 9.1's FolderListView / FolderListDelegate, which replaced the
+    //! stub pair). The view lists the synced folders (Repo.loadFolders()) with an
+    //! empty state when nothing is synced (Req 6.6); selecting a folder navigates
+    //! toward playback (PlaybackConfigView, task 9.2). Must return a [view,
+    //! delegate] pair per the ACP contract (design §5) — the raw-Dc View +
+    //! BehaviorDelegate pair satisfies that contract cleanly. Wrapped so a
+    //! construction failure can't crash the playback-config launch mode (Req 8.5).
     function getPlaybackConfigurationView() as [WatchUi.Views] or [WatchUi.Views, WatchUi.InputDelegates] {
-        return [new FolderListStubView(), new FolderListStubDelegate()];
+        try {
+            var view = new FolderListView();
+            return [view, new FolderListDelegate(view)];
+        } catch (ex) {
+            // A view/delegate construction failure must not crash the
+            // playback-config launch mode: fall back to the throw-free
+            // SafeFallbackView + a plain BehaviorDelegate so the mode still shows
+            // something and routes input (Req 8.5).
+            return [new SafeFallbackView(), new WatchUi.BehaviorDelegate()];
+        }
     }
 
     //! Playback mode: return the content delegate feeding the native player.
-    //! STUB: returns GsoundContentDelegateStub until task 9's GsoundContentDelegate.
+    //! `args` is the PersistableType passed to Media.startPlayback from the
+    //! playback-config track list (PlaybackConfigView) — a Dictionary carrying the
+    //! selected folder under "folder" and the chosen start index under "startIndex".
+    //! Parse it null-safely into GsoundContentDelegate (task 9.4). Defensive: if
+    //! args is null / not a Dictionary / has no String "folder", build a delegate
+    //! with a null folder so it yields the safe empty iterator and the mode still
+    //! launches (Req 6.6, 8.5).
     function getContentDelegate(args as Application.PersistableType) as Media.ContentDelegate {
-        return new GsoundContentDelegateStub();
+        var folder = null;
+        var startIndex = 0;
+        if (args instanceof Dictionary) {
+            var f = (args as Dictionary).get("folder");
+            if (f instanceof String && !(f as String).equals("")) {
+                folder = f as String;
+            }
+            var s = (args as Dictionary).get("startIndex");
+            if (s instanceof Number) {
+                startIndex = s as Number;
+            }
+        }
+        return new GsoundContentDelegate(folder, startIndex);
     }
 
-    //! System sync: return the sync delegate driving downloads. STUB: returns
-    //! GsoundSyncDelegateStub until task 7's GsoundSyncDelegate.
+    //! System sync: return the sync delegate driving downloads (task 7.1's
+    //! GsoundSyncDelegate, which replaced GsoundSyncDelegateStub). Wrapped so a
+    //! construction failure can't crash the sync launch mode — fall back to null,
+    //! which the system treats as "no sync provider" (Req 8.5).
     function getSyncDelegate() as Communications.SyncDelegate or Null {
         try {
-            return new GsoundSyncDelegateStub();
+            return new GsoundSyncDelegate();
         } catch (ex) {
             return null;
         }
@@ -262,6 +323,28 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! Current in-memory track-id index.
     function getIndex() as Array {
         return _index;
+    }
+
+    //! The pairing state machine, or null if the control channel failed to come
+    //! up. The PairingView/Delegate (task 5.2) read the current code and drive
+    //! confirm/reject through this.
+    function getPairingManager() as PairingManager? {
+        return _pairingManager;
+    }
+
+    //! The SYNC_MANIFEST intake controller, or null if the control channel failed
+    //! to come up. The sync-config view/delegate (task 7) read the pending
+    //! manifest and its track count through this.
+    function getSyncController() as SyncController? {
+        return _syncController;
+    }
+
+    //! The control-channel gateway, or null if it failed to come up at app start.
+    //! GsoundSyncDelegate (task 7) uses this to transmit SYNC_STATUS to the phone
+    //! (e.g. a non-null `error` when a sync aborts for a missing pairing/secret).
+    //! Mirrors getSyncController(); added in task 7.1.
+    function getControl() as ControlChannel? {
+        return _control;
     }
 }
 

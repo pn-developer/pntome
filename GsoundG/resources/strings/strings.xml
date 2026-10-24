@@ -2,4 +2,61 @@
     <string id="AppName">Gsound</string>
     <!-- Provider display name shown under the device's Music Providers list. -->
     <string id="ProviderName">Gsound</string>
+
+    <!-- Pairing view (task 5.2): shown while a PAIR_REQUEST awaits the user's
+         confirmation. The 6-digit code is rendered separately (live value from
+         the PairingManager), not as a string resource. -->
+    <string id="PairTitle">Pair with phone</string>
+    <!-- Prompt asking the user to check the code matches the phone's. -->
+    <string id="PairPrompt">Match the code on your phone</string>
+    <!-- Confirm action label / hint. -->
+    <string id="PairConfirm">Confirm</string>
+    <!-- Reject action label / hint. -->
+    <string id="PairReject">Reject</string>
+    <!-- Neutral/empty state when there is no pending pairing to confirm. -->
+    <string id="PairIdle">No pairing in progress</string>
+
+    <!-- Sync-config view (task 7.9): shown from the Music Providers list. The
+         pending track count is rendered separately (live value from the
+         SyncController), not as a string resource. -->
+    <string id="SyncTitle">Sync</string>
+    <!-- Unit label under the pending track count. -->
+    <string id="SyncTracksLabel">tracks to sync</string>
+    <!-- Prompt telling the user how to start the sync. -->
+    <string id="SyncPrompt">Confirm to sync</string>
+    <!-- Fetch-fallback state: a sync will run but the count is fetched at start. -->
+    <string id="SyncReady">Ready to sync</string>
+    <!-- Nothing queued to sync. -->
+    <string id="SyncNothing">Nothing to sync</string>
+    <!-- Neutral/empty state when the control channel didn't come up. -->
+    <string id="SyncEmpty">Unavailable</string>
+
+    <!-- Stats view (task 8.3): shows the persisted library stats on the watch.
+         The counts and the last-synced date are rendered separately (live values
+         from StatsStore), not as string resources. -->
+    <string id="StatsTitle">Stats</string>
+    <!-- Unit label under the track count. -->
+    <string id="StatsTracksLabel">tracks</string>
+    <!-- Unit label shown after the folder count (e.g. "3 folders"). -->
+    <string id="StatsFoldersLabel">folders</string>
+    <!-- Label preceding the formatted last-sync date/time. -->
+    <string id="StatsLastSync">Last sync</string>
+    <!-- Empty state shown before the first sync has ever completed. -->
+    <string id="StatsEmpty">No sync yet. Sync from your phone.</string>
+
+    <!-- Folder-list view (task 9.1): the playback-config surface listing synced
+         folders. The folder names are rendered separately (live values from
+         Repo.loadFolders), not as string resources. -->
+    <string id="FolderListTitle">Music</string>
+    <!-- Empty-state title shown when nothing has been synced yet (Req 6.6). -->
+    <string id="FolderListEmptyTitle">No music yet</string>
+    <!-- Empty-state prompt telling the user to sync from the phone (Req 6.6). -->
+    <string id="FolderListEmptyPrompt">Sync from your phone</string>
+
+    <!-- Track-list view (task 9.2): the per-folder track list in playback-config.
+         The folder name (title) and track titles are rendered separately (live
+         values from Repo), not as string resources. Shown when a folder somehow
+         has no loadable tracks (defensive; should not happen from a non-empty
+         folder). -->
+    <string id="PlaybackTracksEmpty">No tracks</string>
 </strings>

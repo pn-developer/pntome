@@ -2,24 +2,23 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 import Toybox.Graphics;
 
-//! StubViews — minimal placeholder Views + input delegates used by the
-//! configuration-view hooks (task 2.2).
+//! StubViews — the shared drawing helper for the configuration-view surfaces.
 //!
-//! TEMPORARY STUBS. The two ACP configuration modes each need a
-//! [View, InputDelegate] PAIR (the SDK/template contract) so the system can show
-//! *something* and route input without the app crashing (Req 8.5). These
-//! placeholders are replaced by the real views/delegates in later tasks:
-//!   - SyncConfigStubView / SyncConfigStubDelegate -> sync/SyncConfigView.mc       [task 7]
-//!   - FolderListStubView / FolderListStubDelegate -> playback/FolderListView.mc,
-//!                                                    PlaybackConfigView.mc        [task 9]
-//!
-//! The delegates extend WatchUi.BehaviorDelegate (matching the official ACP
-//! template's Configure*Delegate) and add no behavior yet. Keep the views
-//! dependency-free (no Repo/Media/Comm calls) so they can never throw during a
-//! launch, honoring the "no mode can crash" guarantee.
+//! Originally this file also held TEMPORARY placeholder Views + input delegates
+//! for the ACP configuration modes (so each mode could show *something* and route
+//! input without crashing, Req 8.5). Those placeholders have all been replaced by
+//! the real views/delegates:
+//!   - sync-config: sync/SyncConfigView.mc (SyncConfigView / SyncConfigDelegate),
+//!     task 7.9.
+//!   - playback-config: playback/FolderListView.mc (FolderListView /
+//!     FolderListDelegate), task 9.1.
+//! What remains here is the small, exception-free drawCentered helper, which the
+//! real views (SyncConfigView, FolderListView, StatsView) reuse for their simple
+//! one-line / empty states. (Note: the playback content delegate/iterator
+//! placeholders in StubDelegates.mc stay until tasks 9.3/9.4.)
 
 //! Shared drawing helper: center a title + subtitle on screen. Kept tiny and
-//! exception-free so stub rendering can't crash any launch mode.
+//! exception-free so the config views' simple states can't crash any launch mode.
 module StubViews {
     function drawCentered(dc as Graphics.Dc, title as String, subtitle as String) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
@@ -33,41 +32,22 @@ module StubViews {
     }
 }
 
-//! Sync-configuration placeholder. Replaced by SyncConfigView in task 7.
-class SyncConfigStubView extends WatchUi.View {
+//! SafeFallbackView — the last-resort configuration-mode surface used ONLY when a
+//! real config view/delegate constructor throws (GsoundGApp's
+//! getSyncConfigurationView / getPlaybackConfigurationView fallback, Req 8.5).
+//!
+//! It holds no state and draws nothing but two literal lines via the exception-free
+//! StubViews.drawCentered — no Repo reads, no WatchUi.loadResource, no construction
+//! that can throw — so building and drawing it cannot itself crash the launch mode.
+//! Paired with a plain WatchUi.BehaviorDelegate (back/menu pop out normally), it
+//! guarantees that even a total view-construction failure still yields a working,
+//! input-routing [view, delegate] pair instead of a crashed config mode.
+class SafeFallbackView extends WatchUi.View {
     function initialize() {
         View.initialize();
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
-        StubViews.drawCentered(dc, "Sync", "config (stub)");
-    }
-}
-
-//! Input delegate paired with SyncConfigStubView. Extends BehaviorDelegate (as in
-//! the official ACP template) and adds no behavior yet. Replaced in task 7.
-class SyncConfigStubDelegate extends WatchUi.BehaviorDelegate {
-    function initialize() {
-        BehaviorDelegate.initialize();
-    }
-}
-
-//! Playback-configuration placeholder. Replaced by FolderListView /
-//! PlaybackConfigView in task 9.
-class FolderListStubView extends WatchUi.View {
-    function initialize() {
-        View.initialize();
-    }
-
-    function onUpdate(dc as Graphics.Dc) as Void {
-        StubViews.drawCentered(dc, "Music", "folders (stub)");
-    }
-}
-
-//! Input delegate paired with FolderListStubView. Extends BehaviorDelegate (as in
-//! the official ACP template) and adds no behavior yet. Replaced in task 9.
-class FolderListStubDelegate extends WatchUi.BehaviorDelegate {
-    function initialize() {
-        BehaviorDelegate.initialize();
+        StubViews.drawCentered(dc, "Gsound", "Unavailable");
     }
 }

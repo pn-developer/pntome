@@ -1,37 +1,23 @@
 import Toybox.Lang;
 import Toybox.Media;
-import Toybox.Communications;
 
-//! StubDelegates — minimal placeholder delegates used by the mode-routing hooks
-//! (task 2.2).
+//! StubDelegates — shared safe-empty ContentIterator used by the playback path.
 //!
-//! TEMPORARY STUBS. The ACP framework asks for a content delegate (playback mode)
-//! and a sync delegate (sync mode). Returning functional-but-empty delegates lets
-//! those modes launch without crashing (Req 8.5). Replaced by the real
-//! implementations in later tasks:
-//!   - GsoundContentDelegateStub -> playback/GsoundContentDelegate.mc  [task 9]
-//!   - GsoundSyncDelegateStub    -> sync/GsoundSyncDelegate.mc         [task 7]
-
-//! Content-delegate placeholder. Returns a minimal, empty ContentIterator (no
-//! tracks) rather than null. The official ACP template's ContentDelegate always
-//! returns a real iterator; returning null risks a null-deref in the native
-//! player, so the stub mirrors the template with an always-empty iterator. The
-//! real delegate returns a FolderIterator over synced tracks in task 9.
-class GsoundContentDelegateStub extends Media.ContentDelegate {
-    function initialize() {
-        ContentDelegate.initialize();
-    }
-
-    //! Empty-library iterator; the real delegate returns a FolderIterator (task 9).
-    function getContentIterator() as Media.ContentIterator or Null {
-        return new EmptyContentIterator();
-    }
-}
+//! The content-delegate stub (GsoundContentDelegateStub) was removed in task 9.4
+//! when the real playback/GsoundContentDelegate.mc replaced it. What remains here
+//! is EmptyContentIterator: a functional-but-empty ContentIterator that
+//! GsoundContentDelegate returns as its SAFE FALLBACK whenever nothing is selected
+//! / nothing is synced, or the real FolderIterator can't be built (Req 6.6, 8.5).
+//! Returning this (never null) keeps the native player from null-dereffing.
+//!
+//! The sync-delegate stub (GsoundSyncDelegateStub) was removed in task 7.1 when the
+//! real sync/GsoundSyncDelegate.mc replaced it.
 
 //! Minimal empty ContentIterator: no current track, no next/previous. Mirrors the
 //! official ACP template's ContentIterator shape but yields nothing, so the native
-//! player shows an empty library instead of crashing (Req 8.5). Replaced by
-//! FolderIterator in task 9.
+//! player shows an empty library instead of crashing (Req 8.5). Used by
+//! GsoundContentDelegate as the safe-empty fallback (the real tracks come from
+//! FolderIterator, task 9.3).
 class EmptyContentIterator extends Media.ContentIterator {
     function initialize() {
         ContentIterator.initialize();
@@ -80,25 +66,3 @@ class EmptyContentIterator extends Media.ContentIterator {
     }
 }
 
-//! Sync-delegate placeholder. Reports "nothing to sync" and completes immediately
-//! so the system sync flow can run without error. Replaced by GsoundSyncDelegate
-//! (Downloader over the pending manifest) in task 7.
-class GsoundSyncDelegateStub extends Communications.SyncDelegate {
-    function initialize() {
-        SyncDelegate.initialize();
-    }
-
-    //! Nothing pending in the stub.
-    function isSyncNeeded() as Lang.Boolean {
-        return false;
-    }
-
-    //! No-op sync: immediately signal completion so the system doesn't hang.
-    function onStartSync() as Void {
-        try {
-            Communications.notifySyncComplete(null);
-        } catch (ex) {
-            // Defensive: never let the stub sync crash the launch (Req 8.5).
-        }
-    }
-}

@@ -311,6 +311,227 @@ module Repo {
         saveFolders(folders);
     }
 
+    // --- pending manifest (chunked) --------------------------------------------
+    //
+    // Task 6.3: the most recently received SYNC_MANIFEST { serverUrl, tracks:[...] }
+    // is persisted so a sync launched by the system (a separate ACP process, Req
+    // 7.2) can download without the phone resending it. The manifest can be large
+    // (many tracks), so — exactly like the track index above — it is written as
+    // flat, chunked keys instead of one giant nested value (Req 7.1):
+    //   - "pm:serverUrl"  -> the server base URL (one small string).
+    //   - "pm:trk:<n>"    -> chunk n of the cleaned ManifestTrack dicts, at most
+    //                        MANIFEST_CHUNK_SIZE tracks each.
+    //   - "pm:trk:count"  -> number of track chunks persisted.
+    // A "pm:fetch" fallback flag key is reserved for task 6.4's "fetch at sync
+    // start" seam; this task neither reads nor writes it, leaving room for it in
+    // the pm: namespace.
+    //
+    // Each stored track keeps only the fields the downloader needs (id, path,
+    // mime, folder, title, artist, album, sizeBytes) — the cleaned ManifestTrack
+    // produced by SyncController.cleanTrack — so chunks stay small. loadPendingManifest
+    // tolerates missing/partial chunks without crashing (Req 7.2, 8.5).
+
+    //! Base storage key namespace for the pending manifest.
+    const KEY_PENDING_MANIFEST = "pm";
+
+    //! Storage key: the pending manifest's server base URL (one small string).
+    const KEY_PM_SERVER_URL = "pm:serverUrl";
+
+    //! Base storage key for the chunked pending-manifest track list. Chunks are
+    //! "pm:trk:0", "pm:trk:1", ...; "pm:trk:count" holds the chunk count.
+    const KEY_PM_TRACKS = "pm:trk";
+
+    //! Storage key for the task-6.4 "fetch manifest at sync start" fallback flag
+    //! (design §6.1). Owned by this module as of task 6.4. The value is a small
+    //! dict `{ set: Boolean, expected: Number? }` where `set` means "the inline
+    //! manifest was empty/truncated, so task 7's onStartSync must fetch the
+    //! authoritative list from GET {serverUrl}/manifest" and `expected` is the
+    //! phone-reported expected track count when one is available (it is not in v1
+    //! — see savePendingFetchFlag — so this is reserved for forward use).
+    const KEY_PM_FETCH = "pm:fetch";
+
+    //! Max cleaned ManifestTrack dicts per manifest chunk. Each track dict is a
+    //! handful of short strings; 40 per chunk keeps a stored value well under the
+    //! ~8 KB per-value limit even with long titles/paths, while keeping the number
+    //! of chunk reads/writes modest. Conservative by design (Req 7.1).
+    const MANIFEST_CHUNK_SIZE = 40;
+
+    //! Load the persisted pending manifest as { serverUrl, tracks:[...] }, or null
+    //! when none is stored (or the stored serverUrl is missing/empty — a manifest
+    //! with no server is unusable, mirroring SyncController.onManifest). The track
+    //! list is reassembled from its chunks ("pm:trk:0", ...); any missing or
+    //! malformed chunk is skipped defensively so a partially written manifest can
+    //! never crash a sync launch (Req 7.2, 8.5) — the result is a best-effort
+    //! manifest of whatever survived.
+    function loadPendingManifest() as Dictionary? {
+        var serverUrl = Application.Storage.getValue(KEY_PM_SERVER_URL);
+        if (!(serverUrl instanceof String) || (serverUrl as String).equals("")) {
+            return null;
+        }
+        var count = manifestChunkCount();
+        var tracks = [] as Array<Object?>;
+        for (var i = 0; i < count; i++) {
+            var chunk = Application.Storage.getValue(manifestChunkKey(i));
+            if (chunk instanceof Array) {
+                tracks.addAll(chunk as Array<Object?>);
+            }
+        }
+        return {
+            Messages.FIELD_SERVER_URL => serverUrl as String,
+            Messages.FIELD_TRACKS => tracks
+        };
+    }
+
+    //! Persist the pending manifest { serverUrl, tracks:[...] }, replacing any
+    //! previously stored one. The serverUrl is written as one small value; the
+    //! tracks are split into chunks of at most MANIFEST_CHUNK_SIZE so no single
+    //! stored value approaches the ~8 KB limit (Req 7.1). A null manifest, or one
+    //! with a missing/empty serverUrl, clears any stale pending manifest instead
+    //! of writing a half-usable one. Leftover chunks from a previously larger
+    //! manifest are deleted so stale tracks can't resurface on the next load.
+    function savePendingManifest(manifest as Dictionary?) as Void {
+        if (manifest == null) {
+            deletePendingManifest();
+            return;
+        }
+        var serverUrl = manifest.get(Messages.FIELD_SERVER_URL);
+        if (!(serverUrl instanceof String) || (serverUrl as String).equals("")) {
+            deletePendingManifest();
+            return;
+        }
+
+        var tracks = manifest.get(Messages.FIELD_TRACKS);
+        var safeTracks = [] as Array<Object?>;
+        if (tracks instanceof Array) {
+            safeTracks = tracks as Array<Object?>;
+        }
+
+        var previousCount = manifestChunkCount();
+
+        Application.Storage.setValue(
+            KEY_PM_SERVER_URL, serverUrl as Application.Storage.ValueType);
+
+        var newCount = 0;
+        var offset = 0;
+        var total = safeTracks.size();
+        while (offset < total) {
+            var end = offset + MANIFEST_CHUNK_SIZE;
+            if (end > total) {
+                end = total;
+            }
+            Application.Storage.setValue(
+                manifestChunkKey(newCount),
+                safeTracks.slice(offset, end) as Application.Storage.ValueType);
+            newCount++;
+            offset = end;
+        }
+
+        Application.Storage.setValue(
+            KEY_PM_TRACKS + KEY_INDEX_COUNT_SUFFIX,
+            newCount as Application.Storage.ValueType);
+
+        // Drop any leftover chunks from a previously larger manifest.
+        for (var i = newCount; i < previousCount; i++) {
+            Application.Storage.deleteValue(manifestChunkKey(i));
+        }
+    }
+
+    //! Delete the entire pending manifest (serverUrl + all track chunks + the
+    //! chunk-count key) AND the "fetch at sync start" fallback flag. As of task
+    //! 6.4 this module owns the flag's lifecycle, so clearing a pending manifest
+    //! also clears its fallback state — the two always rise and fall together.
+    function deletePendingManifest() as Void {
+        var count = manifestChunkCount();
+        for (var i = 0; i < count; i++) {
+            Application.Storage.deleteValue(manifestChunkKey(i));
+        }
+        Application.Storage.deleteValue(KEY_PM_TRACKS + KEY_INDEX_COUNT_SUFFIX);
+        Application.Storage.deleteValue(KEY_PM_SERVER_URL);
+        deletePendingFetchFlag();
+    }
+
+    // --- pending-manifest fetch-at-sync-start fallback flag (task 6.4) ---------
+    //
+    // design §6.1: the control-channel message has a payload ceiling, so a large
+    // library can arrive as a SYNC_MANIFEST whose `tracks` list is empty (the
+    // phone deliberately sends serverUrl only) or truncated. In that case the
+    // watch must NOT treat "no inline tracks" as "nothing to sync"; it keeps the
+    // serverUrl and records that task 7's onStartSync has to pull the authoritative
+    // list from GET {serverUrl}/manifest over HTTP. Both paths yield the identical
+    // ManifestTrack shape (§8.0), so the downloader consumes one representation.
+    //
+    // The flag is persisted (not just held in memory) because the sync runs in a
+    // separate system-launched ACP process (Req 7.2): the process that receives
+    // the manifest and the process that downloads are not guaranteed to be the
+    // same, so the "must fetch" decision has to survive in Application.Storage
+    // right next to the pending manifest it describes.
+    //
+    // Wire note: GsoundA's SYNC_MANIFEST carries pairingId/serverUrl/tracks/v only
+    // — there is NO expected-count/total field on the message (GsoundA
+    // ControlMessage.SyncManifest). So in v1 the ONLY detectable fallback trigger
+    // is an empty `tracks` list; a count that is merely truncated below some
+    // "expected" total cannot be distinguished from a genuinely short library
+    // without a count field the phone does not send. `expectedCount` is therefore
+    // accepted and persisted for forward-compatibility but is null in practice.
+
+    //! Set the "fetch manifest at sync start" fallback flag (design §6.1). Call
+    //! this when a received SYNC_MANIFEST had an empty/truncated `tracks` list but
+    //! a usable serverUrl, so task 7's onStartSync knows to fetch GET /manifest
+    //! instead of relying on the (absent) inline tracks. `expectedCount` is the
+    //! phone-reported expected track count when one is available, or null (the v1
+    //! wire shape carries none; see the section note). Stored as a small dict
+    //! alongside the pending manifest under KEY_PM_FETCH.
+    function savePendingFetchFlag(expectedCount as Number?) as Void {
+        var flag = { "set" => true };
+        if (expectedCount != null) {
+            flag.put("expected", expectedCount);
+        }
+        Application.Storage.setValue(KEY_PM_FETCH, flag as Application.Storage.ValueType);
+    }
+
+    //! Load the fetch-at-sync-start fallback flag as `{ set: Boolean, expected:
+    //! Number? }`. Always returns a dict (never null) so callers can read it
+    //! without a null check: when no flag is persisted it returns
+    //! `{ set => false }`. `expected` is present only when a non-null expected
+    //! count was recorded. Coerces defensively so a malformed stored value degrades
+    //! to "not set" rather than crashing a sync launch (Req 7.2, 8.5).
+    function loadPendingFetchFlag() as Dictionary {
+        var raw = Application.Storage.getValue(KEY_PM_FETCH);
+        if (!(raw instanceof Dictionary)) {
+            return { "set" => false };
+        }
+        var stored = raw as Dictionary;
+        var isSet = stored.get("set");
+        var result = { "set" => (isSet instanceof Boolean) ? (isSet as Boolean) : false };
+        var expected = stored.get("expected");
+        if (expected instanceof Number) {
+            result.put("expected", expected as Number);
+        }
+        return result;
+    }
+
+    //! Clear the fetch-at-sync-start fallback flag. Called when a complete inline
+    //! manifest arrives (normal path — nothing to fetch) and as part of
+    //! deletePendingManifest so the flag never outlives the manifest it describes.
+    function deletePendingFetchFlag() as Void {
+        Application.Storage.deleteValue(KEY_PM_FETCH);
+    }
+
+    //! Number of pending-manifest track chunks currently persisted (0 when none).
+    //! Reads "pm:trk:count" and coerces defensively to a non-negative integer.
+    function manifestChunkCount() as Number {
+        var raw = Application.Storage.getValue(KEY_PM_TRACKS + KEY_INDEX_COUNT_SUFFIX);
+        if (raw instanceof Number && raw > 0) {
+            return raw as Number;
+        }
+        return 0;
+    }
+
+    //! Storage key for pending-manifest track chunk `i`, e.g. 0 -> "pm:trk:0".
+    function manifestChunkKey(i as Number) as String {
+        return KEY_PM_TRACKS + ":" + i.toString();
+    }
+
     //! True when `list` already contains a String value equal to `value`.
     //! Used to dedupe track ids and folder names (Application.Storage values come
     //! back as generic Objects, so compare via String.equals rather than ==).

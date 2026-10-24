@@ -283,6 +283,21 @@
         "executionId": "8271010a-2d84-4554-8437-b7063a58ea69",
         "chatSessionId": "sess_3bb77381-0b73-4185-864a-8a78473e6c9e",
         "timestamp": 1792603143149
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000531
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747009460
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747170495
       }
     ],
     "5.1 `PairingManager`: handle `PAIR_REQUEST` (store temp, show code), Confirm → send": [
@@ -334,6 +349,21 @@
         "executionId": "47b15c62-b527-4fbc-a067-718dba56c69a",
         "chatSessionId": "sess_f7714c22-9979-43f9-9918-291c09242e74",
         "timestamp": 1792534664098
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000855
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747629604
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792748995778
       }
     ],
     "6.1 `SyncController`: on `SYNC_MANIFEST` persist pending `{serverUrl, tracks}`; validate": [
@@ -606,6 +636,21 @@
         "executionId": "47b15c62-b527-4fbc-a067-718dba56c69a",
         "chatSessionId": "sess_f7714c22-9979-43f9-9918-291c09242e74",
         "timestamp": 1792534664826
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001780
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792767856208
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768092625
       }
     ],
     "10.1 Wrap all system-entry methods so no launch mode can crash the app.": [
@@ -674,6 +719,21 @@
         "executionId": "47b15c62-b527-4fbc-a067-718dba56c69a",
         "chatSessionId": "sess_f7714c22-9979-43f9-9918-291c09242e74",
         "timestamp": 1792534664995
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001967
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768441483
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768859374
       }
     ],
     "11.2 Build device `.prg` for fēnix 6 Pro and fēnix 8; sideload to `GARMIN/APPS/`;": [
@@ -691,6 +751,21 @@
         "executionId": "47b15c62-b527-4fbc-a067-718dba56c69a",
         "chatSessionId": "sess_f7714c22-9979-43f9-9918-291c09242e74",
         "timestamp": 1792534665035
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747002005
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768864846
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792829352270
       }
     ],
     "11.3 Full on-hardware E2E with GsoundA over real Wi-Fi; verify playback controls and": [
@@ -729,6 +804,545 @@
         "executionId": "8271010a-2d84-4554-8437-b7063a58ea69",
         "chatSessionId": "sess_3bb77381-0b73-4185-864a-8a78473e6c9e",
         "timestamp": 1792602795567
+      }
+    ],
+    "4.4 Remove the `[SCRATCH-4.3]` instrumentation: `GsoundGApp.selftest43()` + its call in": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000664
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747174296
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747301427
+      }
+    ],
+    "5.1 `PairingManager`: handle `PAIR_REQUEST` (store temp `{code, pairingId, secret,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000734
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747305199
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747467863
+      }
+    ],
+    "5.2 `PairingView` + `PairingDelegate`: display the 6-digit code, Confirm/Reject actions.": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000792
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747471351
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747625885
+      }
+    ],
+    "6.1 Add per-track `FIELD_*` constants to `protocol/Messages.mc` (`id`, `folder`, `title`,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000898
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792748999660
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749056444
+      }
+    ],
+    "6.2 `SyncController.onManifest(msg)`: parse `serverUrl` (`Protocol.getString`) and": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000944
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749196262
+      }
+    ],
+    "6.3 Persist the pending manifest `{serverUrl, tracks:[…]}` to `Application.Storage`": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747000985
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749199585
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749324855
+      }
+    ],
+    "6.4 HTTP fallback (design §6.1): when `tracks` is empty/truncated, keep `serverUrl`": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001029
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749328270
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749510649
+      }
+    ],
+    "6.5 Simulator test with an inline manifest and with the fallback path.": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001084
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749513861
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749766293
+      }
+    ],
+    "7.1 `GsoundSyncDelegate extends Communications.SyncDelegate` (replace": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001119
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750100550
+      }
+    ],
+    "7.2 `sync/MimeEncoding.mc`: map `track.mime` → `Media.ENCODING_*` (mp3 at minimum;": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001173
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750104268
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750246946
+      }
+    ],
+    "7.3 `Downloader`: dedupe by `id` against the index (Req 4.4); per remaining track": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001211
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750251119
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750429255
+      }
+    ],
+    "7.4 `onDownloaded(code, data, context)`: **200** → record the media handle via": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001255
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750432821
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750859362
+      }
+    ],
+    "7.5 Progress to phone: periodic `control.transmit(Messages.buildSyncStatus(pairingId,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001292
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750863033
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750960642
+      }
+    ],
+    "7.6 `Reconciler.deleteMissing(manifest)`: for each index id not in the manifest,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001328
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792750964369
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792751145963
+      }
+    ],
+    "7.7 Completion: `Communications.notifySyncComplete(errorOrNull)`, then send a **final": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001364
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792751151433
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792751305672
+      }
+    ],
+    "7.8 `onCancelSync()`: stop after the in-flight track, keep completed tracks (Req 4.8),": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001398
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792751309384
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792755068895
+      }
+    ],
+    "7.9 `SyncConfigView` + `SyncConfigDelegate`: show pending count, Confirm triggers the": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001433
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792755072932
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792755227198
+      }
+    ],
+    "7.10 Simulator E2E against a running HTTP server (GsoundA or a stub): download, dedupe,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001470
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792755230898
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759616541
+      }
+    ],
+    "8.1 `StatsStore`: maintain `fileCount` (index size), `folderCount` (folders size),": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001510
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759623678
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759760234
+      }
+    ],
+    "8.2 Send `STATS` via `control.transmit(Messages.buildStats(pairingId, fileCount,": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001550
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759764733
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759849133
+      }
+    ],
+    "8.3 `StatsView`: display stats on the watch; empty state before the first sync.": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001588
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759853082
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759995649
+      }
+    ],
+    "9.1 `FolderListView` + `FolderListDelegate` (replace `FolderListStubView`): list synced": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001639
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792760000094
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792763785611
+      }
+    ],
+    "9.2 `PlaybackConfigView`: list a folder's tracks (ids from `Repo.loadIndex()` filtered by": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001676
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792763790791
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792763911935
+      }
+    ],
+    "9.3 `FolderIterator extends Media.ContentIterator` (replace `EmptyContentIterator`):": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001710
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792763915745
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792767694833
+      }
+    ],
+    "9.4 `GsoundContentDelegate extends Media.ContentDelegate` (replace": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001744
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792767708352
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792767849310
+      }
+    ],
+    "10.1 Keep every system-entry hook (mode routing, delegates, iterator methods) wrapped so": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001824
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768101187
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768217533
+      }
+    ],
+    "10.2 Map web/HTTP errors to `SYNC_STATUS`; preserve existing media on failure; never log": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001863
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768221440
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768341678
+      }
+    ],
+    "10.3 Validate/ignore control messages from unpaired peers (already enforced by": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001898
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768345587
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768410803
+      }
+    ],
+    "10.4 Confirm all `[SCRATCH-*]` instrumentation is gone (see 4.4) before release builds.": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747001935
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768415467
+      },
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768432927
+      }
+    ],
+    "11.3 Full on-hardware E2E with GsoundA over real Wi-Fi; verify playback controls and the": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747002040
+      }
+    ],
+    "4. Protocol & control channel": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792747301501
+      }
+    ],
+    "5. Pairing (`pairing/`)": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792748995830
+      }
+    ],
+    "6. Manifest intake (`sync/SyncController.mc`)": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792749766354
+      }
+    ],
+    "7. Sync delegate & downloader (`sync/`)": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759616594
+      }
+    ],
+    "8. Stats (`stats/`)": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792759995695
+      }
+    ],
+    "9. Playback (`playback/`)": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768092666
+      }
+    ],
+    "10. Hardening & error handling": [
+      {
+        "executionId": "34c19d6c-881d-4b9a-838c-70777235cb53",
+        "chatSessionId": "sess_23e01c53-7c43-48ab-a189-76f21b60cae1",
+        "timestamp": 1792768432977
       }
     ]
   }

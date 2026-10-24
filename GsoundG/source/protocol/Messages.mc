@@ -71,6 +71,22 @@ module Messages {
     const FIELD_FOLDER_COUNT = "folderCount";
     const FIELD_LAST_SYNC_AT = "lastSyncAt";
 
+    // --- per-track manifest field keys (ManifestTrack, design §8.0) ------------
+    //
+    // Keys of each entry in a SYNC_MANIFEST `tracks[]` element. Shared by manifest
+    // intake (task 6) and the downloader (task 7) so spelling matches GsoundA's
+    // ManifestTrack wire shape (@SerialName keys, GsoundA ManifestTrack.kt).
+
+    const FIELD_ID = "id";
+    const FIELD_FOLDER = "folder";
+    const FIELD_TITLE = "title";
+    const FIELD_ARTIST = "artist";
+    const FIELD_ALBUM = "album";
+    const FIELD_DURATION_MS = "durationMs";
+    const FIELD_SIZE_BYTES = "sizeBytes";
+    const FIELD_MIME = "mime";
+    const FIELD_PATH = "path";
+
     //! True when `type` is one of the known control-message types above. Used by
     //! Protocol.validate to reject messages of an unrecognized type (Req 8.4).
     //! Null/non-string input is treated as unknown.

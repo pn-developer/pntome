@@ -73,8 +73,27 @@ create_container() {
 provision_container() {
   container_running || podman start "$CIQ_CONTAINER" >/dev/null
   info "installing webkit-4.0 stack inside the container (first run downloads packages)"
-  cexec bash -lc "export DEBIAN_FRONTEND=noninteractive; sudo apt-get update -qq"
-  cexec bash -lc "export DEBIAN_FRONTEND=noninteractive; sudo apt-get install -y -qq ${CIQ_CONTAINER_PKGS[*]}"
+
+  # Notes on the exec form:
+  #  - The container's exec user is already root, so no `sudo` is needed (and a
+  #    missing/odd sudo config would otherwise hang).
+  #  - Use `bash -c`, NOT `bash -lc`: a login shell sources profile files from the
+  #    shared $HOME and can leak a host snap LD_LIBRARY_PATH, breaking tools inside.
+  #  - `apt-get update` can stall at the end on this image's unattended-upgrades /
+  #    apt daemon trigger even though the package lists downloaded fine. We run it
+  #    under a timeout and DON'T treat a stall as fatal — cached lists are enough
+  #    for the install. The install step is the real success gate.
+  local upd_timeout="${CIQ_APT_UPDATE_TIMEOUT:-120}"
+  # `timeout` guarantees we never block forever; apt-get caches the fetched lists
+  # even when the post-run trigger stalls, so a timeout here is non-fatal.
+  if cexec bash -c "timeout ${upd_timeout} env DEBIAN_FRONTEND=noninteractive apt-get update -qq"; then
+    info "apt-get update: ok"
+  else
+    info "apt-get update timed out/failed — this image stalls on an apt trigger; continuing with cached lists"
+  fi
+
+  cexec bash -c "DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ${CIQ_CONTAINER_PKGS[*]}" \
+    || die "apt-get install failed inside the container. Check network, or run 'podman exec $CIQ_CONTAINER apt-get update' manually."
 }
 
 recreate() {
