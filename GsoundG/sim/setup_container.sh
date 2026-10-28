@@ -44,6 +44,12 @@ verify() {
 create_container() {
   if container_exists; then
     info "container '$CIQ_CONTAINER' already exists"
+    # It may exist but be STOPPED. Start it now so the subsequent webkit check /
+    # provisioning `cexec` doesn't fail with "container state improper".
+    if ! container_running; then
+      info "  (stopped) starting it"
+      start_container || die "container '$CIQ_CONTAINER' exists but could not be started (try: podman start $CIQ_CONTAINER)"
+    fi
     return 0
   fi
   info "creating container '$CIQ_CONTAINER' from $CIQ_IMAGE (host: $(host_family))"
@@ -71,7 +77,7 @@ create_container() {
 }
 
 provision_container() {
-  container_running || podman start "$CIQ_CONTAINER" >/dev/null
+  start_container || die "cannot provision: container '$CIQ_CONTAINER' is not running and could not be started"
   info "installing webkit-4.0 stack inside the container (first run downloads packages)"
 
   # Notes on the exec form:

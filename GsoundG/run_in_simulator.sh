@@ -79,6 +79,11 @@ PRG="$(cd "$(dirname "$PRG")" && pwd)/$(basename "$PRG")"
 
 # --- ensure the container is ready -----------------------------------------
 require_engine
+# If the container exists but is merely STOPPED, start it (cheap) before probing
+# — a stopped container makes the cexec webkit probe fail and would otherwise
+# trigger a full (and here needless) re-provision. Only fall back to the setup
+# script when the container is missing or genuinely lacks webkit 4.0.
+container_exists && ! container_running && start_container || true
 if ! ( container_exists && container_running && \
        cexec bash -c "ldconfig -p 2>/dev/null | grep -q libwebkit2gtk-4.0" ); then
   info "simulator container not ready — running sim/setup_container.sh"

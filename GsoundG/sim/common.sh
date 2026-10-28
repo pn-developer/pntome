@@ -97,7 +97,25 @@ container_running() { [ "$(podman inspect -f '{{.State.Running}}' "$CIQ_CONTAINE
 
 require_container() {
   container_exists  || die "container '$CIQ_CONTAINER' does not exist. Run: GsoundG/sim/setup_container.sh"
-  container_running || die "container '$CIQ_CONTAINER' is not running. Start it: podman start $CIQ_CONTAINER"
+  container_running || start_container
+  container_running || die "container '$CIQ_CONTAINER' exists but could not be started. Try: podman start $CIQ_CONTAINER"
+}
+
+# Start the container if it exists but is stopped. A `podman exec` against a
+# stopped container fails with "can only create exec sessions on running
+# containers: container state improper", so every path that is about to cexec
+# must ensure the container is running first. Prefer `distrobox enter` to
+# materialize it (sets up the shared $HOME/display the distrobox way) when
+# distrobox is present; otherwise a raw `podman start`. Idempotent: a no-op when
+# already running.
+start_container() {
+  container_exists || return 1
+  container_running && return 0
+  if have distrobox; then
+    distrobox enter "$CIQ_CONTAINER" -- true >/dev/null 2>&1 || true
+  fi
+  container_running || podman start "$CIQ_CONTAINER" >/dev/null 2>&1 || true
+  container_running
 }
 
 # podman exec with a clean env + X access.
