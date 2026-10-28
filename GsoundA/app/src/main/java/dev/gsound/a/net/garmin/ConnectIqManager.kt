@@ -109,8 +109,9 @@ class ConnectIqManager @Inject constructor(
         val expectedPairingId = runBlocking { pairingStore.get()?.pairingId }
         GsoundLog.d(tag, "incoming batch: ${messageData.size} payload(s)")
         for (payload in messageData) {
-            val json = payload as? String ?: continue
-            when (val result = MessageCodec.decodeAndValidate(json, expectedPairingId)) {
+            // The SDK delivers structured values: a watch-side Dictionary arrives as a Map.
+            // decodeAndValidateFromAny handles that (and tolerates a legacy JSON String).
+            when (val result = MessageCodec.decodeAndValidateFromAny(payload, expectedPairingId)) {
                 is MessageCodec.DecodeResult.Valid -> {
                     // type is a non-secret discriminator; never log the payload (Req 8.4).
                     GsoundLog.i(tag, "incoming accepted: type=${result.message::class.simpleName}")
@@ -366,7 +367,10 @@ class ConnectIqManager @Inject constructor(
         // Log only the non-secret message type — never the encoded payload, which may carry the
         // PAIR_REQUEST code/secret (Req 8.4).
         GsoundLog.i(tag, "send: type=${message::class.simpleName}")
-        val payload = MessageCodec.encode(message)
+        // Send a STRUCTURED Map, not a JSON String: the Connect IQ SDK marshals a Map to a
+        // Monkey C Dictionary on the watch, which is what GsoundG's Protocol.validate requires.
+        // A JSON String would arrive as a watch String and be dropped as INVALID_NOT_DICT.
+        val payload = MessageCodec.encodeToMap(message)
         val result = OutgoingRetry.retryWithBackoff(policy = retryPolicy) {
             sendOnce(payload)
         }
@@ -383,7 +387,7 @@ class ConnectIqManager @Inject constructor(
      * returning [Result.success] on [ConnectIQ.IQMessageStatus.SUCCESS] and [Result.failure]
      * (never throwing for transport problems) otherwise, so [OutgoingRetry] can retry.
      */
-    private suspend fun sendOnce(payload: String): Result<Unit> {
+    private suspend fun sendOnce(payload: Map<String, Any?>): Result<Unit> {
         val iq = connectIq
         val targetDevice = device
         val targetApp = app ?: gsoundApp

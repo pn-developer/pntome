@@ -37,6 +37,43 @@ class MessageCodecTest {
         assertEquals(original, (result as DecodeResult.Valid).message)
     }
 
+    // --- map round-trip (the pairing-wire-format fix) ----------------------------------------
+
+    @Test
+    fun `encodeToMap then decodeAndValidateFromAny round-trips a valid message`() {
+        // This mirrors the real wire path: the SDK marshals the Map to a watch Dictionary and
+        // back to a Map, so encode-to-map + decode-from-map must reproduce the message.
+        val original = PairRequest(
+            code = "123456",
+            pairingId = pairingId,
+            secret = "shared-secret-value",
+            peerName = "Pixel",
+        )
+
+        val map = MessageCodec.encodeToMap(original)
+        // The map must carry the exact contract keys GsoundG reads, with v as a number.
+        assertEquals("PAIR_REQUEST", map["type"])
+        assertEquals(1, (map["v"] as Number).toInt())
+        assertEquals(pairingId, map["pairingId"])
+
+        val result = MessageCodec.decodeAndValidateFromAny(map, expectedPairingId = pairingId)
+        assertTrue("expected Valid, got $result", result is DecodeResult.Valid)
+        assertEquals(original, (result as DecodeResult.Valid).message)
+    }
+
+    @Test
+    fun `decodeAndValidateFromAny still accepts a legacy JSON String payload`() {
+        val json = MessageCodec.encode(PairConfirm(pairingId = pairingId))
+        val result = MessageCodec.decodeAndValidateFromAny(json, expectedPairingId = pairingId)
+        assertTrue("expected Valid, got $result", result is DecodeResult.Valid)
+    }
+
+    @Test
+    fun `decodeAndValidateFromAny rejects an unsupported payload type`() {
+        val result = MessageCodec.decodeAndValidateFromAny(42, expectedPairingId = null)
+        assertTrue(result is DecodeResult.Invalid)
+    }
+
     @Test
     fun `encode emits the type discriminator and version`() {
         val json = MessageCodec.encode(PairConfirm(pairingId = pairingId))

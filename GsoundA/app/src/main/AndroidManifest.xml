@@ -31,12 +31,24 @@
          ============================================================================================
     -->
 
+    <!-- Open the local HTTP data server socket and exchange control messages over the network.
+         Binding a listening TCP socket (Ktor server in SyncForegroundService) requires INTERNET;
+         without it the bind fails with SocketException "Operation not permitted". Normal
+         install-time permission — no runtime prompt (task 8.1, Req 5.1/5.7). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!-- Resolve the active Wi-Fi/LAN address for the local HTTP server (task 8.1, Req 5.1/5.7). -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Keep Wi-Fi up for the local server while a sync is active via a WifiLock (task 9.2, Req 8.3). -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- WifiManager.WifiLock.acquire() (SyncForegroundService.acquireWifiLock) requires WAKE_LOCK
+         in addition to the WIFI_STATE permissions above. Without it acquire() throws
+         SecurityException and crashes the sync foreground service on start. This is a normal
+         (install-time) permission — no runtime prompt. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Foreground service that keeps the sync/server alive when backgrounded (task 9.2, Req 8.3).
          FOREGROUND_SERVICE_DATA_SYNC is required on API 34+ for the dataSync service type. -->
