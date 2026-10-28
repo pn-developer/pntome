@@ -27,7 +27,7 @@ Connect IQ simulator; sideload to hardware for sync/playback validation.
   - [x] 2.2 Implement mode hooks: `getSyncConfigurationView`, `getPlaybackConfigurationView`,
         `getContentDelegate`, `getSyncDelegate`, `getProviderIconInfo` returning stubs first.
         (NOTE: do **not** add `getInitialView` — ACP has no such hook; it crashes launch.)
-  - [-] 2.3 Verify in simulator that the app launches in each mode without crashing.
+  - [ ] 2.3 Verify in simulator that the app launches in each mode without crashing.
         _(Blocked: simulator GUI needs libwebkit2gtk-4.0; run via the container skill.)_
   - _Reqs: 1.1, 7.2, 8.5_
 
@@ -157,6 +157,6 @@ Connect IQ simulator; sideload to hardware for sync/playback validation.
         paths (401/404/cancel/storage-full).
   - [x] 11.2 Build device `.prg` for fēnix 6 Pro and fēnix 8; sideload to `GARMIN/APPS/`;
         confirm the provider appears under Music Providers.
-  - [~] 11.3 Full on-hardware E2E with GsoundA over real Wi-Fi; verify playback controls and the
+  - [ ] 11.3 Full on-hardware E2E with GsoundA over real Wi-Fi; verify playback controls and the
         stats round-trip to the phone (cross-check `GsoundA/docs/manual-e2e-checklist.md`).
   - _Reqs: all_

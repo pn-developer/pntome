@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -57,12 +60,20 @@ fun FolderListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val addFolderLauncher = rememberAddFolderLauncher(onFolderSelected = viewModel::onFolderSelected)
 
+    // Rescan whenever this destination is entered (first composition and every switch back to
+    // the Folders tab), so a folder whose files changed on disk shows an up-to-date count
+    // without the user tapping refresh. keyed on Unit = once per entry into the composition.
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
     FolderListContent(
         uiState = uiState,
         modifier = modifier,
         onAddFolder = { addFolderLauncher.launch() },
         onRemoveFolder = viewModel::onRemoveConfirmed,
         onMessageShown = viewModel::onMessageShown,
+        onRefresh = viewModel::refresh,
     )
 }
 
@@ -78,6 +89,7 @@ fun FolderListContent(
     onAddFolder: () -> Unit,
     onRemoveFolder: (String) -> Unit,
     onMessageShown: () -> Unit,
+    onRefresh: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -95,7 +107,30 @@ fun FolderListContent(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("Folders") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Folders") },
+                actions = {
+                    IconButton(
+                        onClick = onRefresh,
+                        // Disable while a rescan is running so repeated taps don't queue up.
+                        enabled = !uiState.isRefreshing,
+                    ) {
+                        if (uiState.isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = "Refresh folders",
+                            )
+                        }
+                    }
+                },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddFolder) {

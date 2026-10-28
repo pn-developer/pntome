@@ -1,6 +1,7 @@
 package dev.gsound.a.ui.pairing
 
 import dev.gsound.a.data.pairing.PairingStore
+import dev.gsound.a.log.NoopLogger
 import dev.gsound.a.domain.model.PairingRecord
 import dev.gsound.a.net.garmin.ConnectionState
 import dev.gsound.a.net.garmin.FakeControlChannel
@@ -92,6 +93,7 @@ class PairingViewModelTest {
             peerNameProvider = peerNames,
             clock = clock,
             timeoutMillis = timeout,
+            logger = NoopLogger,
         )
 
     // --- Happy path -----------------------------------------------------------------------------

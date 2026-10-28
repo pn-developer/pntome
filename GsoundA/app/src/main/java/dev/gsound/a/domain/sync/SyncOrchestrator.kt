@@ -7,6 +7,8 @@ import dev.gsound.a.domain.model.PairingRecord
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
 import dev.gsound.a.domain.model.Track
+import dev.gsound.a.log.GsoundLog
+import dev.gsound.a.log.Logger
 import dev.gsound.a.net.garmin.ControlChannel
 import dev.gsound.a.net.garmin.messages.SyncManifest
 import dev.gsound.a.net.garmin.messages.SyncStatus
@@ -79,9 +81,13 @@ class SyncOrchestrator @Inject constructor(
     private val httpServer: GsoundHttpServer,
     private val sessionHolder: SyncSessionHolder,
     private val wifiGuard: WifiGuard,
+    private val logger: Logger = GsoundLog,
 ) {
 
     private val _state = MutableStateFlow<SyncState>(SyncState.Idle)
+
+    /** Logcat tag for sync-orchestration diagnostics (filter: `adb logcat -s Gsound.Sync`). */
+    private val tag = "Gsound.Sync"
 
     /** Live sync state for the UI (task 10) to collect. Starts [SyncState.Idle]. */
     val state: StateFlow<SyncState> = _state.asStateFlow()
@@ -107,23 +113,33 @@ class SyncOrchestrator @Inject constructor(
      */
     suspend fun startSync(): SyncState {
         // Req 6.6: reject a concurrent sync without disturbing the active one.
-        if (!syncMutex.tryLock()) return _state.value
+        if (!syncMutex.tryLock()) {
+            logger.w(tag, "startSync rejected: a sync is already active (Req 6.6)")
+            return _state.value
+        }
 
         try {
+            logger.i(tag, "startSync: state=Preparing")
             _state.value = SyncState.Preparing
 
             // Req 6.1: a sync requires an active pairing (pairingId + sharedSecret).
             val pairing = pairingStore.get()
-                ?: return transition(SyncState.Error("Pair with your watch before syncing."))
+                ?: run {
+                    logger.w(tag, "startSync abort: no pairing")
+                    return transition(SyncState.Error("Pair with your watch before syncing."))
+                }
+            logger.i(tag, "startSync: pairing ok (pairingId=${pairing.pairingId})")
 
             // Build the manifest from the current Room track cache (pure mapping). A "fresh scan
             // if stale" is intentionally driven elsewhere (ScanAndCacheUseCase / the Folders UI);
             // this uses the latest cached snapshot to stay minimal.
             val tracks = folderRepository.getAllTracks()
             if (tracks.isEmpty()) {
+                logger.w(tag, "startSync abort: no cached tracks (add a folder/scan first)")
                 return transition(SyncState.Error("Add a folder with music before syncing."))
             }
             val manifest = ManifestBuilder.build(tracks)
+            logger.i(tag, "manifest built: ${manifest.tracks.size} track(s) from ${tracks.size} cached")
 
             // Req 5.7: Wi-Fi precondition — check BEFORE touching the server and refuse to start
             // it when Wi-Fi is down, carrying the centralized "same Wi-Fi network" guidance
@@ -131,6 +147,7 @@ class SyncOrchestrator @Inject constructor(
             // rather than relying only on the server's own WifiUnavailable fail-fast (which
             // remains as a backstop below).
             if (wifiGuard.check() is WifiStatus.Unavailable) {
+                logger.w(tag, "startSync abort: Wi-Fi unavailable before server start (Req 5.7)")
                 return transition(SyncState.Error(WifiGuard.GUIDANCE_MESSAGE))
             }
 
@@ -139,11 +156,18 @@ class SyncOrchestrator @Inject constructor(
             // first, but a race (Wi-Fi dropping between the check and the bind) still resolves to
             // the same canonical guidance.
             val serverUrl = when (val result = httpServer.start()) {
-                is GsoundHttpServer.StartResult.Started -> result.url
-                is GsoundHttpServer.StartResult.WifiUnavailable ->
+                is GsoundHttpServer.StartResult.Started -> {
+                    logger.i(tag, "HTTP server started at ${result.url}")
+                    result.url
+                }
+                is GsoundHttpServer.StartResult.WifiUnavailable -> {
+                    logger.w(tag, "HTTP server start: Wi-Fi unavailable (race backstop)")
                     return transition(SyncState.Error(WifiGuard.GUIDANCE_MESSAGE))
-                is GsoundHttpServer.StartResult.Error ->
+                }
+                is GsoundHttpServer.StartResult.Error -> {
+                    logger.e(tag, "HTTP server start error: ${result.detail}")
                     return transition(SyncState.Error(result.detail))
+                }
             }
 
             // Install the session the server serves: manifest + per-track SAF documentUri (from
@@ -156,6 +180,7 @@ class SyncOrchestrator @Inject constructor(
                 documentUriFor = { trackId -> documentUriByTrackId[trackId].orEmpty() }
             )
             sessionHolder.set(session)
+            logger.i(tag, "sync session installed; sending SYNC_MANIFEST (serverUrl=$serverUrl, tracks=${manifest.tracks.size})")
 
             // Req 6.1: tell the watch where to fetch and what to fetch. The ControlChannel impl
             // (ConnectIqManager) applies the retry/backoff (Req 10.2).
@@ -167,6 +192,7 @@ class SyncOrchestrator @Inject constructor(
                 )
             )
             if (sendResult.isFailure) {
+                logger.w(tag, "SYNC_MANIFEST send failed: ${sendResult.exceptionOrNull()?.javaClass?.simpleName}")
                 return transition(
                     SyncState.Error(
                         sendResult.exceptionOrNull()?.message
@@ -174,6 +200,7 @@ class SyncOrchestrator @Inject constructor(
                     )
                 )
             }
+            logger.i(tag, "SYNC_MANIFEST sent; awaiting SYNC_STATUS updates")
 
             // Req 6.2 / 6.3: collect SYNC_STATUS updates until a terminal one, projecting
             // progress onto `state`. collectStatuses returns the terminal SyncState.
@@ -182,13 +209,16 @@ class SyncOrchestrator @Inject constructor(
                 totalTracks = manifest.tracks.size,
                 serverUrl = serverUrl
             )
+            logger.i(tag, "sync terminal: ${terminal::class.simpleName}")
             return transition(terminal)
         } catch (t: Throwable) {
+            logger.e(tag, "sync threw: ${t.javaClass.simpleName}", t)
             return transition(
                 SyncState.Error(t.message ?: "Sync failed. Please try again.")
             )
         } finally {
             // Req 5.6: never leave the server running or a session installed.
+            logger.i(tag, "sync teardown: stopping server + clearing session")
             stopServerAndClearSession()
             syncMutex.unlock()
         }
@@ -203,6 +233,7 @@ class SyncOrchestrator @Inject constructor(
      * sync is active (it still ensures the server is stopped).
      */
     suspend fun cancelSync() {
+        logger.i(tag, "cancelSync: tearing down data channel -> Cancelled")
         stopServerAndClearSession()
         _state.value = SyncState.Cancelled
     }
@@ -229,13 +260,23 @@ class SyncOrchestrator @Inject constructor(
             .filterIsInstance<SyncStatus>()
             // Only this pairing's statuses (defence in depth; the channel already drops others).
             .collectUntil({ terminal != null }) { status ->
-                if (status.pairingId != pairing.pairingId) return@collectUntil
+                if (status.pairingId != pairing.pairingId) {
+                    logger.w(tag, "SYNC_STATUS ignored: pairingId mismatch (got=${status.pairingId})")
+                    return@collectUntil
+                }
 
                 val total = if (status.total > 0) status.total else totalTracks
+                logger.i(
+                    tag,
+                    "SYNC_STATUS: done=${status.done}/${total} bytes=${status.bytesDone}" +
+                        (status.error?.let { " error=$it" } ?: "")
+                )
 
                 when {
-                    status.error != null ->
+                    status.error != null -> {
+                        logger.w(tag, "sync reported error -> terminal Error")
                         terminal = SyncState.Error(status.error!!)
+                    }
 
                     isComplete(status, total) -> {
                         val summary = SyncSummary(
@@ -246,6 +287,7 @@ class SyncOrchestrator @Inject constructor(
                             error = null
                         )
                         summaryStore.save(summary) // Req 6.3, 8.3: persist last-sync summary.
+                        logger.i(tag, "sync COMPLETE: synced=${summary.syncedCount} skipped=${summary.skippedCount}")
                         terminal = SyncState.Completed(summary)
                     }
 
@@ -258,6 +300,9 @@ class SyncOrchestrator @Inject constructor(
                 }
             }
 
+        if (terminal == null) {
+            logger.w(tag, "status stream ended with no terminal status (watch stopped reporting)")
+        }
         return terminal ?: SyncState.Error("The watch stopped reporting progress.")
     }
 

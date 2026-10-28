@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import dev.gsound.a.data.folders.FolderRepository
+import dev.gsound.a.log.NoopLogger
 import dev.gsound.a.data.folders.GsoundDatabase
 import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.data.sync.SyncSummaryStore
@@ -124,6 +125,7 @@ class SyncOrchestratorTest {
             httpServer = httpServer,
             sessionHolder = sessionHolder,
             wifiGuard = wifiGuard,
+            logger = NoopLogger,
         )
     }
 

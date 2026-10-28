@@ -7,9 +7,11 @@ import com.garmin.android.connectiq.IQApp
 import com.garmin.android.connectiq.IQDevice
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dev.gsound.a.data.pairing.PairingStore
+import dev.gsound.a.log.GsoundLog
 import dev.gsound.a.net.garmin.messages.ControlMessage
 import dev.gsound.a.net.garmin.messages.MessageCodec
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -56,6 +58,23 @@ class ConnectIqManager @Inject constructor(
     /** Backoff policy applied to outgoing sends (Req 10.2). */
     private val retryPolicy = OutgoingRetry.RetryPolicy()
 
+    /** Logcat tag for control-channel diagnostics (filter: `adb logcat -s Gsound.CIQ`). */
+    private val tag = "Gsound.CIQ"
+
+    /**
+     * Device-enumeration poll window used by [resolveDeviceAndApp].
+     *
+     * With the WIRELESS transport the SDK reaches the watch THROUGH Garmin Connect Mobile over
+     * an IPC binding. `connectedDevices` is frequently EMPTY for a short moment right after
+     * [ConnectIQ.ConnectIQListener.onSdkReady] because that binding has not finished enumerating
+     * paired devices yet — even when the watch is connected in Garmin Connect. Reading it exactly
+     * once therefore produced a spurious [ConnectionState.Error.Reason.NO_DEVICE] ("No Garmin
+     * watch found") on a perfectly healthy setup. We instead poll it a few times over a short
+     * window and only conclude NO_DEVICE if nothing CONNECTED appears within [devicePollTotalMs].
+     */
+    private val devicePollIntervalMs = 300L
+    private val devicePollTotalMs = 5_000L
+
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()
 
@@ -88,17 +107,24 @@ class ConnectIqManager @Inject constructor(
         // Snapshot the active pairing once per batch; the SDK delivers on its own thread, so a
         // short blocking read of the persisted record is acceptable (control payloads are tiny).
         val expectedPairingId = runBlocking { pairingStore.get()?.pairingId }
+        GsoundLog.d(tag, "incoming batch: ${messageData.size} payload(s)")
         for (payload in messageData) {
             val json = payload as? String ?: continue
             when (val result = MessageCodec.decodeAndValidate(json, expectedPairingId)) {
-                is MessageCodec.DecodeResult.Valid ->
+                is MessageCodec.DecodeResult.Valid -> {
+                    // type is a non-secret discriminator; never log the payload (Req 8.4).
+                    GsoundLog.i(tag, "incoming accepted: type=${result.message::class.simpleName}")
                     // Non-blocking emit; the SharedFlow buffer absorbs bursts.
                     _incoming.tryEmit(result.message)
+                }
 
                 // Invalid envelope/schema or an unpaired peer: ignore (Req 10.3).
-                is MessageCodec.DecodeResult.Invalid,
-                is MessageCodec.DecodeResult.UnpairedPeer,
-                -> Unit
+                is MessageCodec.DecodeResult.Invalid -> {
+                    GsoundLog.w(tag, "incoming dropped: invalid envelope/schema")
+                }
+                is MessageCodec.DecodeResult.UnpairedPeer -> {
+                    GsoundLog.w(tag, "incoming dropped: unpaired/foreign peer (pairingId mismatch)")
+                }
             }
         }
     }
@@ -109,7 +135,8 @@ class ConnectIqManager @Inject constructor(
      * (typically [ConnectionState.Error.Reason.DEVICE_DISCONNECTED]); a CONNECTED status restores
      * [ConnectionState.Connected] (task 6.4).
      */
-    private val deviceEventListener = ConnectIQ.IQDeviceEventListener { _, status ->
+    private val deviceEventListener = ConnectIQ.IQDeviceEventListener { device, status ->
+        GsoundLog.i(tag, "deviceEvent: device=${device?.friendlyName} id=${device?.deviceIdentifier} status=$status")
         _connectionState.value = when (val outcome = SdkStateMapper.mapDeviceStatus(status)) {
             is SdkStateMapper.DeviceOutcome.Connected -> ConnectionState.Connected
             is SdkStateMapper.DeviceOutcome.Error -> outcome.error
@@ -117,6 +144,7 @@ class ConnectIqManager @Inject constructor(
     }
 
     override suspend fun connect() {
+        GsoundLog.i(tag, "connect(): initializing Connect IQ SDK (transport=WIRELESS, via Garmin Connect)")
         _connectionState.value = ConnectionState.Connecting
 
         val iq = ConnectIQ.getInstance(context, ConnectIQ.IQConnectType.WIRELESS)
@@ -127,15 +155,18 @@ class ConnectIqManager @Inject constructor(
         val ready = CompletableDeferred<Boolean>()
         val listener = object : ConnectIQ.ConnectIQListener {
             override fun onSdkReady() {
+                GsoundLog.i(tag, "onSdkReady: SDK bound to Garmin Connect; resolving device")
                 if (!ready.isCompleted) ready.complete(true)
             }
 
             override fun onInitializeError(status: ConnectIQ.IQSdkErrorStatus) {
+                GsoundLog.e(tag, "onInitializeError: status=$status (is Garmin Connect installed/updated?)")
                 _connectionState.value = SdkStateMapper.mapInitError(status)
                 if (!ready.isCompleted) ready.complete(false)
             }
 
             override fun onSdkShutDown() {
+                GsoundLog.i(tag, "onSdkShutDown")
                 _connectionState.value = ConnectionState.Disconnected
             }
         }
@@ -143,6 +174,7 @@ class ConnectIqManager @Inject constructor(
         try {
             iq.initialize(context, /* autoUI = */ false, listener)
         } catch (t: Throwable) {
+            GsoundLog.e(tag, "initialize() threw: ${t.javaClass.simpleName}", t)
             _connectionState.value = SdkStateMapper.mapThrowable(t)
             return
         }
@@ -161,22 +193,30 @@ class ConnectIqManager @Inject constructor(
      * mapped via [mapThrowable]; missing device/app map to the matching reasons.
      */
     private suspend fun resolveDeviceAndApp(iq: ConnectIQ) {
+        // Resolve a reachable device over a short window. The candidate device is found by
+        // enumeration, but its LIVE connection status is resolved via the device-event listener
+        // + iq.getDeviceStatus(...), NOT the synchronous IQDevice.status field: with the WIRELESS
+        // transport that field is a stale placeholder that stays UNKNOWN even for a healthy,
+        // connected watch (observed on a fenix 6S Pro via GCM), so filtering enumeration on
+        // status == CONNECTED never matched and timed out to a false NO_DEVICE. Any SDK throw is
+        // mapped and aborts the wait.
         val connected = try {
-            iq.connectedDevices.orEmpty().firstOrNull {
-                it.status == IQDevice.IQDeviceStatus.CONNECTED
-            }
+            awaitConnectedDevice(iq)
         } catch (t: Throwable) {
             _connectionState.value = SdkStateMapper.mapThrowable(t)
             return
         }
 
         if (connected == null) {
-            // No reachable device. Let the mapper decide between "Bluetooth is off" and
-            // "no device" using the phone's current adapter state (task 6.4, Req 4.2).
+            // No reachable device after the full poll window. Let the mapper decide between
+            // "Bluetooth is off" and "no device" using the phone's current adapter state
+            // (task 6.4, Req 4.2).
+            GsoundLog.w(tag, "no CONNECTED device after poll window (btEnabled=${isBluetoothEnabled()}) -> NO_DEVICE/BLUETOOTH_OFF")
             _connectionState.value = SdkStateMapper.resolveConnectivityError(isBluetoothEnabled())
             return
         }
         device = connected
+        GsoundLog.i(tag, "resolved device: name=${connected.friendlyName} id=${connected.deviceIdentifier} status=${connected.status}")
 
         // Confirm the GsoundG app is installed, then register for events (Req 4.1).
         val appInstalled = suspendCancellableCoroutine { cont ->
@@ -185,11 +225,13 @@ class ConnectIqManager @Inject constructor(
                 connected,
                 object : ConnectIQ.IQApplicationInfoListener {
                     override fun onApplicationInfoReceived(iqApp: IQApp) {
+                        GsoundLog.i(tag, "GsoundG app found on watch (appId=${GsoundAppId.VALUE})")
                         app = iqApp
                         if (cont.isActive) cont.resume(true)
                     }
 
                     override fun onApplicationNotInstalled(applicationId: String) {
+                        GsoundLog.w(tag, "GsoundG app NOT installed on watch (appId=$applicationId)")
                         if (cont.isActive) cont.resume(false)
                     }
                 },
@@ -212,12 +254,102 @@ class ConnectIqManager @Inject constructor(
             iq.registerForAppEvents(connected, resolvedApp, appEventListener)
             iq.registerForDeviceEvents(connected, deviceEventListener)
         } catch (t: Throwable) {
+            GsoundLog.e(tag, "registerForEvents threw: ${t.javaClass.simpleName}", t)
             _connectionState.value = SdkStateMapper.mapThrowable(t)
             return
         }
 
+        GsoundLog.i(tag, "control channel CONNECTED (device + GsoundG app ready)")
         _connectionState.value = ConnectionState.Connected
     }
+
+    /**
+     * Resolve a reachable Garmin device within the poll window, returning it once its LIVE status
+     * is [IQDevice.IQDeviceStatus.CONNECTED], or null if none becomes connected in time.
+     *
+     * ## Why not the synchronous `IQDevice.status`
+     * With the WIRELESS transport (via Garmin Connect Mobile) the device objects returned by
+     * [ConnectIQ.getConnectedDevices]/[ConnectIQ.getKnownDevices] carry a STALE status that
+     * stays [IQDevice.IQDeviceStatus.UNKNOWN] even for a healthy, connected watch — observed on
+     * a fenix 6S Pro: `connectedDevices=1 [fenix 6S Pro=UNKNOWN]` on every poll. Filtering
+     * enumeration on `status == CONNECTED` therefore never matched and always timed out to a
+     * false NO_DEVICE. The authoritative live status comes from [ConnectIQ.getDeviceStatus] and
+     * from the async [ConnectIQ.IQDeviceEventListener] — not that field.
+     *
+     * ## Strategy
+     * 1. Enumerate a CANDIDATE device (first of `connectedDevices`, else `knownDevices`) — WITHOUT
+     *    filtering on the placeholder status. The watch is present even while reporting UNKNOWN.
+     * 2. Register that candidate for device events ([ConnectIQ.registerForDeviceEvents]) so GCM
+     *    pushes its real status, and also actively query [ConnectIQ.getDeviceStatus].
+     * 3. Accept the device as soon as either signal reports CONNECTED; keep re-checking (and
+     *    re-enumerating, since the candidate list itself may start empty right after
+     *    onSdkReady) every [devicePollIntervalMs] until the [devicePollTotalMs] budget is spent.
+     *
+     * The event listener registered here is the SAME [deviceEventListener] used for the lifetime
+     * of the connection, so registration is not torn down on success — [resolveDeviceAndApp]
+     * re-registers it idempotently after the app check, and [close] unregisters it.
+     *
+     * A thrown SDK exception propagates to the caller (mapped to an error state) rather than
+     * being swallowed, so a hard failure is not mistaken for "still enumerating".
+     */
+    private suspend fun awaitConnectedDevice(iq: ConnectIQ): IQDevice? {
+        var registeredFor: IQDevice? = null
+        var elapsed = 0L
+        while (true) {
+            val candidate = firstCandidate(iq)
+
+            if (candidate != null) {
+                // Register for this candidate's events once so GCM delivers its live status.
+                if (registeredFor?.deviceIdentifier != candidate.deviceIdentifier) {
+                    try {
+                        iq.registerForDeviceEvents(candidate, deviceEventListener)
+                        registeredFor = candidate
+                    } catch (t: Throwable) {
+                        // Registration failure is not fatal to resolution: fall back to polling
+                        // getDeviceStatus below. A genuinely broken SDK surfaces via that call.
+                        GsoundLog.w(tag, "registerForDeviceEvents(candidate) failed: ${t.javaClass.simpleName}")
+                    }
+                }
+
+                // Authoritative live status (not the stale IQDevice.status placeholder).
+                val liveStatus = runCatching { iq.getDeviceStatus(candidate) }.getOrNull()
+                GsoundLog.d(tag, "candidate=${candidate.friendlyName} liveStatus=$liveStatus (field=${candidate.status})")
+                if (liveStatus == IQDevice.IQDeviceStatus.CONNECTED) {
+                    return candidate
+                }
+            }
+
+            if (elapsed >= devicePollTotalMs) {
+                return null
+            }
+            GsoundLog.d(tag, "device not CONNECTED yet; waiting (elapsed=${elapsed}ms/${devicePollTotalMs}ms)")
+            delay(devicePollIntervalMs)
+            elapsed += devicePollIntervalMs
+        }
+    }
+
+    /**
+     * One enumeration pass returning a CANDIDATE device to resolve — the first entry of
+     * `connectedDevices`, falling back to the first of `knownDevices` — WITHOUT filtering on the
+     * synchronous [IQDevice.status], which is an unreliable placeholder under the WIRELESS
+     * transport (see [awaitConnectedDevice]). Returns null only when GCM reports no devices at
+     * all. SDK throws propagate to the caller rather than being treated as "no device".
+     */
+    private fun firstCandidate(iq: ConnectIQ): IQDevice? {
+        val connectedList = iq.connectedDevices.orEmpty()
+        val knownList = iq.knownDevices.orEmpty()
+        // Diagnostic (non-secret): friendlyName + status are not sensitive.
+        GsoundLog.d(
+            tag,
+            "enumerate: connectedDevices=${connectedList.size} ${connectedList.describe()} | " +
+                "knownDevices=${knownList.size} ${knownList.describe()}",
+        )
+        return connectedList.firstOrNull() ?: knownList.firstOrNull()
+    }
+
+    /** Compact, non-secret rendering of a device list for diagnostics: `[name=status, ...]`. */
+    private fun List<IQDevice>.describe(): String =
+        joinToString(prefix = "[", postfix = "]") { "${it.friendlyName}=${it.status}" }
 
     /**
      * Encode and send [message], retrying transient transport failures with exponential backoff
@@ -231,10 +363,19 @@ class ConnectIqManager @Inject constructor(
         // payload or message contents. If diagnostics are needed, log only the non-secret
         // discriminator and pairingId (e.g. via dev.gsound.a.log.GsoundLog), and route any secret
         // through dev.gsound.a.log.Redact.redact first.
+        // Log only the non-secret message type — never the encoded payload, which may carry the
+        // PAIR_REQUEST code/secret (Req 8.4).
+        GsoundLog.i(tag, "send: type=${message::class.simpleName}")
         val payload = MessageCodec.encode(message)
-        return OutgoingRetry.retryWithBackoff(policy = retryPolicy) {
+        val result = OutgoingRetry.retryWithBackoff(policy = retryPolicy) {
             sendOnce(payload)
         }
+        if (result.isSuccess) {
+            GsoundLog.i(tag, "send ok: type=${message::class.simpleName}")
+        } else {
+            GsoundLog.w(tag, "send FAILED: type=${message::class.simpleName} cause=${result.exceptionOrNull()?.javaClass?.simpleName}")
+        }
+        return result
     }
 
     /**
@@ -247,6 +388,7 @@ class ConnectIqManager @Inject constructor(
         val targetDevice = device
         val targetApp = app ?: gsoundApp
         if (iq == null || targetDevice == null) {
+            GsoundLog.w(tag, "sendOnce: not connected (iq=${iq != null}, device=${targetDevice != null})")
             return Result.failure(
                 IllegalStateException("Control channel not connected; call connect() first"),
             )
@@ -263,6 +405,7 @@ class ConnectIqManager @Inject constructor(
                         if (status == ConnectIQ.IQMessageStatus.SUCCESS) {
                             cont.resume(Result.success(Unit))
                         } else {
+                            GsoundLog.w(tag, "sendMessage transport status=$status (will retry if budget remains)")
                             cont.resume(
                                 Result.failure(
                                     SendFailedException(status),

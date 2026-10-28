@@ -9,8 +9,11 @@ import dev.gsound.a.domain.folders.AddFolderResult
 import dev.gsound.a.domain.folders.AddFolderUseCase
 import dev.gsound.a.domain.folders.RemoveFolderResult
 import dev.gsound.a.domain.folders.RemoveFolderUseCase
+import dev.gsound.a.domain.folders.ScanAndCacheResult
+import dev.gsound.a.domain.folders.ScanAndCacheUseCase
 import dev.gsound.a.domain.model.Folder
 import dev.gsound.a.ui.util.ByteSizeFormatter
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,11 +53,14 @@ data class FolderListItem(
  *   screen (task 10) applies the additional "paired" condition.
  * @property message a transient user notice (duplicate add or an error) to show once in a
  *   Snackbar, cleared via [FolderListViewModel.onMessageShown] (Req 1.4).
+ * @property isRefreshing true while a rescan of the folders is in progress, so the UI can show
+ *   a progress indicator and disable the refresh action.
  */
 data class FolderListUiState(
     val isLoading: Boolean = true,
     val folders: List<FolderListItem> = emptyList(),
     val message: String? = null,
+    val isRefreshing: Boolean = false,
 ) {
     val isEmpty: Boolean get() = !isLoading && folders.isEmpty()
 
@@ -73,20 +79,33 @@ data class FolderListUiState(
  */
 @HiltViewModel
 class FolderListViewModel @Inject constructor(
-    folderRepository: FolderRepository,
+    private val folderRepository: FolderRepository,
     private val addFolderUseCase: AddFolderUseCase,
     private val removeFolderUseCase: RemoveFolderUseCase,
+    private val scanAndCacheUseCase: ScanAndCacheUseCase,
 ) : ViewModel() {
 
     /** Transient one-shot message overlaid on the folder snapshot (duplicate/error notices). */
     private val message = MutableStateFlow<String?>(null)
 
+    /** True while [refresh] is rescanning folders; drives the progress indicator (Req 2.1). */
+    private val refreshing = MutableStateFlow(false)
+
+    /** Guards against overlapping rescans (e.g. tab re-entry fired while one is still running). */
+    private var refreshJob: Job? = null
+
     val uiState: StateFlow<FolderListUiState> =
         combine(
             folderRepository.observeFolders().map { folders -> folders.map(::toItem) },
             message,
-        ) { items, msg ->
-            FolderListUiState(isLoading = false, folders = items, message = msg)
+            refreshing,
+        ) { items, msg, isRefreshing ->
+            FolderListUiState(
+                isLoading = false,
+                folders = items,
+                message = msg,
+                isRefreshing = isRefreshing,
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
@@ -101,10 +120,45 @@ class FolderListViewModel @Inject constructor(
     fun onFolderSelected(treeUri: Uri) {
         viewModelScope.launch {
             when (val result = addFolderUseCase.add(treeUri)) {
-                is AddFolderResult.Added -> Unit // Reactive flow adds the row.
+                is AddFolderResult.Added -> {
+                    // A folder is persisted with trackCount=0; scan it now so its real count is
+                    // reflected instead of staying 0 until the next manual/tab refresh.
+                    refresh()
+                }
                 is AddFolderResult.Duplicate ->
                     message.value = "That folder is already in your list."
                 is AddFolderResult.Error -> message.value = result.message
+            }
+        }
+    }
+
+    /**
+     * Rescan every persisted folder and refresh its cached track count/size (Req 2.1).
+     *
+     * The folder's `trackCount`/`totalBytes` are denormalized columns only updated by
+     * [ScanAndCacheUseCase]; nothing updates them automatically when files are added to or
+     * removed from a folder on disk. This re-runs the scan for each folder so the list reflects
+     * the current contents. The reactive [FolderRepository.observeFolders] flow repaints the UI
+     * as each folder's row is rewritten.
+     *
+     * Safe to call repeatedly (e.g. on every switch to the Folders tab): a rescan already in
+     * flight is left to finish rather than starting a second concurrent pass.
+     */
+    fun refresh() {
+        if (refreshJob?.isActive == true) return
+        refreshJob = viewModelScope.launch {
+            refreshing.value = true
+            try {
+                val folders = folderRepository.getFolders()
+                for (folder in folders) {
+                    when (val result = scanAndCacheUseCase.scanAndCache(folder.id)) {
+                        is ScanAndCacheResult.Success,
+                        is ScanAndCacheResult.FolderNotFound -> Unit // Flow repaints the row.
+                        is ScanAndCacheResult.Error -> message.value = result.message
+                    }
+                }
+            } finally {
+                refreshing.value = false
             }
         }
     }

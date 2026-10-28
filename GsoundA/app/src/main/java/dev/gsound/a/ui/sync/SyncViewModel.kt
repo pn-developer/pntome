@@ -11,6 +11,7 @@ import dev.gsound.a.data.sync.SyncSummaryStore
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
 import dev.gsound.a.domain.sync.SyncOrchestrator
+import dev.gsound.a.log.GsoundLog
 import dev.gsound.a.net.garmin.ConnectionState
 import dev.gsound.a.net.garmin.ControlChannel
 import dev.gsound.a.net.garmin.messages.Ping
@@ -178,6 +179,9 @@ class SyncViewModel @Inject constructor(
      */
     private val watchStats = MutableStateFlow<WatchStats?>(null)
 
+    /** Logcat tag for sync diagnostics (filter: `adb logcat -s Gsound.Sync`). */
+    private val syncTag = "Gsound.Sync"
+
     init {
         // Req 7.1: observe STATS from the watch and keep the latest for the current pairing.
         // Req 7.3: accept only a STATS whose pairingId matches the active pairing so an old/other
@@ -188,12 +192,13 @@ class SyncViewModel @Inject constructor(
                 .filterIsInstance<Stats>()
                 .collect { stats ->
                     val currentPairingId = pairingStore.get()?.pairingId
-                    watchStats.value =
-                        if (currentPairingId != null && stats.pairingId == currentPairingId) {
-                            WatchStats.from(stats)
-                        } else {
-                            null
-                        }
+                    if (currentPairingId != null && stats.pairingId == currentPairingId) {
+                        GsoundLog.i(syncTag, "STATS received: files=${stats.fileCount} folders=${stats.folderCount} lastSyncAt=${stats.lastSyncAt}")
+                        watchStats.value = WatchStats.from(stats)
+                    } else {
+                        GsoundLog.w(syncTag, "STATS ignored: pairingId mismatch (got=${stats.pairingId}, current=$currentPairingId)")
+                        watchStats.value = null
+                    }
                 }
         }
     }
@@ -225,16 +230,19 @@ class SyncViewModel @Inject constructor(
      * only enables this when [SyncUiState.canStartSync] is true.
      */
     fun onSyncClicked() {
+        GsoundLog.i(syncTag, "onSyncClicked: starting sync foreground service")
         SyncForegroundService.start(context)
     }
 
     /** Cancel the active sync via the foreground service (Req 6.5). */
     fun onCancelClicked() {
+        GsoundLog.i(syncTag, "onCancelClicked: cancelling sync")
         SyncForegroundService.cancel(context)
     }
 
     /** Retry after a failed sync by starting again (Req 6.4). Same path as [onSyncClicked]. */
     fun onRetryClicked() {
+        GsoundLog.i(syncTag, "onRetryClicked: restarting sync")
         SyncForegroundService.start(context)
     }
 
@@ -253,8 +261,16 @@ class SyncViewModel @Inject constructor(
      */
     fun onRefreshStatsClicked() {
         viewModelScope.launch {
-            val pairing = pairingStore.get() ?: return@launch
-            if (controlChannel.connectionState.value !is ConnectionState.Connected) return@launch
+            val pairing = pairingStore.get() ?: run {
+                GsoundLog.d(syncTag, "refreshStats: no pairing -> skip")
+                return@launch
+            }
+            val state = controlChannel.connectionState.value
+            if (state !is ConnectionState.Connected) {
+                GsoundLog.d(syncTag, "refreshStats: channel not connected (state=${state::class.simpleName}) -> skip")
+                return@launch
+            }
+            GsoundLog.i(syncTag, "refreshStats: sending PING to request STATS (pairingId=${pairing.pairingId})")
             controlChannel.send(Ping(pairingId = pairing.pairingId))
         }
     }

@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.domain.model.PairingRecord
+import dev.gsound.a.log.GsoundLog
+import dev.gsound.a.log.Logger
 import dev.gsound.a.net.garmin.ConnectionState
 import dev.gsound.a.net.garmin.ControlChannel
 import dev.gsound.a.net.garmin.messages.PairConfirm
@@ -116,10 +118,14 @@ class PairingViewModel @Inject constructor(
     private val peerNameProvider: PeerNameProvider,
     private val clock: PairingClock,
     @Named(PAIRING_TIMEOUT_MILLIS) private val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
+    private val logger: Logger = GsoundLog,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PairingUiState>(PairingUiState.Idle())
     val uiState: StateFlow<PairingUiState> = _uiState.asStateFlow()
+
+    /** Logcat tag for pairing diagnostics (filter: `adb logcat -s Gsound.Pair`). */
+    private val tag = "Gsound.Pair"
 
     /** The in-flight attempt's temporary credentials, or null when not awaiting confirmation. */
     private var pending: PairingCredentials? = null
@@ -153,10 +159,15 @@ class PairingViewModel @Inject constructor(
      * Refuses to start while a pairing already exists (Req 4.8) — the user must [unpair] first.
      */
     fun startPairing() {
-        if (_uiState.value !is PairingUiState.Idle) return
+        if (_uiState.value !is PairingUiState.Idle) {
+            logger.d(tag, "startPairing ignored: state=${_uiState.value::class.simpleName}")
+            return
+        }
 
         viewModelScope.launch {
+            logger.i(tag, "startPairing: beginning pairing attempt")
             if (pairingStore.isPaired()) {
+                logger.w(tag, "startPairing refused: already paired (unpair first, Req 4.8)")
                 _uiState.value = PairingUiState.Error(
                     "Already paired. Unpair the current watch before pairing a new one.",
                 )
@@ -164,18 +175,26 @@ class PairingViewModel @Inject constructor(
             }
 
             _uiState.value = PairingUiState.Discovering
+            logger.i(tag, "state=Discovering; ensuring control channel connected")
 
             val connectError = ensureConnected()
             if (connectError != null) {
+                logger.w(tag, "ensureConnected failed -> Error: $connectError")
                 _uiState.value = PairingUiState.Error(connectError)
                 return@launch
             }
+            logger.i(tag, "control channel connected; generating credentials")
 
             val credentials = credentialGenerator.generate()
             pending = credentials
             localConfirmed = false
             remoteConfirmed = false
+            // pairingId is a non-secret UUID and is safe to log; the code/secret are NOT logged
+            // (Req 8.4). Use dRedacted to confirm the secret's presence/length only.
+            logger.i(tag, "generated credentials: pairingId=${credentials.pairingId}")
+            logger.dRedacted(tag, "sharedSecret", credentials.sharedSecret)
 
+            logger.i(tag, "sending PAIR_REQUEST (pairingId=${credentials.pairingId})")
             val sendResult = controlChannel.send(
                 PairRequest(
                     code = credentials.code,
@@ -185,6 +204,7 @@ class PairingViewModel @Inject constructor(
                 ),
             )
             if (sendResult.isFailure) {
+                logger.w(tag, "PAIR_REQUEST send failed: ${sendResult.exceptionOrNull()?.javaClass?.simpleName}")
                 clearPending()
                 _uiState.value = PairingUiState.Error(
                     "Couldn't reach the watch. Make sure Garmin Connect is running and try again.",
@@ -192,6 +212,7 @@ class PairingViewModel @Inject constructor(
                 return@launch
             }
 
+            logger.i(tag, "state=AwaitingConfirm; showing code, waiting for user tap + PAIR_CONFIRM")
             _uiState.value = PairingUiState.AwaitingConfirm(credentials.code)
             observePairConfirm(credentials.pairingId)
             startTimeout()
@@ -203,7 +224,11 @@ class PairingViewModel @Inject constructor(
      * this completes the pairing; otherwise it waits for the remote half.
      */
     fun confirm() {
-        if (_uiState.value !is PairingUiState.AwaitingConfirm) return
+        if (_uiState.value !is PairingUiState.AwaitingConfirm) {
+            logger.d(tag, "confirm ignored: state=${_uiState.value::class.simpleName}")
+            return
+        }
+        logger.i(tag, "local confirm tapped (remoteConfirmed=$remoteConfirmed)")
         localConfirmed = true
         maybeComplete()
     }
@@ -230,9 +255,11 @@ class PairingViewModel @Inject constructor(
     fun unpair() {
         viewModelScope.launch {
             val record = pairingStore.get() ?: run {
+                logger.d(tag, "unpair: nothing to unpair")
                 _uiState.value = PairingUiState.Idle(paired = null)
                 return@launch
             }
+            logger.i(tag, "unpair: sending UNPAIR + clearing store (pairingId=${record.pairingId})")
             controlChannel.send(Unpair(pairingId = record.pairingId))
             pairingStore.clear()
             _uiState.value = PairingUiState.Idle(paired = null)
@@ -270,8 +297,11 @@ class PairingViewModel @Inject constructor(
                 .filterIsInstance<PairConfirm>()
                 .collect { confirm ->
                     if (confirm.pairingId == pairingId && pending?.pairingId == pairingId) {
+                        logger.i(tag, "PAIR_CONFIRM received + matches (pairingId=$pairingId, localConfirmed=$localConfirmed)")
                         remoteConfirmed = true
                         maybeComplete()
+                    } else {
+                        logger.w(tag, "PAIR_CONFIRM ignored: pairingId mismatch (got=${confirm.pairingId}, expected=$pairingId)")
                     }
                 }
         }
@@ -284,6 +314,7 @@ class PairingViewModel @Inject constructor(
             delay(timeoutMillis)
             // Only fire if still awaiting confirmation (completion cancels this job).
             if (_uiState.value is PairingUiState.AwaitingConfirm) {
+                logger.w(tag, "pairing TIMED OUT after ${timeoutMillis}ms (localConfirmed=$localConfirmed, remoteConfirmed=$remoteConfirmed)")
                 clearPending()
                 _uiState.value = PairingUiState.Error(
                     "Pairing timed out. Check the code on your watch and try again.",
@@ -302,6 +333,7 @@ class PairingViewModel @Inject constructor(
         val credentials = pending ?: return
 
         viewModelScope.launch {
+            logger.i(tag, "both confirmations present -> completing pairing (pairingId=${credentials.pairingId})")
             val record = PairingRecord(
                 pairingId = credentials.pairingId,
                 peerName = peerNameProvider.peerName(),
@@ -309,6 +341,7 @@ class PairingViewModel @Inject constructor(
                 createdAt = clock.nowMillis(),
             )
             pairingStore.save(record)
+            logger.i(tag, "pairing PERSISTED -> state=Paired (peer=${record.peerName})")
             timeoutJob?.cancel()
             incomingJob?.cancel()
             pending = null
