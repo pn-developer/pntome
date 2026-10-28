@@ -37,13 +37,9 @@ import Toybox.Communications;
 
 class SyncConfigView extends WatchUi.View {
 
-    //! Guard so the pairing screen is presented at most once per pending
-    //! PAIR_REQUEST. A PAIR_REQUEST arrives asynchronously on the control-channel
-    //! dispatch path while this foreground config view is up; onUpdate (UI thread)
-    //! is the "known foreground context" PairingView.present requires. Without
-    //! this latch, every redraw while AWAITING_CONFIRM would push another
-    //! PairingView onto the stack. Reset once pairing is no longer awaiting
-    //! (confirmed / rejected / timed out) so a later re-pair is presented again.
+    //! One-shot latch threaded through PairingView.presentIfAwaiting so an inbound
+    //! PAIR_REQUEST presents the pairing screen exactly once while this view is up,
+    //! regardless of how often onUpdate redraws. See PairingView.presentIfAwaiting.
     private var _pairingPresented as Boolean;
 
     //! Build a SyncConfigView. Holds no state of its own — the pending count is
@@ -60,11 +56,10 @@ class SyncConfigView extends WatchUi.View {
     //! (Req 7.3).
     function onUpdate(dc as Graphics.Dc) as Void {
         // Surface pairing first: if a PAIR_REQUEST arrived over the control channel
-        // while this foreground config view is up, present the PairingView so the
-        // user sees the code + Confirm/Reject (Req 2.2-2.4). This is the foreground
-        // UI context PairingView.present requires; the latch keeps it to one push
-        // per pending request. Wrapped so it can never crash the config mode.
-        maybePresentPairing();
+        // while this foreground view is up, present the PairingView so the user
+        // sees the code + Confirm/Reject (Req 2.2-2.4). Shared across every
+        // foreground view via the one-shot latch (see PairingView).
+        _pairingPresented = PairingView.presentIfAwaiting(_pairingPresented);
 
         var title = WatchUi.loadResource(Rez.Strings.SyncTitle) as String;
 
@@ -135,39 +130,6 @@ class SyncConfigView extends WatchUi.View {
         dc.drawText(cx, cy + 56, Graphics.FONT_XTINY,
             WatchUi.loadResource(Rez.Strings.SyncPrompt) as String,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-    }
-
-    //! Present the PairingView when a PAIR_REQUEST is awaiting confirmation, at
-    //! most once per pending request (see [_pairingPresented]).
-    //!
-    //! The PairingManager moves to AWAITING_CONFIRM on the control-channel dispatch
-    //! path, which can fire while this config view is the foreground mode. Pushing
-    //! the view from here (the UI thread, inside onUpdate) satisfies the foreground
-    //! requirement documented on PairingView.present, which is unsafe to call from
-    //! the dispatch path itself. The whole body is wrapped so a missing manager /
-    //! view-stack hiccup can never crash sync-config mode (Req 8.5); nothing
-    //! sensitive is read here (the code/peer name live inside PairingView, the
-    //! secret is never touched — Req 7.3).
-    private function maybePresentPairing() as Void {
-        try {
-            var manager = getApp().getPairingManager();
-            if (manager == null) {
-                return;
-            }
-            if (manager.isAwaitingConfirm()) {
-                if (!_pairingPresented) {
-                    _pairingPresented = true;
-                    PairingView.present(manager);
-                }
-            } else {
-                // No longer awaiting (confirmed / rejected / timed out): drop the
-                // latch so a subsequent re-pair is presented again.
-                _pairingPresented = false;
-            }
-        } catch (ex) {
-            // A missing app/manager or a push failure must not crash sync-config
-            // mode (Req 8.5).
-        }
     }
 }
 

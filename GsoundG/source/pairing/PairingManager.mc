@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.Time;
 import Toybox.Timer;
+import Toybox.WatchUi;
 
 //! PairingManager — the watch-side pairing state machine (design.md §7; Req 2.1–2.7).
 //!
@@ -136,6 +137,19 @@ class PairingManager {
             _state = STATE_AWAITING_CONFIRM;
 
             armTimeout();
+
+            // Nudge the foreground view to redraw so its onUpdate hook
+            // (PairingView.presentIfAwaiting) fires and presents the pairing screen
+            // immediately — a PAIR_REQUEST arrives on the control-channel dispatch
+            // path while the user may be sitting idle on a view, which would not
+            // otherwise trigger a redraw. requestUpdate only SCHEDULES a redraw on
+            // the UI thread; it does not push a view itself (safe from the dispatch
+            // path). Wrapped so a mode with no UI (background sync) can't crash.
+            try {
+                WatchUi.requestUpdate();
+            } catch (ex2) {
+                // No UI context in this launch mode; ignore (Req 8.5).
+            }
         } catch (ex) {
             // Malformed/hostile payload must not crash dispatch (Req 8.4/8.5).
             // Leave any prior state untouched; nothing logged (Req 7.3).

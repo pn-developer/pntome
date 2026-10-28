@@ -50,6 +50,51 @@ class PairingView extends WatchUi.View {
         }
     }
 
+    //! Present the pairing screen when a PAIR_REQUEST is awaiting confirmation,
+    //! at most once per pending request — the shared hook every foreground view
+    //! (SyncConfigView, FolderListView, PlaybackConfigView) calls from its
+    //! onUpdate so pairing pops up regardless of which screen the user is on
+    //! (Req 2.2-2.4).
+    //!
+    //! Why a shared helper: a PAIR_REQUEST arrives asynchronously on the
+    //! control-channel dispatch path, which can fire while ANY foreground mode is
+    //! up. Each view's onUpdate runs on the UI thread — the "known foreground
+    //! context" [present] requires (pushing from the dispatch path is unsafe). This
+    //! method owns the manager lookup + awaiting check + one-shot latch so no view
+    //! re-implements it (and they can't drift).
+    //!
+    //! Latch contract: the caller owns a single Boolean it threads through here.
+    //! Pass the previous latch value; the returned value is the new latch to store.
+    //! While AWAITING_CONFIRM the view is presented exactly once (latch goes true);
+    //! once no longer awaiting (confirmed / rejected / timed out) the latch resets
+    //! to false so a later re-pair is presented again. Fully wrapped so a missing
+    //! app/manager or a push failure can never crash the calling mode (Req 8.5);
+    //! nothing sensitive is read here (the code/peer name live inside the pushed
+    //! PairingView; the secret is never touched — Req 7.3).
+    //!
+    //! @param alreadyPresented the caller's current latch value.
+    //! @return the new latch value to store on the caller.
+    static function presentIfAwaiting(alreadyPresented as Boolean) as Boolean {
+        try {
+            var manager = getApp().getPairingManager();
+            if (manager == null) {
+                return false;
+            }
+            if (manager.isAwaitingConfirm()) {
+                if (!alreadyPresented) {
+                    present(manager);
+                }
+                return true;
+            }
+            // No longer awaiting: drop the latch so a subsequent re-pair presents.
+            return false;
+        } catch (ex) {
+            // A missing app/manager or push failure must not crash the caller
+            // (Req 8.5). Leave the latch as it was.
+            return alreadyPresented;
+        }
+    }
+
     //! The pairing state machine this view renders. May be null when the control
     //! channel failed to initialize (Req 8.5); the view degrades to the neutral
     //! empty state in that case. Held for the view's lifetime.

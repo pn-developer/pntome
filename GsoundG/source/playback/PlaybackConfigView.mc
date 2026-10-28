@@ -59,6 +59,11 @@ class PlaybackConfigView extends WatchUi.View {
     //! every redraw so it can never point past the end after the list shrinks.
     private var _selected as Number;
 
+    //! One-shot latch threaded through PairingView.presentIfAwaiting so an inbound
+    //! PAIR_REQUEST presents the pairing screen exactly once while this view is up,
+    //! regardless of redraw frequency. See PairingView.presentIfAwaiting.
+    private var _pairingPresented as Boolean;
+
     //! Build a PlaybackConfigView for `folder`. Starts with an empty cached list +
     //! selection 0; the real track rows are pulled live from Repo in onUpdate so the
     //! screen always reflects the current library.
@@ -67,6 +72,7 @@ class PlaybackConfigView extends WatchUi.View {
         _folder = folder;
         _tracks = [] as Array<Dictionary>;
         _selected = 0;
+        _pairingPresented = false;
     }
 
     //! Refresh the cached track rows for this folder from Repo. Iterates the flat
@@ -118,6 +124,10 @@ class PlaybackConfigView extends WatchUi.View {
     //! so playback-config mode can never crash (Req 8.5); only titles are shown
     //! (Req 7.3).
     function onUpdate(dc as Graphics.Dc) as Void {
+        // Surface pairing regardless of screen: if a PAIR_REQUEST arrived while
+        // this track-list view is up, present the PairingView (Req 2.2-2.4).
+        _pairingPresented = PairingView.presentIfAwaiting(_pairingPresented);
+
         refreshTracks();
 
         // Empty state: shouldn't happen when reached from a non-empty folder, but

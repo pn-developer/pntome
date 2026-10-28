@@ -52,6 +52,17 @@
     <string id="FolderListEmptyTitle">No music yet</string>
     <!-- Empty-state prompt telling the user to sync from the phone (Req 6.6). -->
     <string id="FolderListEmptyPrompt">Sync from your phone</string>
+    <!-- Empty-state prompt shown when NOT paired: the user must pair first before
+         anything can be synced/played. -->
+    <string id="FolderListPairFirst">Pair with phone first</string>
+    <!-- Status line shown at the top when a pairing is active. -->
+    <string id="FolderListPaired">Paired</string>
+    <!-- Hint telling the user the Menu button cancels the current pairing. -->
+    <string id="FolderListUnpairHint">Menu: cancel pairing</string>
+    <!-- Unit label after the synced-file count (e.g. "12 files"). -->
+    <string id="FolderListFilesLabel">files</string>
+    <!-- Title of the confirm dialog shown before cancelling a pairing. -->
+    <string id="FolderListUnpairTitle">Cancel pairing?</string>
 
     <!-- Track-list view (task 9.2): the per-folder track list in playback-config.
          The folder name (title) and track titles are rendered separately (live

@@ -57,6 +57,11 @@ class FolderListView extends WatchUi.View {
     //! on every redraw so it can never point past the end after the list shrinks.
     private var _selected as Number;
 
+    //! One-shot latch threaded through PairingView.presentIfAwaiting so an inbound
+    //! PAIR_REQUEST presents the pairing screen exactly once while this view is up,
+    //! regardless of redraw frequency. See PairingView.presentIfAwaiting.
+    private var _pairingPresented as Boolean;
+
     //! Build a FolderListView. Starts with an empty cached list + selection 0; the
     //! real folder names are pulled live from Repo in onUpdate so the screen always
     //! reflects the current library.
@@ -64,6 +69,7 @@ class FolderListView extends WatchUi.View {
         View.initialize();
         _folders = [] as Array<String>;
         _selected = 0;
+        _pairingPresented = false;
     }
 
     //! Refresh the cached folder list from Repo.loadFolders(), coercing every entry
@@ -95,19 +101,31 @@ class FolderListView extends WatchUi.View {
         }
     }
 
-    //! Render the folder list, or the empty state when nothing is synced. Reads the
-    //! folder names live from Repo each frame. Fully wrapped so playback-config mode
-    //! can never crash (Req 8.5); only folder names are shown (Req 7.3).
+    //! Render the folder list, or a pairing-aware empty state when nothing is
+    //! synced. Reads the folder names live from Repo each frame and the pairing
+    //! state live from the PairingManager. Fully wrapped so playback-config mode
+    //! can never crash (Req 8.5); only folder names / counts are shown, never the
+    //! secret (Req 7.3).
     function onUpdate(dc as Graphics.Dc) as Void {
+        // Surface pairing regardless of screen: if a PAIR_REQUEST arrived while
+        // this playback-config view is up, present the PairingView (Req 2.2-2.4).
+        _pairingPresented = PairingView.presentIfAwaiting(_pairingPresented);
+
         refreshFolders();
 
         var title = WatchUi.loadResource(Rez.Strings.FolderListTitle) as String;
+        var paired = isPaired();
 
-        // Empty state (Req 6.6): nothing synced → prompt a sync, not a blank list.
+        // Empty state (Req 6.6): nothing synced. The prompt now depends on pairing:
+        //   - not paired → "Pair with phone first" (pairing is the prerequisite).
+        //   - paired     → "Sync from your phone" (pairing done, just sync music).
         if (_folders.size() == 0) {
+            var prompt = paired
+                ? WatchUi.loadResource(Rez.Strings.FolderListEmptyPrompt) as String
+                : WatchUi.loadResource(Rez.Strings.FolderListPairFirst) as String;
             StubViews.drawCentered(dc,
                 WatchUi.loadResource(Rez.Strings.FolderListEmptyTitle) as String,
-                WatchUi.loadResource(Rez.Strings.FolderListEmptyPrompt) as String);
+                prompt);
             return;
         }
 
@@ -117,9 +135,21 @@ class FolderListView extends WatchUi.View {
         var cx = dc.getWidth() / 2;
         var cy = dc.getHeight() / 2;
 
-        // Title at the top.
-        dc.drawText(cx, 20, Graphics.FONT_XTINY, title,
+        // Title + a small pairing/stats status line at the top.
+        dc.drawText(cx, 16, Graphics.FONT_XTINY, title,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        if (paired) {
+            // "Paired · N files" — confirms the pairing is active and how much is
+            // synced, and the Menu-cancel hint (handled by the delegate's onMenu).
+            var fileCount = syncedFileCount();
+            var status = (WatchUi.loadResource(Rez.Strings.FolderListPaired) as String)
+                + " · " + fileCount.toString() + " "
+                + (WatchUi.loadResource(Rez.Strings.FolderListFilesLabel) as String);
+            dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_BLACK);
+            dc.drawText(cx, 38, Graphics.FONT_XTINY, status,
+                Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+        }
 
         // Draw a short vertical window of folder names centered on the highlighted
         // one. The highlighted row is emphasized (larger font); neighbours are
@@ -149,6 +179,30 @@ class FolderListView extends WatchUi.View {
     //! delegate guard its navigation without re-reading storage.
     function folderCount() as Number {
         return _folders.size();
+    }
+
+    //! True when a pairing record is currently active. Read live from the
+    //! PairingManager (which reflects the persisted record) so the view shows the
+    //! current pairing status each frame. Fully wrapped; any failure degrades to
+    //! "not paired" so a read hiccup can't crash the view (Req 8.5).
+    function isPaired() as Boolean {
+        try {
+            var manager = getApp().getPairingManager();
+            return manager != null && manager.isPaired();
+        } catch (ex) {
+            return false;
+        }
+    }
+
+    //! Number of synced files (tracks) currently cached, read from the persisted
+    //! stats via StatsStore. Defensive: any failure yields 0 rather than crashing
+    //! the view (Req 8.5). Shown in the paired status line.
+    function syncedFileCount() as Number {
+        try {
+            return StatsStore.fileCountOf(StatsStore.load());
+        } catch (ex) {
+            return 0;
+        }
     }
 
     //! The currently highlighted folder index.
@@ -250,8 +304,34 @@ class FolderListDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    //! MENU: same as back — leave playback-config.
+    //! MENU: when a pairing is active, offer to CANCEL it (unpair) behind a
+    //! confirmation dialog; otherwise behave like Back and leave playback-config.
+    //! The confirmation guards against an accidental unpair of a working setup.
+    //! Wrapped so a read/dialog hiccup can never crash input (Req 8.5).
     function onMenu() as Boolean {
+        var paired = false;
+        try {
+            var manager = getApp().getPairingManager();
+            paired = manager != null && manager.isPaired();
+        } catch (ex) {
+            paired = false;
+        }
+
+        if (paired) {
+            try {
+                WatchUi.pushView(
+                    new WatchUi.Confirmation(
+                        WatchUi.loadResource(Rez.Strings.FolderListUnpairTitle) as String),
+                    new UnpairConfirmationDelegate(),
+                    WatchUi.SLIDE_LEFT);
+            } catch (ex) {
+                // If the confirmation can't be shown, do nothing rather than
+                // unpairing without consent (Req 8.5).
+            }
+            return true;
+        }
+
+        // Not paired: Menu just leaves the view, matching Back.
         popView();
         return true;
     }
@@ -300,5 +380,42 @@ class FolderListDelegate extends WatchUi.BehaviorDelegate {
         } catch (ex) {
             // No-op: nothing to pop / UI not in a poppable state.
         }
+    }
+}
+
+//! UnpairConfirmationDelegate — handles the Yes/No response of the "Cancel
+//! pairing?" confirmation shown from FolderListDelegate.onMenu (Req 2.5).
+//!
+//! On a YES response it drives PairingManager.unpair(), which sends an UNPAIR to
+//! the phone (best effort) and deletes the local PairingRecord, returning the
+//! manager to IDLE — after which FolderListView's next redraw reflects the
+//! now-unpaired state (its "Pair with phone first" empty prompt / dropped status
+//! line). A NO response is a no-op. Everything is wrapped so a response can never
+//! crash the mode (Req 8.5); nothing sensitive is read or logged (Req 7.3).
+class UnpairConfirmationDelegate extends WatchUi.ConfirmationDelegate {
+
+    //! Build the confirmation delegate. Stateless — it reaches the PairingManager
+    //! through the app when a YES response arrives.
+    function initialize() {
+        ConfirmationDelegate.initialize();
+    }
+
+    //! Confirmation result. On RESPONSE_YES, unpair via the PairingManager; any
+    //! other response leaves the pairing intact. Returns true so the response is
+    //! consumed (the confirmation dismisses itself). Wrapped so a missing
+    //! app/manager can't crash input (Req 8.5).
+    function onResponse(response as WatchUi.Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            try {
+                var manager = getApp().getPairingManager();
+                if (manager != null) {
+                    manager.unpair();
+                    WatchUi.requestUpdate();
+                }
+            } catch (ex) {
+                // A unpair hiccup must not crash the response path (Req 8.5).
+            }
+        }
+        return true;
     }
 }
