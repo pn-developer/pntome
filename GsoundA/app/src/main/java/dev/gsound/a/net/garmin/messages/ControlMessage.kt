@@ -79,6 +79,19 @@ data class SyncManifest(
 ) : ControlMessage()
 
 /**
+ * `SYNC_REQUEST` (G→A): the watch asks the phone to begin a sync (user tapped "sync" on the
+ * watch). The phone validates the [pairingId] against its stored pairing and, if it matches,
+ * starts the same sync flow as the phone-side Sync button. Carries no payload beyond the
+ * envelope — the phone owns what to sync (its folder cache) and where to serve it from.
+ */
+@Serializable
+@SerialName("SYNC_REQUEST")
+data class SyncRequest(
+    @SerialName("pairingId") override val pairingId: String,
+    @SerialName("v") override val v: Int = PROTOCOL_VERSION
+) : ControlMessage()
+
+/**
  * `SYNC_STATUS` (G→A): progress reporting during a sync.
  *
  * @property state watch-reported sync state label.

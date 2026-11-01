@@ -324,6 +324,90 @@ class PairingViewModelTest {
             assertNull((state as PairingUiState.Idle).paired)
         }
 
+    // --- Reachability refresh (tap-to-refresh the watch status) --------------------------------
+
+    @Test
+    fun `refreshReachability runs a check and clears the refreshing flag`() =
+        runTest(dispatcher.scheduler) {
+            val existing = PairingRecord(
+                pairingId = "pre-paired-id",
+                peerName = "fenix 6S Pro",
+                sharedSecret = "old-secret",
+                createdAt = 42L,
+            )
+            store.save(existing)
+            channel.setConnectionState(ConnectionState.Connected)
+            val vm = newViewModel()
+            runCurrent()
+
+            vm.refreshReachability()
+            runCurrent()
+
+            // connect() was invoked (a real check is performed, not a no-op flip).
+            assertEquals(1, channel.connectCount)
+
+            // Resolves to online and is no longer "Checking…" — must never get stuck.
+            val state = vm.uiState.value as PairingUiState.Idle
+            assertTrue("expected online after a connected check", state.reachable == true)
+            assertTrue("refreshing must be cleared", !state.refreshing)
+        }
+
+    @Test
+    fun `refreshReachability is a no-op while a check is already in flight`() =
+        runTest(dispatcher.scheduler) {
+            store.save(
+                PairingRecord(
+                    pairingId = "pre-paired-id",
+                    peerName = "fenix 6S Pro",
+                    sharedSecret = "old-secret",
+                    createdAt = 42L,
+                ),
+            )
+            val vm = newViewModel()
+            runCurrent()
+
+            // First call flips refreshing=true synchronously (before its launched body runs).
+            vm.refreshReachability()
+            // Second call, before runCurrent, sees refreshing=true and must bail out.
+            vm.refreshReachability()
+            runCurrent()
+
+            // Only one check actually ran despite two taps.
+            assertEquals(1, channel.connectCount)
+        }
+
+    @Test
+    fun `unpair takes effect immediately even while a reachability check is in flight`() =
+        runTest(dispatcher.scheduler) {
+            val existing = PairingRecord(
+                pairingId = "pre-paired-id",
+                peerName = "fenix 6S Pro",
+                sharedSecret = "old-secret",
+                createdAt = 42L,
+            )
+            store.save(existing)
+            val vm = newViewModel()
+            runCurrent()
+
+            // Start a reachability check (sets refreshing=true synchronously), then unpair BEFORE
+            // letting the check's coroutine run — mirroring the user tapping Unpair while the
+            // watch icon shows "Checking…".
+            vm.refreshReachability()
+            assertTrue((vm.uiState.value as PairingUiState.Idle).refreshing)
+
+            vm.unpair()
+            runCurrent()
+
+            // Unpaired immediately: store cleared, state is unpaired Idle, not stuck "Checking…".
+            assertNull(store.get())
+            val state = vm.uiState.value as PairingUiState.Idle
+            assertNull(state.paired)
+            assertTrue("refreshing must be cleared by unpair", !state.refreshing)
+
+            // The UNPAIR notification to the watch was still sent (best-effort).
+            assertTrue(channel.sent.any { it is Unpair && it.pairingId == existing.pairingId })
+        }
+
     // --- helpers --------------------------------------------------------------------------------
 
     private suspend fun assertPaired(vm: PairingViewModel) {

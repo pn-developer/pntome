@@ -17,6 +17,7 @@ import dev.gsound.a.net.garmin.FakeControlChannel
 import dev.gsound.a.net.garmin.messages.SyncManifest
 import dev.gsound.a.net.garmin.messages.SyncStatus
 import dev.gsound.a.net.server.GsoundHttpServer
+import dev.gsound.a.net.server.ServerTransferMonitor
 import dev.gsound.a.net.server.SyncSessionHolder
 import dev.gsound.a.net.server.WifiAddressResolver
 import dev.gsound.a.net.server.WifiGuard
@@ -89,6 +90,7 @@ class SyncOrchestratorTest {
     private lateinit var resolver: MutableWifiAddressResolver
     private lateinit var httpServer: GsoundHttpServer
     private lateinit var sessionHolder: SyncSessionHolder
+    private lateinit var transferMonitor: ServerTransferMonitor
     private lateinit var wifiGuard: WifiGuard
     private lateinit var orchestrator: SyncOrchestrator
 
@@ -116,6 +118,7 @@ class SyncOrchestratorTest {
         resolver = MutableWifiAddressResolver("127.0.0.1")
         httpServer = GsoundHttpServer(resolver, emptySet())
         sessionHolder = SyncSessionHolder()
+        transferMonitor = ServerTransferMonitor()
         wifiGuard = WifiGuard(resolver)
 
         orchestrator = SyncOrchestrator(
@@ -125,6 +128,7 @@ class SyncOrchestratorTest {
             controlChannel = channel,
             httpServer = httpServer,
             sessionHolder = sessionHolder,
+            transferMonitor = transferMonitor,
             wifiGuard = wifiGuard,
             logger = NoopLogger,
         )

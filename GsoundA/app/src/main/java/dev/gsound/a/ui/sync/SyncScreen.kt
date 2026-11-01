@@ -284,6 +284,14 @@ private fun RunningState(running: SyncState.Running) {
         style = MaterialTheme.typography.bodySmall,
     )
 
+    running.speedBytesPerSec?.takeIf { it > 0 }?.let { speed ->
+        Text(
+            text = "${ByteSizeFormatter.format(speed)}/s",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
     running.currentTrackTitle?.let { title ->
         Text(
             text = title,

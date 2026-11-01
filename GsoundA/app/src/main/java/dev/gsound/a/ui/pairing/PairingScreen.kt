@@ -1,13 +1,19 @@
 package dev.gsound.a.ui.pairing
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -18,14 +24,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import dev.gsound.a.R
 import dev.gsound.a.domain.model.PairingRecord
+import dev.gsound.a.ui.theme.StatusOffline
+import dev.gsound.a.ui.theme.StatusOnline
 import java.text.DateFormat
 import java.util.Date
 
@@ -55,6 +68,7 @@ fun PairingScreen(
         onConfirm = viewModel::confirm,
         onCancel = viewModel::cancel,
         onUnpair = viewModel::unpair,
+        onRefreshStatus = viewModel::refreshReachability,
     )
 }
 
@@ -72,6 +86,7 @@ fun PairingContent(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     onUnpair: () -> Unit,
+    onRefreshStatus: () -> Unit = {},
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -88,7 +103,13 @@ fun PairingContent(
             when (state) {
                 is PairingUiState.Idle ->
                     if (state.paired != null) {
-                        PairedPeer(peer = state.paired, onUnpair = onUnpair)
+                        PairedPeer(
+                            peer = state.paired,
+                            reachable = state.reachable,
+                            refreshing = state.refreshing,
+                            onRefreshStatus = onRefreshStatus,
+                            onUnpair = onUnpair,
+                        )
                     } else {
                         PairPrompt(onStartPairing = onStartPairing)
                     }
@@ -105,6 +126,11 @@ fun PairingContent(
                 is PairingUiState.Paired ->
                     PairedPeer(
                         peer = state.peer,
+                        // Pairing just completed over a live channel, so show it online; tapping
+                        // the watch still re-checks on demand.
+                        reachable = true,
+                        refreshing = false,
+                        onRefreshStatus = onRefreshStatus,
                         header = "Paired with your watch",
                         onUnpair = onUnpair,
                     )
@@ -198,13 +224,24 @@ private fun AwaitingConfirm(
 }
 
 /**
- * Paired display: show the paired [peer]'s name and when pairing completed, plus an Unpair
- * affordance that sends `UNPAIR` and clears the record (Req 4.7). The [peer]'s `sharedSecret` is
- * deliberately never rendered (Req 8.4).
+ * Paired display: show a picture of the paired watch ringed in green (online) or red (offline)
+ * per live reachability, the [peer]'s name, when pairing completed, and an Unpair affordance that
+ * sends `UNPAIR` and clears the record (Req 4.7). The [peer]'s `sharedSecret` is deliberately
+ * never rendered (Req 8.4).
+ *
+ * Tapping the watch icon calls [onRefreshStatus] to re-check connectivity on demand, so the user
+ * can quickly diagnose whether the watch is online.
+ *
+ * @param reachable `true` = online (green ring), `false` = offline (red ring), `null` = unknown
+ *   (neutral ring) — e.g. before the first check.
+ * @param refreshing `true` while a re-check is in flight; shows a spinner over the icon.
  */
 @Composable
 private fun PairedPeer(
     peer: PairingRecord,
+    reachable: Boolean?,
+    refreshing: Boolean,
+    onRefreshStatus: () -> Unit,
     onUnpair: () -> Unit,
     header: String = "Paired watch",
 ) {
@@ -212,9 +249,27 @@ private fun PairedPeer(
         text = header,
         style = MaterialTheme.typography.headlineSmall,
     )
+
+    WatchStatusBadge(
+        reachable = reachable,
+        refreshing = refreshing,
+        onRefreshStatus = onRefreshStatus,
+    )
+
     Text(
         text = peer.peerName,
         style = MaterialTheme.typography.titleLarge,
+    )
+    Text(
+        text = statusLabel(reachable, refreshing),
+        style = MaterialTheme.typography.bodyMedium,
+        color = statusColor(reachable),
+    )
+    Text(
+        text = "Tap the watch to refresh its status",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
     )
     Text(
         text = "Paired ${formatTimestamp(peer.createdAt)}",
@@ -223,6 +278,62 @@ private fun PairedPeer(
     OutlinedButton(onClick = onUnpair) {
         Text("Unpair")
     }
+}
+
+/**
+ * A circular watch picture surrounded by a status ring (green = online, red = offline, neutral =
+ * unknown), tappable to refresh reachability. While [refreshing] a spinner overlays the icon and
+ * the ring dims slightly. The whole badge is a single semantic button for accessibility.
+ */
+@Composable
+private fun WatchStatusBadge(
+    reachable: Boolean?,
+    refreshing: Boolean,
+    onRefreshStatus: () -> Unit,
+) {
+    val ringColor = statusColor(reachable)
+    val semantics = "Paired watch, ${statusLabel(reachable, refreshing)}. Tap to refresh status."
+
+    Box(
+        modifier = Modifier
+            .size(112.dp)
+            .clip(CircleShape)
+            .border(width = 4.dp, color = ringColor, shape = CircleShape)
+            .clickable(enabled = !refreshing, onClick = onRefreshStatus)
+            .padding(8.dp)
+            .semantics { contentDescription = semantics },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.ic_watch),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(56.dp),
+        )
+        if (refreshing) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(84.dp),
+                strokeWidth = 3.dp,
+                color = ringColor,
+            )
+        }
+    }
+}
+
+/** Green when online, red when offline, neutral when unknown. */
+@Composable
+private fun statusColor(reachable: Boolean?) = when (reachable) {
+    true -> StatusOnline
+    false -> StatusOffline
+    null -> MaterialTheme.colorScheme.outline
+}
+
+/** Human-readable connectivity label for the status line and accessibility. */
+private fun statusLabel(reachable: Boolean?, refreshing: Boolean): String = when {
+    refreshing -> "Checking…"
+    reachable == true -> "Online"
+    reachable == false -> "Offline"
+    else -> "Status unknown"
 }
 
 /** Error state: surface an actionable [message] with Retry and Dismiss (Req 4.2, 4.6). */

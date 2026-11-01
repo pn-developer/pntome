@@ -13,16 +13,21 @@ import dev.gsound.a.net.garmin.ControlChannel
 import dev.gsound.a.net.garmin.messages.SyncManifest
 import dev.gsound.a.net.garmin.messages.SyncStatus
 import dev.gsound.a.net.server.GsoundHttpServer
+import dev.gsound.a.net.server.ServerTransferMonitor
 import dev.gsound.a.net.server.SyncSession
 import dev.gsound.a.net.server.SyncSessionHolder
 import dev.gsound.a.net.server.WifiGuard
 import dev.gsound.a.net.server.WifiStatus
 import kotlinx.coroutines.CancellationException
+import dev.gsound.a.net.server.TransferProgress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -81,6 +86,7 @@ class SyncOrchestrator @Inject constructor(
     private val controlChannel: ControlChannel,
     private val httpServer: GsoundHttpServer,
     private val sessionHolder: SyncSessionHolder,
+    private val transferMonitor: ServerTransferMonitor,
     private val wifiGuard: WifiGuard,
     private val logger: Logger = GsoundLog,
 ) {
@@ -202,6 +208,9 @@ class SyncOrchestrator @Inject constructor(
                 documentUriFor = { trackId -> documentUriByTrackId[trackId].orEmpty() }
             )
             sessionHolder.set(session)
+            // Start watching real HTTP byte activity so the UI shows download progress/speed even
+            // if the watch never sends SYNC_STATUS (observed in the field).
+            transferMonitor.begin(session)
             logger.i(tag, "sync session installed; sending SYNC_MANIFEST (serverUrl=$serverUrl, tracks=${manifest.tracks.size})")
 
             // Req 6.1: tell the watch where to fetch and what to fetch. The ControlChannel impl
@@ -269,12 +278,19 @@ class SyncOrchestrator @Inject constructor(
     }
 
     /**
-     * Collect validated incoming [SyncStatus] messages for this [pairing] and project them onto
-     * [state], returning the terminal [SyncState] once a status reports completion or an error.
+     * Drive [state] from two merged progress sources and return the terminal [SyncState].
      *
-     * Progress maps to [SyncState.Running] (carrying [serverUrl] for Req 5.8 display); a status
-     * whose `error` is set resolves to [SyncState.Error]; a status reporting all tracks done
-     * resolves to [SyncState.Completed] with a persisted [SyncSummary] (Req 6.3, 8.3).
+     * 1. **Watch control-channel** `SYNC_STATUS` messages (the original source): authoritative for
+     *    watch-reported errors and watch-reported completion.
+     * 2. **Server-observed transfer** ([ServerTransferMonitor]): the actual bytes the watch pulls
+     *    from the local HTTP server. This makes progress and speed visible **even when the watch
+     *    never sends `SYNC_STATUS`** — the real-world failure mode where the UI was stuck on
+     *    "Preparing".
+     *
+     * Precedence: a watch error is terminal immediately. Otherwise whichever source shows more
+     * completed tracks wins the progress projection, and completion resolves when **either** the
+     * watch reports all tracks done **or** the server has fully served every track. Completion
+     * persists a [SyncSummary] (Req 6.3, 8.3).
      *
      * @param serverUrl the bound LAN `http://ip:port`, forwarded onto each [SyncState.Running]
      *   so the UI can show it (Req 5.8).
@@ -285,60 +301,97 @@ class SyncOrchestrator @Inject constructor(
         serverUrl: String
     ): SyncState {
         var terminal: SyncState? = null
+        // Last values seen from each source, so a progress emission from one doesn't erase the
+        // richer picture from the other.
+        var watchDone = 0
+        var watchBytes = 0L
+        var serverProgress: TransferProgress? = null
 
-        controlChannel.incoming
+        val watchEvents = controlChannel.incoming
             .filterIsInstance<SyncStatus>()
-            // Only this pairing's statuses (defence in depth; the channel already drops others).
-            .collectUntil({ terminal != null }) { status ->
-                if (status.pairingId != pairing.pairingId) {
-                    logger.w(tag, "SYNC_STATUS ignored: pairingId mismatch (got=${status.pairingId})")
-                    return@collectUntil
+            .map<SyncStatus, ProgressEvent> { ProgressEvent.Watch(it) }
+        val serverEvents = transferMonitor.progress
+            .filterNotNull()
+            .map<TransferProgress, ProgressEvent> { ProgressEvent.Server(it) }
+
+        merge(watchEvents, serverEvents).collectUntil({ terminal != null }) { event ->
+            when (event) {
+                is ProgressEvent.Watch -> {
+                    val status = event.status
+                    if (status.pairingId != pairing.pairingId) {
+                        logger.w(tag, "SYNC_STATUS ignored: pairingId mismatch (got=${status.pairingId})")
+                        return@collectUntil
+                    }
+                    val total = if (status.total > 0) status.total else totalTracks
+                    logger.i(
+                        tag,
+                        "SYNC_STATUS: done=${status.done}/${total} bytes=${status.bytesDone}" +
+                            (status.error?.let { " error=$it" } ?: "")
+                    )
+                    if (status.error != null) {
+                        logger.w(tag, "watch reported error -> terminal Error")
+                        terminal = SyncState.Error(status.error!!)
+                        return@collectUntil
+                    }
+                    watchDone = status.done
+                    watchBytes = status.bytesDone
+                    if (total > 0 && status.done >= total) {
+                        terminal = complete(done = status.done, total = total)
+                        return@collectUntil
+                    }
                 }
 
-                val total = if (status.total > 0) status.total else totalTracks
-                logger.i(
-                    tag,
-                    "SYNC_STATUS: done=${status.done}/${total} bytes=${status.bytesDone}" +
-                        (status.error?.let { " error=$it" } ?: "")
-                )
-
-                when {
-                    status.error != null -> {
-                        logger.w(tag, "sync reported error -> terminal Error")
-                        terminal = SyncState.Error(status.error!!)
-                    }
-
-                    isComplete(status, total) -> {
-                        val summary = SyncSummary(
-                            syncedCount = status.done,
-                            skippedCount = (total - status.done).coerceAtLeast(0),
-                            removedCount = 0,
-                            lastSyncAt = System.currentTimeMillis(),
-                            error = null
-                        )
-                        summaryStore.save(summary) // Req 6.3, 8.3: persist last-sync summary.
-                        logger.i(tag, "sync COMPLETE: synced=${summary.syncedCount} skipped=${summary.skippedCount}")
-                        terminal = SyncState.Completed(summary)
-                    }
-
-                    else -> _state.value = SyncState.Running(
-                        tracksDone = status.done,
-                        tracksTotal = total,
-                        bytesSent = status.bytesDone,
-                        serverUrl = serverUrl // Req 5.8: surface the LAN address to the UI.
+                is ProgressEvent.Server -> {
+                    serverProgress = event.progress
+                    logger.i(
+                        tag,
+                        "server transfer: complete=${event.progress.tracksComplete}/${event.progress.tracksTotal} " +
+                            "bytes=${event.progress.bytesServed}" +
+                            (event.progress.speedBytesPerSec?.let { " speed=${it}B/s" } ?: "")
                     )
+                    val p = event.progress
+                    if (p.tracksTotal > 0 && p.tracksComplete >= p.tracksTotal) {
+                        terminal = complete(done = p.tracksComplete, total = p.tracksTotal)
+                        return@collectUntil
+                    }
                 }
             }
 
+            // Project merged progress: take whichever source shows more completed tracks / more
+            // bytes, and enrich with server-observed total/speed/current-track when available.
+            val sp = serverProgress
+            val tracksDone = maxOf(watchDone, sp?.tracksComplete ?: 0)
+            val bytesSent = maxOf(watchBytes, sp?.bytesServed ?: 0L)
+            _state.value = SyncState.Running(
+                tracksDone = tracksDone,
+                tracksTotal = sp?.tracksTotal?.takeIf { it > 0 } ?: totalTracks,
+                bytesSent = bytesSent,
+                bytesTotal = sp?.bytesTotal,
+                currentTrackTitle = sp?.currentTrackTitle,
+                speedBytesPerSec = sp?.speedBytesPerSec,
+                serverUrl = serverUrl // Req 5.8: surface the LAN address to the UI.
+            )
+        }
+
         if (terminal == null) {
-            logger.w(tag, "status stream ended with no terminal status (watch stopped reporting)")
+            logger.w(tag, "progress stream ended with no terminal status")
         }
         return terminal ?: SyncState.Error("The watch stopped reporting progress.")
     }
 
-    /** A status is terminal-success when it reports every track done (and carries no error). */
-    private fun isComplete(status: SyncStatus, total: Int): Boolean =
-        total > 0 && status.done >= total
+    /** Persist a success [SyncSummary] and build the terminal [SyncState.Completed] (Req 6.3, 8.3). */
+    private suspend fun complete(done: Int, total: Int): SyncState {
+        val summary = SyncSummary(
+            syncedCount = done,
+            skippedCount = (total - done).coerceAtLeast(0),
+            removedCount = 0,
+            lastSyncAt = System.currentTimeMillis(),
+            error = null
+        )
+        summaryStore.save(summary)
+        logger.i(tag, "sync COMPLETE: synced=${summary.syncedCount} skipped=${summary.skippedCount}")
+        return SyncState.Completed(summary)
+    }
 
     /** Apply a terminal/intermediate [next] state and return it, for `return transition(...)`. */
     private fun transition(next: SyncState): SyncState {
@@ -350,6 +403,7 @@ class SyncOrchestrator @Inject constructor(
     private suspend fun stopServerAndClearSession() {
         runCatching { httpServer.stop() }
         sessionHolder.clear()
+        transferMonitor.reset()
     }
 }
 
@@ -370,6 +424,15 @@ private suspend inline fun <T> Flow<T>.collectUntil(
     } catch (_: StopCollection) {
         // normal termination
     }
+}
+
+/**
+ * A unified progress event merged from the two sources [SyncOrchestrator.collectStatuses]
+ * listens to: watch-reported [SyncStatus] messages and server-observed [TransferProgress].
+ */
+private sealed interface ProgressEvent {
+    data class Watch(val status: SyncStatus) : ProgressEvent
+    data class Server(val progress: TransferProgress) : ProgressEvent
 }
 
 /** Sentinel used by [collectUntil] to break out of a `collect` without surfacing an error. */

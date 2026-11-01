@@ -24,6 +24,8 @@ sealed interface SyncState {
      * @property bytesSent bytes served so far.
      * @property bytesTotal total bytes expected across all tracks, or null when not yet known.
      * @property currentTrackTitle title of the track currently transferring, or null.
+     * @property speedBytesPerSec recent transfer rate in bytes/second observed on the local
+     *   server, or null until it can be estimated.
      * @property serverUrl the LAN `http://ip:port` the music server is bound to, surfaced so the
      *   UI can display it for connectivity verification (Req 5.8); null when not yet known.
      */
@@ -33,6 +35,7 @@ sealed interface SyncState {
         val bytesSent: Long,
         val bytesTotal: Long? = null,
         val currentTrackTitle: String? = null,
+        val speedBytesPerSec: Long? = null,
         val serverUrl: String? = null
     ) : SyncState
 

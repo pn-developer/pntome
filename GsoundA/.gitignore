@@ -10,3 +10,5 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+# Kotlin compiler daemon session/error state — machine-local build artifacts, not source.
+.kotlin/

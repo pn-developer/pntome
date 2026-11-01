@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -90,6 +91,19 @@ class ConnectIqManager @Inject constructor(
     /** The SDK handle, created lazily in [connect] and retained until [close]. */
     private var connectIq: ConnectIQ? = null
 
+    /**
+     * True once [ConnectIQ.ConnectIQListener.onSdkReady] has fired for the current [connectIq]
+     * handle. The Connect IQ SDK invokes that callback only on the FIRST [ConnectIQ.initialize]
+     * for a handle; calling `initialize()` again on an already-initialized SDK silently never
+     * calls back, which hung [connect] on every call after the first (observed: repeated
+     * "initializing Connect IQ SDK" with no "onSdkReady"). We track readiness so a subsequent
+     * [connect]/refresh skips re-initialization and re-resolves the device directly.
+     */
+    private var sdkInitialized: Boolean = false
+
+    /** Serializes [connect] so overlapping taps (refresh) don't stack concurrent resolves. */
+    private val connectMutex = kotlinx.coroutines.sync.Mutex()
+
     /** The resolved device/app pair, set once [ConnectionState.Connected] is reached. */
     private var device: IQDevice? = null
     private var app: IQApp? = null
@@ -144,7 +158,20 @@ class ConnectIqManager @Inject constructor(
         }
     }
 
-    override suspend fun connect() {
+    override suspend fun connect() = connectMutex.withLock {
+        // Idempotent: the SDK's ConnectIQListener fires onSdkReady only on the first initialize()
+        // for a handle. A second initialize() on an already-initialized SDK never calls back, so
+        // re-initializing hung every refresh after the first. When already initialized, skip
+        // initialization and just RE-RESOLVE the device/app — that is the actual "is it online"
+        // re-check a refresh wants.
+        val existing = connectIq
+        if (sdkInitialized && existing != null) {
+            GsoundLog.i(tag, "connect(): SDK already initialized; re-resolving device (refresh)")
+            _connectionState.value = ConnectionState.Connecting
+            resolveDeviceAndApp(existing)
+            return@withLock
+        }
+
         GsoundLog.i(tag, "connect(): initializing Connect IQ SDK (transport=WIRELESS, via Garmin Connect)")
         _connectionState.value = ConnectionState.Connecting
 
@@ -157,17 +184,20 @@ class ConnectIqManager @Inject constructor(
         val listener = object : ConnectIQ.ConnectIQListener {
             override fun onSdkReady() {
                 GsoundLog.i(tag, "onSdkReady: SDK bound to Garmin Connect; resolving device")
+                sdkInitialized = true
                 if (!ready.isCompleted) ready.complete(true)
             }
 
             override fun onInitializeError(status: ConnectIQ.IQSdkErrorStatus) {
                 GsoundLog.e(tag, "onInitializeError: status=$status (is Garmin Connect installed/updated?)")
+                sdkInitialized = false
                 _connectionState.value = SdkStateMapper.mapInitError(status)
                 if (!ready.isCompleted) ready.complete(false)
             }
 
             override fun onSdkShutDown() {
                 GsoundLog.i(tag, "onSdkShutDown")
+                sdkInitialized = false
                 _connectionState.value = ConnectionState.Disconnected
             }
         }
@@ -177,12 +207,12 @@ class ConnectIqManager @Inject constructor(
         } catch (t: Throwable) {
             GsoundLog.e(tag, "initialize() threw: ${t.javaClass.simpleName}", t)
             _connectionState.value = SdkStateMapper.mapThrowable(t)
-            return
+            return@withLock
         }
 
         if (!ready.await()) {
             // onInitializeError already set the error state.
-            return
+            return@withLock
         }
 
         resolveDeviceAndApp(iq)
@@ -450,6 +480,7 @@ class ConnectIqManager @Inject constructor(
         connectIq = null
         device = null
         app = null
+        sdkInitialized = false
         _connectionState.value = ConnectionState.Disconnected
     }
 

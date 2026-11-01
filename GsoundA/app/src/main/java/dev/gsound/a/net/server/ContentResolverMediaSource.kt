@@ -41,7 +41,8 @@ import javax.inject.Singleton
 @Singleton
 class ContentResolverMediaSource @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val sessionHolder: SyncSessionHolder
+    private val sessionHolder: SyncSessionHolder,
+    private val transferMonitor: ServerTransferMonitor,
 ) : MediaSource {
 
     private val contentResolver: ContentResolver get() = context.contentResolver
@@ -58,7 +59,11 @@ class ContentResolverMediaSource @Inject constructor(
                 // Opened lazily and freshly per call so PartialContent can re-open for a Range
                 // retry; the caller owns and closes the returned stream. A null/opening failure
                 // means the file vanished mid-sync (Req 10.1) → surfaced as IOException → 404.
-                openStreamOrThrow(uri)
+                // Wrapped so every byte the watch actually pulls is reported to the transfer
+                // monitor, giving real server-side progress/speed even without watch SYNC_STATUS.
+                CountingInputStream(openStreamOrThrow(uri)) { offset ->
+                    transferMonitor.reportTrackOffset(trackId, offset)
+                }
             }
         )
     }
@@ -71,4 +76,57 @@ class ContentResolverMediaSource @Inject constructor(
             // Lost/never-granted URI permission is, from the server's view, an unavailable file.
             throw IOException("Media no longer accessible", e)
         }
+}
+
+/**
+ * An [InputStream] decorator that reports cumulative bytes read through [onProgress] as a running
+ * offset from the start of the underlying stream. Used to observe how much of a track the watch
+ * has actually pulled over HTTP (see [ServerTransferMonitor]). Reporting is best-effort and must
+ * never disturb the transfer, so [onProgress] exceptions are swallowed.
+ */
+private class CountingInputStream(
+    private val delegate: InputStream,
+    private val onProgress: (offset: Long) -> Unit,
+) : InputStream() {
+
+    private var count: Long = 0L
+
+    override fun read(): Int {
+        val b = delegate.read()
+        if (b != -1) {
+            count += 1
+            report()
+        }
+        return b
+    }
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        val n = delegate.read(b, off, len)
+        if (n > 0) {
+            count += n
+            report()
+        }
+        return n
+    }
+
+    override fun skip(n: Long): Long {
+        val skipped = delegate.skip(n)
+        if (skipped > 0) {
+            count += skipped
+            report()
+        }
+        return skipped
+    }
+
+    override fun available(): Int = delegate.available()
+
+    override fun close() = delegate.close()
+
+    private fun report() {
+        try {
+            onProgress(count)
+        } catch (_: Throwable) {
+            // Monitoring must never break the actual download.
+        }
+    }
 }

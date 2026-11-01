@@ -41,6 +41,10 @@ module Messages {
     //! Full track list + where to fetch: payload serverUrl, tracks[]. A → G.
     const TYPE_SYNC_MANIFEST = "SYNC_MANIFEST";
 
+    //! Ask the phone to begin a sync (user tapped "sync" on the watch): payload
+    //! pairingId only. G → A. The phone owns what/where to sync.
+    const TYPE_SYNC_REQUEST = "SYNC_REQUEST";
+
     //! Sync progress report: payload state, done, total, bytesDone, error?. G → A.
     const TYPE_SYNC_STATUS = "SYNC_STATUS";
 
@@ -98,6 +102,7 @@ module Messages {
             || type.equals(TYPE_PAIR_CONFIRM)
             || type.equals(TYPE_UNPAIR)
             || type.equals(TYPE_SYNC_MANIFEST)
+            || type.equals(TYPE_SYNC_REQUEST)
             || type.equals(TYPE_SYNC_STATUS)
             || type.equals(TYPE_STATS)
             || type.equals(TYPE_PING)
@@ -148,6 +153,13 @@ module Messages {
     //! watch (Req 2.5).
     function buildUnpair(pairingId as String) as Dictionary {
         return envelope(TYPE_UNPAIR, pairingId);
+    }
+
+    //! Build a SYNC_REQUEST { v, type, pairingId } sent when the user asks the
+    //! phone to start a sync from the watch. Payload is the envelope only; the
+    //! phone decides what to sync (its folder cache) and where to serve it.
+    function buildSyncRequest(pairingId as String) as Dictionary {
+        return envelope(TYPE_SYNC_REQUEST, pairingId);
     }
 
     //! Build a SYNC_STATUS { v, type, pairingId, state, done, total, bytesDone,

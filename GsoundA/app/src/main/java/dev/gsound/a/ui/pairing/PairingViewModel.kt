@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -43,8 +44,17 @@ sealed interface PairingUiState {
      * a new attempt).
      *
      * @property paired the persisted pairing restored from [PairingStore], or null when unpaired.
+     * @property reachable the watch's live reachability when [paired] is non-null: `true` =
+     *   online (control channel Connected), `false` = offline/unreachable, `null` = not yet
+     *   checked (resting/unknown). Ignored when [paired] is null.
+     * @property refreshing `true` while an on-demand reachability re-check is in flight, so the
+     *   UI can show a spinner over the watch icon (Req: tap-to-refresh status).
      */
-    data class Idle(val paired: PairingRecord? = null) : PairingUiState
+    data class Idle(
+        val paired: PairingRecord? = null,
+        val reachable: Boolean? = null,
+        val refreshing: Boolean = false,
+    ) : PairingUiState
 
     /**
      * A pairing attempt has started: connecting the control channel and resolving the GsoundG
@@ -142,15 +152,78 @@ class PairingViewModel @Inject constructor(
     /** Collector of matching `PAIR_CONFIRM` messages for the current attempt. */
     private var incomingJob: Job? = null
 
+    /** In-flight tap-to-refresh reachability check, so [unpair] can cancel it (Req: unpair must
+     *  never be blocked by a connectivity probe). */
+    private var refreshJob: Job? = null
+
     init {
         // Restore the persisted pairing so Idle reflects the current paired peer on launch
-        // (Req 4.8, Req 8.2). Only overwrite Idle; never clobber an active attempt.
+        // (Req 4.8, Req 8.2). Only overwrite Idle; never clobber an active attempt. Preserve the
+        // last known reachability/refreshing flags so a store re-emit doesn't blank the ring.
         viewModelScope.launch {
             pairingStore.pairing.collect { record ->
-                if (_uiState.value is PairingUiState.Idle) {
-                    _uiState.value = PairingUiState.Idle(paired = record)
+                val current = _uiState.value
+                if (current is PairingUiState.Idle) {
+                    _uiState.value = current.copy(paired = record)
                 }
             }
+        }
+
+        // Drive the online/offline ring reactively: Connected = online, anything else = offline.
+        // Only meaningful while paired; the screen ignores reachability when unpaired. A fresh
+        // reachability value also clears any in-flight `refreshing` flag.
+        viewModelScope.launch {
+            controlChannel.connectionState.collect { state ->
+                val current = _uiState.value
+                if (current is PairingUiState.Idle && current.paired != null) {
+                    _uiState.value = current.copy(
+                        reachable = state is ConnectionState.Connected,
+                        refreshing = false,
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Re-check whether the paired watch is reachable right now (tap-to-refresh on the watch
+     * icon). Triggers an on-demand [ControlChannel.connect] re-enumeration; the resulting
+     * [ConnectionState] is projected onto [PairingUiState.Idle.reachable] by the collector in
+     * [init]. No-op unless currently paired and resting in [PairingUiState.Idle] — there is
+     * nothing to refresh mid-handshake.
+     */
+    fun refreshReachability() {
+        val current = _uiState.value
+        if (current !is PairingUiState.Idle || current.paired == null) {
+            logger.d(tag, "refreshReachability ignored: state=${current::class.simpleName}")
+            return
+        }
+        if (current.refreshing) return // already in flight
+
+        _uiState.value = current.copy(refreshing = true)
+        refreshJob = viewModelScope.launch {
+            logger.i(tag, "refreshReachability: re-checking watch connectivity")
+            // Bound the check so the UI can never get stuck on "Checking…" if the SDK resolve
+            // stalls (the device poll window is ~5s; allow headroom for app-info resolution).
+            val timedOut = withTimeoutOrNull(REACHABILITY_TIMEOUT_MILLIS) {
+                runCatching { controlChannel.connect() }
+                    .onFailure { logger.w(tag, "refreshReachability connect() threw: ${it.javaClass.simpleName}") }
+                true
+            } == null
+            if (timedOut) {
+                logger.w(tag, "refreshReachability: timed out after ${REACHABILITY_TIMEOUT_MILLIS}ms")
+            }
+            // The connectionState collector updates `reachable` + clears `refreshing`. As a
+            // backstop (state unchanged → no new emission, or a timeout), clear the flag here too
+            // using the latest known connection state.
+            val latest = _uiState.value
+            if (latest is PairingUiState.Idle && latest.refreshing) {
+                _uiState.value = latest.copy(
+                    reachable = controlChannel.connectionState.value is ConnectionState.Connected,
+                    refreshing = false,
+                )
+            }
+            refreshJob = null
         }
     }
 
@@ -253,16 +326,30 @@ class PairingViewModel @Inject constructor(
      * longer paired even if the watch is unreachable.
      */
     fun unpair() {
+        // Unpair must take effect immediately and must never be blocked by an in-flight
+        // reachability check (the probe can take seconds). Cancel any running refresh first so
+        // the user is never stuck watching "Checking…" while Unpair appears to do nothing.
+        refreshJob?.cancel()
+        refreshJob = null
+
         viewModelScope.launch {
             val record = pairingStore.get() ?: run {
                 logger.d(tag, "unpair: nothing to unpair")
                 _uiState.value = PairingUiState.Idle(paired = null)
                 return@launch
             }
-            logger.i(tag, "unpair: sending UNPAIR + clearing store (pairingId=${record.pairingId})")
-            controlChannel.send(Unpair(pairingId = record.pairingId))
+            logger.i(tag, "unpair: clearing store + notifying watch (pairingId=${record.pairingId})")
+            // Clear the LOCAL record first so the UI reflects "unpaired" at once, independent of
+            // whether the watch is reachable. The UNPAIR notify to the watch is best-effort and
+            // must not gate the local state change.
             pairingStore.clear()
-            _uiState.value = PairingUiState.Idle(paired = null)
+            _uiState.value = PairingUiState.Idle(paired = null, reachable = null, refreshing = false)
+            // Fire-and-forget the UNPAIR to the watch; a slow/failed send no longer holds up the
+            // user-visible unpair.
+            launch {
+                runCatching { controlChannel.send(Unpair(pairingId = record.pairingId)) }
+                    .onFailure { logger.w(tag, "unpair: UNPAIR notify failed: ${it.javaClass.simpleName}") }
+            }
         }
     }
 
@@ -381,5 +468,12 @@ class PairingViewModel @Inject constructor(
 
         /** Default pairing timeout, ~120 s (Req 4.6). */
         const val DEFAULT_TIMEOUT_MILLIS: Long = 120_000L
+
+        /**
+         * Upper bound for a tap-to-refresh reachability check so the watch icon never gets stuck
+         * on "Checking…". Covers the control channel's ~5 s device poll window plus headroom for
+         * app-info resolution.
+         */
+        const val REACHABILITY_TIMEOUT_MILLIS: Long = 10_000L
     }
 }
