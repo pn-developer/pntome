@@ -1,5 +1,7 @@
 package dev.gsound.a.net.server
 
+import dev.gsound.a.log.GsoundLog
+import dev.gsound.a.log.Logger
 import dev.gsound.a.net.garmin.messages.GsoundJson
 import dev.gsound.a.net.garmin.messages.Manifest
 import io.ktor.http.ContentType
@@ -14,6 +16,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.autohead.AutoHeadResponse
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.partialcontent.PartialContent
+import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -23,6 +26,9 @@ import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import kotlinx.serialization.Serializable
 import java.io.IOException
+
+/** Logcat tag for HTTP data-channel diagnostics (filter: `adb logcat -s Gsound.HTTP`). */
+private const val HTTP_TAG = "Gsound.HTTP"
 
 /**
  * Installs the Gsound data-channel HTTP routes and their supporting plugins onto a Ktor
@@ -73,16 +79,43 @@ import java.io.IOException
  *
  * @param mediaSource the read-only view of the active sync session (manifest + openable tracks).
  * @param secretProvider supplies the current expected secret for the `X-Gsound-Secret` check.
+ * @param logger sink for request diagnostics; defaults to [GsoundLog] in production. The Ktor
+ *   test host passes [dev.gsound.a.log.NoopLogger] so JVM tests don't touch `android.util.Log`.
  */
 fun Application.installGsoundRouting(
     mediaSource: MediaSource,
     secretProvider: SecretProvider,
+    logger: Logger = GsoundLog,
 ) {
     install(ContentNegotiation) {
         json(GsoundJson)
     }
     install(PartialContent)
     install(AutoHeadResponse)
+
+    // Request-level diagnostics (filter: `adb logcat -s Gsound.HTTP`). This is the single most
+    // useful signal when a sync "hangs": it tells you definitively whether the WATCH ever reached
+    // the phone's server over Wi-Fi, which endpoint it hit, and the status it got back —
+    // independent of whether the watch sends SYNC_STATUS. One line is logged as each request
+    // ENTERS (method + path + whether the secret header was present) and one as it RESOLVES
+    // (status + any Range). The secret VALUE is never logged, only its presence (Req 8.4).
+    intercept(ApplicationCallPipeline.Setup) {
+        val method = call.request.httpMethod.value
+        val path = call.request.path()
+        val hasSecret = !call.request.headers[SECRET_HEADER].isNullOrBlank()
+        val range = call.request.headers[HttpHeaders.Range]
+        logger.i(
+            HTTP_TAG,
+            "--> $method $path secret=${if (hasSecret) "present" else "absent"}" +
+                (range?.let { " range=$it" } ?: "")
+        )
+        try {
+            proceed()
+        } finally {
+            val status = call.response.status()?.value?.toString() ?: "no-response"
+            logger.i(HTTP_TAG, "<-- $method $path -> $status")
+        }
+    }
 
     // Secret-auth gate (Req 5.3). Runs before routing so unauthenticated requests to any route
     // other than /health never reach a handler. /health stays open for liveness checks.
@@ -92,6 +125,13 @@ fun Application.installGsoundRouting(
         val presented = call.request.headers[SECRET_HEADER]
         val expected = secretProvider.expectedSecret()
         if (!isSecretAuthorized(presented = presented, expected = expected)) {
+            // Most common "sync hangs" cause after the watch connects: a stale/missing secret.
+            // Log the cause (not the value) so it's obvious in logcat (Req 8.4).
+            logger.w(
+                HTTP_TAG,
+                "401 ${call.request.path()}: secret ${if (presented.isNullOrBlank()) "absent" else "mismatch"}" +
+                    (if (expected.isNullOrBlank()) " (no active session secret)" else "")
+            )
             call.respond(HttpStatusCode.Unauthorized)
             finish()
         }
@@ -105,6 +145,7 @@ fun Application.installGsoundRouting(
         get("/manifest") {
             // No active session → empty manifest (200), a valid "nothing to sync" answer.
             val manifest = mediaSource.manifest() ?: Manifest(tracks = emptyList())
+            logger.i(HTTP_TAG, "/manifest served: ${manifest.tracks.size} track(s)")
             call.respond(manifest)
         }
 
@@ -117,12 +158,14 @@ fun Application.installGsoundRouting(
             // touching the manifest or storage. The lookup below is itself traversal-safe (the id
             // is only a map key), but this makes the no-traversal guarantee explicit (Req 5.5).
             if (trackId == null || !TrackId.isValidTrackId(trackId)) {
+                logger.w(HTTP_TAG, "/media 404: invalid trackId")
                 call.respond(HttpStatusCode.NotFound)
                 return@get
             }
 
             // Unknown id (not in current manifest) → 404 (Req 5.5).
             val media = mediaSource.openTrack(trackId) ?: run {
+                logger.w(HTTP_TAG, "/media/$trackId 404: not in active session")
                 call.respond(HttpStatusCode.NotFound)
                 return@get
             }
@@ -131,9 +174,12 @@ fun Application.installGsoundRouting(
             val stream = try {
                 media.open()
             } catch (_: IOException) {
+                logger.w(HTTP_TAG, "/media/$trackId 404: media no longer accessible")
                 call.respond(HttpStatusCode.NotFound)
                 return@get
             }
+
+            logger.i(HTTP_TAG, "/media/$trackId streaming ${media.length} bytes (${media.contentType})")
 
             // Explicitly advertise range support (PartialContent also sets this, but we assert
             // it for Req 5.4 regardless of plugin internals).

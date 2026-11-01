@@ -1,5 +1,6 @@
 package dev.gsound.a.net.server
 
+import dev.gsound.a.log.NoopLogger
 import dev.gsound.a.net.garmin.messages.GsoundJson
 import dev.gsound.a.net.garmin.messages.Manifest
 import dev.gsound.a.net.garmin.messages.ManifestTrack
@@ -107,6 +108,7 @@ class GsoundRoutingTest {
                 installGsoundRouting(
                     mediaSource = FakeMediaSource(MANIFEST),
                     secretProvider = FakeSecretProvider(SECRET),
+                    logger = NoopLogger,
                 )
             }
 
@@ -123,7 +125,7 @@ class GsoundRoutingTest {
     fun `manifest without secret header is 401`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             assertEquals(HttpStatusCode.Unauthorized, client.get("/manifest").status)
@@ -134,7 +136,7 @@ class GsoundRoutingTest {
     fun `media without secret header is 401`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             assertEquals(HttpStatusCode.Unauthorized, client.get("/media/$TRACK_ID").status)
@@ -145,7 +147,7 @@ class GsoundRoutingTest {
     fun `wrong secret is 401`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/manifest") {
@@ -160,7 +162,7 @@ class GsoundRoutingTest {
     fun `null expected secret rejects even a presented header (fail closed)`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(secret = null))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(secret = null), NoopLogger)
             }
 
             val response = client.get("/manifest") {
@@ -175,7 +177,7 @@ class GsoundRoutingTest {
     fun `correct secret proceeds past the auth gate`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/manifest") {
@@ -192,7 +194,7 @@ class GsoundRoutingTest {
     fun `manifest returns the serialized manifest for an authenticated request`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/manifest") { header(SECRET_HEADER, SECRET) }
@@ -207,7 +209,7 @@ class GsoundRoutingTest {
     fun `manifest is empty when the source has no active session`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(manifest = null), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(manifest = null), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/manifest") { header(SECRET_HEADER, SECRET) }
@@ -224,7 +226,7 @@ class GsoundRoutingTest {
     fun `media full download returns the bytes with content type and accept-ranges`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/media/$TRACK_ID") { header(SECRET_HEADER, SECRET) }
@@ -246,7 +248,7 @@ class GsoundRoutingTest {
     fun `media range request returns 206 with content-range and the sliced body`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val start = 100
@@ -272,7 +274,7 @@ class GsoundRoutingTest {
     fun `media unsatisfiable range returns 416`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             // Range entirely beyond the file length is not satisfiable.
@@ -291,7 +293,7 @@ class GsoundRoutingTest {
     fun `media unknown id returns 404`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.get("/media/does-not-exist") { header(SECRET_HEADER, SECRET) }
@@ -304,7 +306,7 @@ class GsoundRoutingTest {
     fun `media rejects a traversal-looking id with 404 without hitting the source`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             // Encoded so Ktor decodes it into a single "../../etc/passwd" path segment, which
@@ -324,6 +326,7 @@ class GsoundRoutingTest {
                 installGsoundRouting(
                     mediaSource = FakeMediaSource(MANIFEST, failOpen = true),
                     secretProvider = FakeSecretProvider(SECRET),
+                    logger = NoopLogger,
                 )
             }
 
@@ -339,7 +342,7 @@ class GsoundRoutingTest {
     fun `head media returns size and accept-ranges without a body`() = runTest {
         testApplication {
             application {
-                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET))
+                installGsoundRouting(FakeMediaSource(MANIFEST), FakeSecretProvider(SECRET), NoopLogger)
             }
 
             val response = client.head("/media/$TRACK_ID") { header(SECRET_HEADER, SECRET) }

@@ -1,5 +1,6 @@
 import Toybox.Lang;
 import Toybox.Communications;
+import Toybox.System;
 
 //! GsoundSyncDelegate — the system-driven sync entry point
 //! (design.md §8.2; Req 4.1, 4.2, 8.5). Replaces GsoundSyncDelegateStub.
@@ -144,6 +145,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //! Wrapped so no exception escapes into the SDK (Req 8.5). Never logs the
     //! secret (Req 7.3).
     function onStartSync() as Void {
+        System.println("Gsound: onStartSync() called by ACP framework");
         try {
             var pairing = Repo.loadPairing();
             var secret = pairingSecret(pairing);
@@ -306,6 +308,9 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //! completion — none of which is implemented in task 7.1 (this is the seam).
     //! Held on _downloader so onCancelSync (task 7.8) can reach it.
     private function startDownload(manifest as Dictionary, pairing as Dictionary) as Void {
+        var tracks = manifest.get(Messages.FIELD_TRACKS);
+        var count = (tracks instanceof Array) ? (tracks as Array).size() : 0;
+        System.println("Gsound: startDownload() work=" + count + " track(s)");
         var control = resolveControl();
         _downloader = new Downloader(manifest, pairing, control);
         _downloader.start();

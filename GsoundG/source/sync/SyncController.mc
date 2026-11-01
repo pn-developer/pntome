@@ -1,4 +1,5 @@
 import Toybox.Lang;
+import Toybox.System;
 
 //! SyncController — SYNC_MANIFEST intake + pending-manifest holder
 //! (design.md §8.0–§8.1; Req 3.1, 3.3, 8.4).
@@ -125,6 +126,12 @@ class SyncController {
                 Messages.FIELD_TRACKS => cleanTracks
             };
             _pendingManifest = manifest;
+
+            // Diagnostic: confirm the watch RECEIVED and parsed a SYNC_MANIFEST. Visible in the
+            // simulator console / `monkeydo` output. Non-sensitive: track count only, never the
+            // serverUrl host or any payload content (Req 7.3). This is the watch-side counterpart
+            // to the phone's "SYNC_MANIFEST sent" log — together they prove delivery end to end.
+            System.println("Gsound: SYNC_MANIFEST received, tracks=" + cleanTracks.size());
 
             // Persist the new pending manifest so a system-launched sync (a
             // separate ACP process, Req 7.2) can download without the phone

@@ -52,6 +52,31 @@ SDK="$(detect_sdk)"
 
 mkdir -p "$(dirname "$OUTPUT")"
 
+# --- Stamp the git commit into source/Version.mc for this build -----------------------------
+# The app shows "v<SEMVER> (<COMMIT>)" in the UI. SEMVER is hand-maintained in Version.mc; the
+# COMMIT is injected here from git so the installed .prg always carries the real build commit.
+# We edit the file in place, build, then RESTORE it so the working tree isn't left dirty (the
+# committed COMMIT value is the "dev" fallback). A trap guarantees the restore even on failure.
+VERSION_FILE="source/Version.mc"
+VERSION_BACKUP=""
+restore_version() {
+  if [ -n "$VERSION_BACKUP" ] && [ -f "$VERSION_BACKUP" ]; then
+    mv -f "$VERSION_BACKUP" "$VERSION_FILE"
+  fi
+}
+if [ -f "$VERSION_FILE" ]; then
+  GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo dev)"
+  if git rev-parse --git-dir >/dev/null 2>&1 && ! git diff --quiet 2>/dev/null; then
+    GIT_COMMIT="${GIT_COMMIT}-dirty"
+  fi
+  VERSION_BACKUP="$(mktemp)"
+  cp "$VERSION_FILE" "$VERSION_BACKUP"
+  trap restore_version EXIT
+  # Replace the COMMIT constant value with the resolved git commit.
+  sed -i "s/const COMMIT = \"[^\"]*\";/const COMMIT = \"${GIT_COMMIT}\";/" "$VERSION_FILE"
+  echo "build.sh: version $(sed -n 's/.*const SEMVER = "\([^"]*\)".*/\1/p' "$VERSION_FILE") (${GIT_COMMIT})"
+fi
+
 echo "build.sh: SDK    $SDK"
 echo "build.sh: key    $CIQ_DEVKEY"
 echo "build.sh: device $DEVICE"

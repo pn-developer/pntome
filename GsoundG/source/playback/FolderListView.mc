@@ -126,6 +126,7 @@ class FolderListView extends WatchUi.View {
             StubViews.drawCentered(dc,
                 WatchUi.loadResource(Rez.Strings.FolderListEmptyTitle) as String,
                 prompt);
+            drawVersionFooter(dc);
             return;
         }
 
@@ -173,6 +174,27 @@ class FolderListView extends WatchUi.View {
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
+
+        drawVersionFooter(dc);
+    }
+
+    //! Draw the app version string ("v<semver> (<commit>)") centered near the bottom of the
+    //! screen in a dim gray XTINY font, shown on both the folder list and its empty state so the
+    //! build is always identifiable from the watch. Exception-free: only a draw call plus the
+    //! pure AppVersion.display().
+    //!
+    //! Positioned at ~85% of the height (NOT the very bottom edge): on a ROUND fēnix display the
+    //! circular bezel clips the extreme top/bottom, so `height - 6` sat in the cut-off zone and
+    //! was barely readable. 85% keeps the whole line inside the safe area. The text is
+    //! bottom-anchored (TEXT_JUSTIFY_VCENTER at that y) so descenders stay clear of the edge.
+    static function drawVersionFooter(dc as Graphics.Dc) as Void {
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            dc.getWidth() / 2,
+            (dc.getHeight() * 85) / 100,
+            Graphics.FONT_XTINY,
+            AppVersion.display(),
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     //! Number of folders currently listed (0 in the empty state). Lets the paired

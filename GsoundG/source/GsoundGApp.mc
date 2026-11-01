@@ -4,6 +4,7 @@ import Toybox.WatchUi;
 import Toybox.Media;
 import Toybox.Communications;
 import Toybox.Graphics;
+import Toybox.System;
 
 //! GsoundGApp — Audio Content Provider application entry point.
 //!
@@ -97,8 +98,18 @@ class GsoundGApp extends Application.AudioContentProviderApp {
             _pairing = Repo.loadPairing();
             _stats = Repo.loadStats();
             _index = Repo.loadIndex();
+            // Diagnostic: confirm whether a pairing record survived a reboot. Non-sensitive — we
+            // log only whether a record exists and its pairingId (never the secret, Req 7.3).
+            // Visible in the simulator console / `monkeydo` output as "Gsound: onStart ...".
+            if (_pairing != null) {
+                var pid = _pairing.get(Protocol.KEY_PAIRING_ID);
+                System.println("Gsound: onStart pairing RESTORED pairingId=" + (pid != null ? pid.toString() : "?"));
+            } else {
+                System.println("Gsound: onStart NO pairing persisted (unpaired)");
+            }
         } catch (ex) {
             // Corrupt/unavailable storage must not crash launch; fall back to empty state.
+            System.println("Gsound: onStart storage read FAILED -> treating as unpaired");
             _pairing = null;
             _stats = null;
             _index = [];
@@ -133,7 +144,11 @@ class GsoundGApp extends Application.AudioContentProviderApp {
             _control = control;
             _pairingManager = pairingManager;
             _syncController = syncController;
+            // Diagnostic: the pairing manager restores STATE_PAIRED in its initialize() when a
+            // record was persisted, so this line tells you the status the UI will show.
+            System.println("Gsound: onStart control channel UP; paired=" + pairingManager.isPaired());
         } catch (ex) {
+            System.println("Gsound: onStart control channel FAILED to come up -> UI shows unpaired");
             _control = null;
             _pairingManager = null;
             _syncController = null;
@@ -196,8 +211,13 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! Resolve the pairingId to echo in the PONG: prefer the stored record's id,
     //! falling back to the id carried on the PING itself (they match once the
     //! pairing filter has accepted the message).
+    //!
+    //! Reads the pairing LIVE from Repo (not the onStart `_pairing` snapshot) so a pairing
+    //! established after launch is reflected — the snapshot is no longer kept in sync (see
+    //! onStop). Falls back to the id on the PING itself, which the control channel has already
+    //! matched against the stored record.
     private function pingPairingId(msg as Dictionary) as String? {
-        var record = _pairing;
+        var record = Repo.loadPairing();
         if (record != null) {
             var stored = record.get(Protocol.KEY_PAIRING_ID);
             if (stored instanceof String && !(stored as String).equals("")) {
@@ -210,12 +230,17 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! Called when the application is exiting. Persist current in-memory state via Repo.
     //! Wrapped so a storage error on shutdown can't crash the app (Req 8.5).
     function onStop(state as Dictionary?) as Void {
-        try {
-            Repo.savePairing(_pairing);
-            Repo.saveStats(_stats);
-        } catch (ex) {
-            // Best-effort save; swallow to avoid crashing on exit.
-        }
+        // Intentionally does NOT re-save pairing/stats here.
+        //
+        // The app-level `_pairing`/`_stats` fields are a read-only SNAPSHOT taken at onStart. The
+        // authoritative writers persist to Repo at the moment of change:
+        //   - PairingManager.persistPendingPairing()/unpair() -> Repo.savePairing/deletePairing,
+        //   - the Downloader / StatsStore                     -> Repo.saveStats,
+        // all on their own (possibly separate ACP) process. Re-saving the stale snapshot here
+        // would CLOBBER those writes: e.g. pairing on the watch updates Repo but not this field,
+        // so an onStop(Repo.savePairing(_pairing==null)) would wipe a freshly-paired record. Repo
+        // is the single source of truth; onStop must not overwrite it (Req 7.1, 7.2). Left as a
+        // no-op (wrapped-call removed) so a relaunch always reflects what was actually persisted.
     }
 
     // --- ACP mode-routing hooks (task 2.2) -------------------------------------

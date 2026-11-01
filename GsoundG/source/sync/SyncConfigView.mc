@@ -75,6 +75,7 @@ class SyncConfigView extends WatchUi.View {
         if (controller == null) {
             StubViews.drawCentered(dc, title,
                 WatchUi.loadResource(Rez.Strings.SyncEmpty) as String);
+            drawVersionFooter(dc);
             return;
         }
 
@@ -94,6 +95,7 @@ class SyncConfigView extends WatchUi.View {
             // nothing queued.
             StubViews.drawCentered(dc, title,
                 WatchUi.loadResource(Rez.Strings.SyncNothing) as String);
+            drawVersionFooter(dc);
             return;
         }
 
@@ -129,6 +131,28 @@ class SyncConfigView extends WatchUi.View {
         // Confirm prompt near the bottom.
         dc.drawText(cx, cy + 56, Graphics.FONT_XTINY,
             WatchUi.loadResource(Rez.Strings.SyncPrompt) as String,
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+
+        // App version footer (semantic version + build commit) at the very bottom, dimmed so it
+        // never competes with the primary content. Pure string assembly (AppVersion.display),
+        // no SDK calls that could throw.
+        drawVersionFooter(dc);
+    }
+
+    //! Draw the app version string ("v<semver> (<commit>)") centered at the bottom of the
+    //! screen in a dim gray XTINY font. Shared helper so the empty/nothing states can show it
+    //! too. Exception-free (only a draw call + the pure AppVersion.display()).
+    //!
+    //! Positioned at ~85% of the height (NOT the very bottom edge): on a ROUND fēnix display the
+    //! circular bezel clips the extreme bottom, so `height - 6` was in the cut-off zone and
+    //! barely readable. 85% keeps the line inside the safe area, below the confirm prompt.
+    static function drawVersionFooter(dc as Graphics.Dc) as Void {
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            dc.getWidth() / 2,
+            (dc.getHeight() * 85) / 100,
+            Graphics.FONT_XTINY,
+            AppVersion.display(),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 }

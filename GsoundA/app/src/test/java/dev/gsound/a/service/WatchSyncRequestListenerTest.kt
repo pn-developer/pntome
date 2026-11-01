@@ -10,7 +10,7 @@ import dev.gsound.a.net.garmin.messages.SyncRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -46,8 +46,12 @@ class WatchSyncRequestListenerTest {
         listener = WatchSyncRequestListener(context, channel, store)
     }
 
+    // These use runBlocking (real wall-clock), NOT runTest: the listener collects on its own
+    // Dispatchers.Default scope, so the virtual-time scheduler of runTest would skip the polling
+    // delays without ever letting the background collector run. Real delays give it time.
+
     @Test
-    fun `matching SYNC_REQUEST starts the sync service`() = runTest {
+    fun `matching SYNC_REQUEST starts the sync service`() = runBlocking {
         store.save(PairingRecord(pairingId, "fenix", "secret", 1L))
         listener.start()
         awaitSubscribed()
@@ -61,14 +65,14 @@ class WatchSyncRequestListenerTest {
     }
 
     @Test
-    fun `SYNC_REQUEST with a foreign pairingId is ignored`() = runTest {
+    fun `SYNC_REQUEST with a foreign pairingId is ignored`() = runBlocking {
         store.save(PairingRecord(pairingId, "fenix", "secret", 1L))
         listener.start()
         awaitSubscribed()
 
         channel.emitIncoming(SyncRequest(pairingId = "some-other-pairing"))
-        // Give the collector a chance to process (and reject) the message.
-        repeat(5) { kotlinx.coroutines.yield() }
+        // Give the collector real time to process (and reject) the message.
+        kotlinx.coroutines.delay(200)
 
         assertNull(
             "no service should start for a foreign pairingId",
@@ -77,13 +81,13 @@ class WatchSyncRequestListenerTest {
     }
 
     @Test
-    fun `SYNC_REQUEST is ignored when not paired`() = runTest {
+    fun `SYNC_REQUEST is ignored when not paired`() = runBlocking {
         // store left empty → unpaired
         listener.start()
         awaitSubscribed()
 
         channel.emitIncoming(SyncRequest(pairingId = pairingId))
-        repeat(5) { kotlinx.coroutines.yield() }
+        kotlinx.coroutines.delay(200)
 
         assertNull(
             "no service should start when unpaired",
