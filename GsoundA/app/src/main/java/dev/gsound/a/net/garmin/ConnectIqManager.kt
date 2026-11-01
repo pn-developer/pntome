@@ -150,11 +150,23 @@ class ConnectIqManager @Inject constructor(
      * (typically [ConnectionState.Error.Reason.DEVICE_DISCONNECTED]); a CONNECTED status restores
      * [ConnectionState.Connected] (task 6.4).
      */
-    private val deviceEventListener = ConnectIQ.IQDeviceEventListener { device, status ->
-        GsoundLog.i(tag, "deviceEvent: device=${device?.friendlyName} id=${device?.deviceIdentifier} status=$status")
-        _connectionState.value = when (val outcome = SdkStateMapper.mapDeviceStatus(status)) {
-            is SdkStateMapper.DeviceOutcome.Connected -> ConnectionState.Connected
-            is SdkStateMapper.DeviceOutcome.Error -> outcome.error
+    private val deviceEventListener = ConnectIQ.IQDeviceEventListener { eventDevice, status ->
+        GsoundLog.i(tag, "deviceEvent: device=${eventDevice?.friendlyName} id=${eventDevice?.deviceIdentifier} status=$status")
+        when (val outcome = SdkStateMapper.mapDeviceStatus(status)) {
+            is SdkStateMapper.DeviceOutcome.Connected -> {
+                // Capture the device from the event so a send has a target even if this CONNECTED
+                // arrived outside a full connect()/resolveDeviceAndApp pass (e.g. a BT reconnect
+                // after unpair/reboot). Without this the state could be Connected while `device`
+                // stayed null, and sends failed with "not connected (device=false)". `app` is
+                // still bound by resolveDeviceAndApp / falls back to gsoundApp in sendOnce.
+                if (eventDevice != null) {
+                    device = eventDevice
+                }
+                _connectionState.value = ConnectionState.Connected
+            }
+            is SdkStateMapper.DeviceOutcome.Error -> {
+                _connectionState.value = outcome.error
+            }
         }
     }
 
@@ -418,7 +430,19 @@ class ConnectIqManager @Inject constructor(
      * (never throwing for transport problems) otherwise, so [OutgoingRetry] can retry.
      */
     private suspend fun sendOnce(payload: Map<String, Any?>): Result<Unit> {
-        val iq = connectIq
+        var iq = connectIq
+        // Self-heal: the device-event listener can flip connectionState to Connected (a BT
+        // reconnect after unpair/reboot) WITHOUT binding `device`/`app` — those are only set by
+        // resolveDeviceAndApp. If we have no resolved device yet, resolve it on demand via
+        // connect() (idempotent) rather than failing, so a send never dies with "not connected"
+        // while the watch is actually reachable. This was the cause of PAIR_REQUEST failing with
+        // device=false right after the channel reported Connected.
+        if (device == null) {
+            GsoundLog.i(tag, "sendOnce: no resolved device yet; resolving on demand before send")
+            runCatching { connect() }
+                .onFailure { GsoundLog.w(tag, "sendOnce: on-demand connect() threw: ${it.javaClass.simpleName}") }
+            iq = connectIq
+        }
         val targetDevice = device
         val targetApp = app ?: gsoundApp
         if (iq == null || targetDevice == null) {

@@ -58,6 +58,29 @@ mkdir -p "$(dirname "$OUTPUT")"
 # We edit the file in place, build, then RESTORE it so the working tree isn't left dirty (the
 # committed COMMIT value is the "dev" fallback). A trap guarantees the restore even on failure.
 VERSION_FILE="source/Version.mc"
+
+# --- Guard: the semantic version must match between Version.mc and manifest.xml -------------
+# AppVersion.SEMVER (shown in the watch UI footer) and the manifest's <iq:application version=...>
+# (app metadata / store tooling) are two separate literals. Fail the build if they disagree so a
+# release bump can never silently update one but not the other. Skipped only when a file is
+# absent (e.g. a partial checkout), with a warning rather than a hard stop.
+if [ -f "$VERSION_FILE" ] && [ -f "$JUNGLE" ] && [ -f manifest.xml ]; then
+  SEMVER_CODE="$(sed -n 's/.*const SEMVER = "\([^"]*\)".*/\1/p' "$VERSION_FILE" | head -1)"
+  # Match the APPLICATION version (a dotted semver like 0.1.0), NOT the manifest-schema
+  # `version="3"` on <iq:manifest>. Requiring a dot (N.N...) excludes the single-digit schema
+  # version regardless of attribute order.
+  SEMVER_MANIFEST="$(grep -o 'version="[0-9][0-9]*\.[0-9][^"]*"' manifest.xml | head -1 | sed 's/version="\([^"]*\)"/\1/')"
+  if [ -z "$SEMVER_CODE" ]; then
+    die "could not read AppVersion.SEMVER from $VERSION_FILE"
+  fi
+  if [ -z "$SEMVER_MANIFEST" ]; then
+    die "manifest.xml has no <iq:application version=\"...\"> attribute (add one matching $VERSION_FILE's SEMVER=$SEMVER_CODE)"
+  fi
+  if [ "$SEMVER_CODE" != "$SEMVER_MANIFEST" ]; then
+    die "version mismatch: Version.mc SEMVER=$SEMVER_CODE but manifest.xml version=$SEMVER_MANIFEST — bump both together."
+  fi
+fi
+
 VERSION_BACKUP=""
 restore_version() {
   if [ -n "$VERSION_BACKUP" ] && [ -f "$VERSION_BACKUP" ]; then

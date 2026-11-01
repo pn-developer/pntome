@@ -6,6 +6,9 @@
                      PROTOCOL CONSTANT and MUST stay byte-for-byte identical to
                      GsoundA/.../net/garmin/GsoundAppId.kt (VALUE). Do not change one without
                      the other.
+      - version:     semantic app version (MAJOR.MINOR.PATCH). MUST stay in sync with
+                     AppVersion.SEMVER in source/Version.mc (the value shown in the watch UI
+                     footer); bump both together on a release.
       - minApiLevel: 3.0.0 (Req 1.3).
       - permissions: Communications (web requests + phone app messaging; Req 1.2). Media and
                      background capabilities come with the audio-content-provider-app type.
@@ -20,6 +23,7 @@
         name="@Strings.AppName"
         entry="GsoundGApp"
         launcherIcon="@Drawables.LauncherIcon"
+        version="0.1.0"
         minApiLevel="3.0.0">
 
         <!--

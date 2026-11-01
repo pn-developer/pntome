@@ -1,5 +1,6 @@
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Communications;
 
 //! SyncController — SYNC_MANIFEST intake + pending-manifest holder
 //! (design.md §8.0–§8.1; Req 3.1, 3.3, 8.4).
@@ -162,6 +163,23 @@ class SyncController {
             // the seam is ready if the wire ever grows one.
             applyFetchFallback(msg, cleanTracks);
 
+            // AUTO-TRIGGER the system sync as soon as a usable manifest lands (design §8.1).
+            //
+            // Why: on an Audio Content Provider the DOWNLOAD only runs when the system launches
+            // the app in sync mode and calls GsoundSyncDelegate.onStartSync() — and the ONLY way
+            // to enter that mode is Communications.startSync(). Without this, the phone's "Sync"
+            // button delivers the manifest but the watch never downloads (observed: server up,
+            // complete=0/23 bytes=0, zero HTTP requests) until the user manually navigates the
+            // watch's Music Providers → sync-config → confirm. Triggering here makes "tap Sync on
+            // the phone" actually start the transfer.
+            //
+            // startSync() exits this app instance and relaunches it in sync mode; onStartSync()
+            // then reads the PERSISTED manifest (cross-process safe) and downloads. isSyncNeeded()
+            // still gates it, so if there is genuinely nothing new the relaunched sync just
+            // no-ops. Guarded so an unsupported launch context / transient failure can't crash the
+            // message dispatch path (Req 8.5) — the user can still trigger the sync manually.
+            maybeAutoStartSync(cleanTracks);
+
             return manifest;
         } catch (ex) {
             // A malformed/hostile payload must never crash the message callback
@@ -220,6 +238,30 @@ class SyncController {
         }
     }
 
+    //! Kick off the system sync right after a fresh, usable manifest is persisted, so the phone's
+    //! "Sync" starts the download without the user navigating the watch UI (design §8.1).
+    //!
+    //! Triggers only when there is something to sync — either inline tracks arrived OR the
+    //! fetch-at-sync-start fallback is set (serverUrl-only manifest). Communications.startSync()
+    //! relaunches the app in sync mode; GsoundSyncDelegate.isSyncNeeded() then re-gates against
+    //! the persisted index, so an already-synced library won't re-download. Wrapped end to end:
+    //! startSync() can throw in an unsupported launch context, and that must never crash the
+    //! SYNC_MANIFEST dispatch — the manual sync-config path remains as a fallback (Req 8.5).
+    private function maybeAutoStartSync(cleanTracks as Array<Dictionary>) as Void {
+        var hasWork = cleanTracks.size() > 0 || _needsFetchAtSyncStart;
+        if (!hasWork) {
+            return;
+        }
+        try {
+            System.println("Gsound: manifest received -> auto startSync()");
+            Communications.startSync();
+        } catch (ex) {
+            // Unsupported launch context / transient failure: the user can still start the sync
+            // from the watch's Music Providers → sync-config screen. Never crash dispatch.
+            System.println("Gsound: auto startSync() failed (use manual sync on watch)");
+        }
+    }
+
     // --- accessors --------------------------------------------------------------
 
     //! The most recently parsed pending manifest `{ serverUrl, tracks:[...] }`, or
@@ -233,11 +275,27 @@ class SyncController {
     //! Number of validated tracks in the current pending manifest, or 0 when there
     //! is no pending manifest. Convenience for SyncConfigView's pending-count
     //! surface (design §8.1).
+    //!
+    //! CROSS-PROCESS: the Audio Content Provider framework launches each mode in a SEPARATE
+    //! process. The process that received the SYNC_MANIFEST (control channel) is NOT the one that
+    //! renders the sync-config view, so the in-memory `_pendingManifest` is null there even
+    //! though onManifest persisted it. We therefore fall back to the PERSISTED manifest
+    //! (Repo.loadPendingManifest) when the in-memory copy is absent, so the count is correct in a
+    //! freshly-launched config process (design §8.1, Req 7.2). Wrapped so a storage hiccup
+    //! degrades to 0 rather than crashing the view (Req 8.5).
     function getPendingTrackCount() as Number {
-        if (_pendingManifest == null) {
+        var manifest = _pendingManifest;
+        if (manifest == null) {
+            try {
+                manifest = Repo.loadPendingManifest();
+            } catch (ex) {
+                manifest = null;
+            }
+        }
+        if (manifest == null) {
             return 0;
         }
-        var tracks = _pendingManifest.get(Messages.FIELD_TRACKS);
+        var tracks = manifest.get(Messages.FIELD_TRACKS);
         if (tracks instanceof Array) {
             return (tracks as Array).size();
         }
@@ -247,12 +305,24 @@ class SyncController {
     //! True when the current pending manifest was received with an empty/truncated
     //! inline `tracks` list, so task 7's onStartSync must fetch the authoritative
     //! list from GET {serverUrl}/manifest over HTTP rather than trusting the inline
-    //! tracks (design §6.1). False on the normal inline path. Reflects the same
-    //! decision persisted by Repo under "pm:fetch" (task 7 reads the persisted flag
-    //! in its own process; this accessor serves an in-process reader such as
-    //! SyncConfigView).
+    //! tracks (design §6.1). False on the normal inline path.
+    //!
+    //! CROSS-PROCESS: like getPendingTrackCount, the in-memory flag is only set in the process
+    //! that handled onManifest. A freshly-launched sync-config process must read the PERSISTED
+    //! flag (Repo.loadPendingFetchFlag) so a "serverUrl-only" manifest still offers a sync there
+    //! (Req 7.2). We OR the in-memory flag with the persisted one. Wrapped so a storage hiccup
+    //! degrades to the in-memory value (Req 8.5).
     function needsFetchAtSyncStart() as Boolean {
-        return _needsFetchAtSyncStart;
+        if (_needsFetchAtSyncStart) {
+            return true;
+        }
+        try {
+            var flag = Repo.loadPendingFetchFlag();
+            var isSet = flag.get("set");
+            return (isSet instanceof Boolean) && (isSet as Boolean);
+        } catch (ex) {
+            return false;
+        }
     }
 
     //! The phone-reported expected track count when the fetch-at-sync-start flag is
