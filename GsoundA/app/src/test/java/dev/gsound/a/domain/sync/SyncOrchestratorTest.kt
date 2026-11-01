@@ -20,6 +20,7 @@ import dev.gsound.a.net.server.GsoundHttpServer
 import dev.gsound.a.net.server.SyncSessionHolder
 import dev.gsound.a.net.server.WifiAddressResolver
 import dev.gsound.a.net.server.WifiGuard
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -353,6 +354,62 @@ class SyncOrchestratorTest {
         channel.emitIncoming(terminalStatus(done = 1, total = 1, bytes = 10L))
         awaitTerminal(run)
         Unit
+    }
+
+    // --- Cancellation is propagated, not swallowed as Error -------------------------------------
+
+    @Test
+    fun `coroutine cancellation propagates and is not mapped to Error`() = runBlocking {
+        pairingStore.save(pairing)
+        seedTracks(track("a"))
+
+        // Launch a sync and let it park in status collection (server bound, manifest sent).
+        val run = startSyncAsync()
+        awaitSent()
+        assertTrue(httpServer.isRunning)
+
+        // Cancel the coroutine running startSync() — this models the foreground service's
+        // lifecycleScope being torn down. The orchestrator must NOT catch this and turn it into
+        // SyncState.Error (the old "sync threw: JobCancellationException" bug); it must propagate.
+        run.cancel()
+
+        var cancelled = false
+        try {
+            run.await()
+        } catch (_: CancellationException) {
+            cancelled = true
+        }
+        assertTrue("cancellation should propagate out of startSync()", cancelled)
+
+        // State was never flipped to Error by the cancellation.
+        assertFalse(
+            "cancellation must not be mapped to SyncState.Error",
+            orchestrator.state.value is SyncState.Error
+        )
+
+        // Teardown still ran via finally: server stopped, session cleared (Req 5.6).
+        awaitUntil("server stopped after cancellation teardown") { !httpServer.isRunning }
+        assertNull("session should be cleared after cancellation", sessionHolder.current)
+    }
+
+    // --- beginSync clears a retained terminal state ---------------------------------------------
+
+    @Test
+    fun `beginSync clears a retained terminal state to Preparing`() = runBlocking {
+        pairingStore.save(pairing)
+        seedTracks(track("a"))
+
+        // Drive one sync to a terminal Error so the singleton StateFlow retains it.
+        channel.sendResults.addLast(Result.failure(RuntimeException("transport down")))
+        val first = orchestrator.startSync()
+        assertTrue(first is SyncState.Error)
+        assertTrue(orchestrator.state.value is SyncState.Error)
+
+        // beginSync() must move the retained terminal value to Preparing BEFORE a new run — this
+        // is what stops a fresh state observer from replaying the stale terminal and killing the
+        // next sync.
+        orchestrator.beginSync()
+        assertEquals(SyncState.Preparing, orchestrator.state.value)
     }
 
     // --- helpers --------------------------------------------------------------------------------

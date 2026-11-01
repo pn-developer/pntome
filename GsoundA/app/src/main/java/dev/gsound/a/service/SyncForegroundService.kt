@@ -108,6 +108,12 @@ class SyncForegroundService : LifecycleService() {
         // kill us during startup (Android requires startForeground shortly after start).
         acquireWifiLock()
         goForeground(buildNotification(SyncState.Preparing))
+
+        // Reset the orchestrator's hot StateFlow out of any terminal value left by a PREVIOUS
+        // sync BEFORE observing it. Otherwise observeState()'s fresh collector replays that stale
+        // terminal value, hits the terminal branch, and stopSelf()s — cancelling the sync we are
+        // about to launch (the "sync threw: JobCancellationException" failure).
+        orchestrator.beginSync()
         observeState()
 
         if (!syncLaunched) {

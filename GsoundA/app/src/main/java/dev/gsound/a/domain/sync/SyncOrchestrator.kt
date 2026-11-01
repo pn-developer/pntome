@@ -17,6 +17,7 @@ import dev.gsound.a.net.server.SyncSession
 import dev.gsound.a.net.server.SyncSessionHolder
 import dev.gsound.a.net.server.WifiGuard
 import dev.gsound.a.net.server.WifiStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -111,6 +112,22 @@ class SyncOrchestrator @Inject constructor(
      *
      * @return the terminal [SyncState] this call resolved to (also observable via [state]).
      */
+    /**
+     * Synchronously move [state] out of any retained terminal value to [SyncState.Preparing]
+     * **before** a sync coroutine is launched.
+     *
+     * [state] is a hot singleton [StateFlow], so it keeps the last terminal value
+     * (Completed/Error/Cancelled) between runs. A fresh collector — notably
+     * [dev.gsound.a.service.SyncForegroundService]'s state observer — replays that retained value
+     * the instant it subscribes. If that replayed value is terminal, the service calls
+     * `stopSelf()` immediately, which cancels the just-launched [startSync] coroutine and surfaces
+     * as a spurious `JobCancellationException`. Calling this first makes the replayed value
+     * [SyncState.Preparing], so the observer sees a correct in-progress state instead.
+     */
+    fun beginSync() {
+        _state.value = SyncState.Preparing
+    }
+
     suspend fun startSync(): SyncState {
         // Req 6.6: reject a concurrent sync without disturbing the active one.
         if (!syncMutex.tryLock()) {
@@ -120,6 +137,11 @@ class SyncOrchestrator @Inject constructor(
 
         try {
             logger.i(tag, "startSync: state=Preparing")
+            // Clear any terminal value retained by this singleton StateFlow from a *previous*
+            // sync run. Observers that subscribe before this coroutine runs must not see a stale
+            // Completed/Error/Cancelled (which would make the foreground service stopSelf() and
+            // cancel this very sync). beginSync() already sets Preparing synchronously for that
+            // reason; this keeps it true on the direct startSync() path too.
             _state.value = SyncState.Preparing
 
             // Req 6.1: a sync requires an active pairing (pairingId + sharedSecret).
@@ -211,6 +233,14 @@ class SyncOrchestrator @Inject constructor(
             )
             logger.i(tag, "sync terminal: ${terminal::class.simpleName}")
             return transition(terminal)
+        } catch (c: CancellationException) {
+            // Structured-concurrency cancellation (e.g. the foreground service's lifecycleScope
+            // being torn down) is NOT a sync failure. Re-throw so cancellation propagates and is
+            // not mislabeled as SyncState.Error (this also stops the misleading
+            // "sync threw: JobCancellationException" error log). The `finally` below still runs
+            // teardown, so the server is stopped and the session cleared regardless.
+            logger.i(tag, "sync cancelled; propagating cancellation")
+            throw c
         } catch (t: Throwable) {
             logger.e(tag, "sync threw: ${t.javaClass.simpleName}", t)
             return transition(
