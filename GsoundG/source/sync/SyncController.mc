@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Communications;
+import Toybox.Timer;
 
 //! SyncController — SYNC_MANIFEST intake + pending-manifest holder
 //! (design.md §8.0–§8.1; Req 3.1, 3.3, 8.4).
@@ -74,6 +75,13 @@ class SyncController {
     //! surface an expectation if the phone ever adds one.
     private var _expectedTrackCount as Number?;
 
+    //! Delay before the deferred auto-start fires (see maybeAutoStartSync). Short: just enough to
+    //! return out of the phone-message callback before startSync() tears the app down.
+    private const AUTO_START_DELAY_MS = 500;
+
+    //! Pending one-shot timer for the deferred auto-start, held so it isn't garbage collected.
+    private var _autoStartTimer as Timer.Timer?;
+
     //! Build a SyncController bound to `control`. Does not register the handler —
     //! registerHandlers() is a separate step the app calls once the channel is
     //! ready (mirrors PairingManager).
@@ -82,6 +90,7 @@ class SyncController {
         _pendingManifest = null;
         _needsFetchAtSyncStart = false;
         _expectedTrackCount = null;
+        _autoStartTimer = null;
     }
 
     //! Register this controller's inbound handler on the control channel: it
@@ -247,18 +256,84 @@ class SyncController {
     //! the persisted index, so an already-synced library won't re-download. Wrapped end to end:
     //! startSync() can throw in an unsupported launch context, and that must never crash the
     //! SYNC_MANIFEST dispatch — the manual sync-config path remains as a fallback (Req 8.5).
+    //!
+    //! DEFERRED, not called inline: this runs inside the phone-message (comm) callback, and
+    //! startSync() EXITS and relaunches the app. Doing that from within the comm callback produced
+    //! a device "System Error: Error in comm callback" (CIQ_LOG.YAML, empty stack) and the IQ!
+    //! icon, even though the relaunched sync then ran. So we return from the callback first and
+    //! call startSync() from a short one-shot Timer — the same kind of UI-thread event as the
+    //! button press SyncConfigDelegate.onSelect uses. If a Timer can't be created in this context
+    //! we fall back to the direct call (the previous, working-but-logged behaviour).
     private function maybeAutoStartSync(cleanTracks as Array<Dictionary>) as Void {
         var hasWork = cleanTracks.size() > 0 || _needsFetchAtSyncStart;
         if (!hasWork) {
             return;
         }
+        // Only start a sync the system will actually run. SyncNeed is the same check the sync
+        // mode's isSyncNeeded() uses; if it says "nothing to do", the system would never call
+        // onStartSync and the watch would sit on "Synchronization in progress". Instead, tell the
+        // phone right away that every manifest track is already on the watch, so its sync
+        // completes too.
+        if (!SyncNeed.isNeeded()) {
+            DebugLog.log("SYNC", "manifest received but nothing new -> no startSync, reporting up to date");
+            reportUpToDate();
+            return;
+        }
         try {
-            System.println("Gsound: manifest received -> auto startSync()");
+            var timer = new Timer.Timer();
+            timer.start(method(:onAutoStartSyncTimer), AUTO_START_DELAY_MS, false);
+            _autoStartTimer = timer; // keep a reference so the timer isn't collected
+            DebugLog.log("SYNC", "manifest received -> startSync() scheduled in " + AUTO_START_DELAY_MS.toString() + "ms");
+        } catch (ex) {
+            DebugLog.log("SYNC", "Timer unavailable (" + DebugLog.describe(ex) + ") -> startSync() now");
+            startSyncNow();
+        }
+    }
+
+    //! Send the phone a terminal SYNC_STATUS "N of N, no error" when the manifest it just sent is
+    //! already fully on the watch. The phone resolves Completed from done >= total > 0. Best
+    //! effort; never throws (Req 8.5). Never logs the secret (Req 7.3).
+    private function reportUpToDate() as Void {
+        try {
+            var pairing = Repo.loadPairing();
+            if (pairing == null) {
+                return;
+            }
+            var pairingId = pairing.get(Protocol.KEY_PAIRING_ID);
+            if (!(pairingId instanceof String) || (pairingId as String).equals("")) {
+                return;
+            }
+            var n = SyncNeed.manifestTrackCount();
+            if (n <= 0) {
+                return;
+            }
+            _control.transmit(
+                Messages.buildSyncStatus(pairingId as String, "uptodate", n, n, 0, null), null, null);
+
+            // Also forward the watch debug log (one line per message, see DebugLog). Safe here:
+            // nothing new means no startSync(), so this process is not about to exit mid-send.
+            // (When a sync DOES start we skip this — the app is torn down 500 ms later.)
+            DebugLog.sendPending(_control, pairingId as String);
+        } catch (ex) {
+            // Best effort.
+        }
+    }
+
+    //! Timer callback for the deferred auto-start (see maybeAutoStartSync). Public so the Timer
+    //! can invoke it by symbol.
+    function onAutoStartSyncTimer() as Void {
+        _autoStartTimer = null;
+        startSyncNow();
+    }
+
+    //! Call Communications.startSync(), wrapped: it can throw in an unsupported launch context,
+    //! and the manual Music Providers → sync-config path remains as the fallback (Req 8.5).
+    private function startSyncNow() as Void {
+        try {
+            DebugLog.log("SYNC", "calling Communications.startSync()");
             Communications.startSync();
         } catch (ex) {
-            // Unsupported launch context / transient failure: the user can still start the sync
-            // from the watch's Music Providers → sync-config screen. Never crash dispatch.
-            System.println("Gsound: auto startSync() failed (use manual sync on watch)");
+            DebugLog.log("SYNC", "startSync() FAILED " + DebugLog.describe(ex) + " (use manual sync on watch)");
         }
     }
 

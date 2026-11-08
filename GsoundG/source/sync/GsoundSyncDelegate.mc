@@ -53,81 +53,13 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //!
     //! Wrapped so a storage/parse problem degrades to "no sync needed" rather than
     //! crashing the sync process (Req 8.5).
+    //! The decision lives in SyncNeed so the auto-start in SyncController makes the SAME call:
+    //! when this returns false the system does NOT call onStartSync, so we must never trigger a
+    //! sync in that case (that left the watch stuck on "Synchronization in progress").
     function isSyncNeeded() as Lang.Boolean {
-        try {
-            var manifest = Repo.loadPendingManifest();
-            if (manifest == null) {
-                // No pending manifest → nothing authoritative to sync against.
-                return false;
-            }
-
-            // Fallback path: the inline list is empty/truncated and the real list
-            // must be fetched at sync start. We can't diff without fetching, so if
-            // a usable serverUrl is present, report sync-needed.
-            var fetchFlag = Repo.loadPendingFetchFlag();
-            if (fetchFlag.get("set") instanceof Boolean && (fetchFlag.get("set") as Boolean)) {
-                var serverUrl = manifest.get(Messages.FIELD_SERVER_URL);
-                return (serverUrl instanceof String) && !(serverUrl as String).equals("");
-            }
-
-            // Normal inline path: diff the manifest ids against the stored index.
-            return manifestDiffersFromIndex(manifest);
-        } catch (ex) {
-            // Never let the decision crash the sync process (Req 8.5).
-            return false;
-        }
-    }
-
-    //! True when the inline manifest's track ids differ from the stored index —
-    //! there is at least one manifest id not in the index (an addition) OR at
-    //! least one index id not in the manifest (a deletion to reconcile). Both
-    //! directions count as "sync needed" (design §8.2). Defensive about element
-    //! types; a malformed entry simply doesn't contribute an id.
-    private function manifestDiffersFromIndex(manifest as Dictionary) as Boolean {
-        var tracks = manifest.get(Messages.FIELD_TRACKS);
-        var manifestIds = [] as Array<String>;
-        if (tracks instanceof Array) {
-            var arr = tracks as Array;
-            for (var i = 0; i < arr.size(); i++) {
-                var track = arr[i];
-                if (track instanceof Dictionary) {
-                    var id = Protocol.getString(track as Dictionary, Messages.FIELD_ID);
-                    if (id != null && !id.equals("")) {
-                        manifestIds.add(id);
-                    }
-                }
-            }
-        }
-
-        var index = Repo.loadIndex();
-
-        // Addition: any manifest id not already in the index.
-        for (var i = 0; i < manifestIds.size(); i++) {
-            if (!Repo.containsValue(index, manifestIds[i])) {
-                return true;
-            }
-        }
-
-        // Deletion: any index id no longer present in the manifest.
-        for (var i = 0; i < index.size(); i++) {
-            var existing = index[i];
-            if (existing instanceof String && !listContains(manifestIds, existing as String)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    //! True when `ids` contains a String equal to `value`. Local helper mirroring
-    //! Repo.containsValue but over a typed String array built above.
-    private function listContains(ids as Array<String>, value as String) as Boolean {
-        for (var i = 0; i < ids.size(); i++) {
-            if (ids[i].equals(value)) {
-                return true;
-            }
-        }
-        return false;
+        var needed = SyncNeed.isNeeded();
+        DebugLog.log("SYNC", "isSyncNeeded -> " + needed.toString());
+        return needed;
     }
 
     // --- onStartSync -----------------------------------------------------------
@@ -145,7 +77,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //! Wrapped so no exception escapes into the SDK (Req 8.5). Never logs the
     //! secret (Req 7.3).
     function onStartSync() as Void {
-        System.println("Gsound: onStartSync() called by ACP framework");
+        DebugLog.log("SYNC", "onStartSync called by system");
         try {
             var pairing = Repo.loadPairing();
             var secret = pairingSecret(pairing);
@@ -438,14 +370,32 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //!     a cancel has done < total, so a no-error status would leave the phone
     //!     hanging). See Downloader.finish() for the full rationale.
     //! Wrapped so cancel can never crash the sync process (Req 8.5).
-    function onCancelSync() as Void {
+    //!
+    //! NAME FIX: the SDK's SyncDelegate callback is `onStopSync()` ("Called when an active sync is
+    //! cancelled ... the app is responsible for calling cancelAllRequests() ... and
+    //! notifySyncComplete()"). This was previously named `onCancelSync()`, which the SDK never
+    //! calls, so a cancel on the watch never released the sync and the watch stayed in sync mode.
+    //! Now: flag the Downloader, cancel in-flight requests, and complete the sync right away
+    //! (Downloader.finish() is idempotent, so a late request callback can't complete it twice).
+    function onStopSync() as Void {
+        DebugLog.log("SYNC", "onStopSync (user/system cancel) downloader=" + (_downloader != null).toString());
         try {
             var downloader = _downloader;
             if (downloader != null) {
                 downloader.cancel();
             }
+            Communications.cancelAllRequests();
+            if (downloader != null) {
+                downloader.finishCancelled();
+            } else {
+                Communications.notifySyncComplete(null);
+            }
         } catch (ex) {
-            // Never let cancel crash the sync process (Req 8.5).
+            // Never let cancel crash the sync process (Req 8.5); still release the sync.
+            try {
+                Communications.notifySyncComplete(null);
+            } catch (ex2) {
+            }
         }
     }
 }
