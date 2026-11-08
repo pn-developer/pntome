@@ -18,9 +18,10 @@ module AppVersion {
     //! build time; "dev" means a direct/non-scripted build.
     const COMMIT = "dev";
 
-    //! Human-readable combined version string, e.g. "v0.1.0 (e5c511d)". Used by
-    //! the UI (SyncConfigView footer). Pure string assembly — no SDK calls.
+    //! Human-readable combined version string, e.g. "v0.1.0 (e5c511d)", with a " dbg" suffix on
+    //! debug builds (`./build.sh --debug`, see DebugLog). Used by the UI footers. Pure string
+    //! assembly — no SDK calls.
     function display() as String {
-        return "v" + SEMVER + " (" + COMMIT + ")";
+        return "v" + SEMVER + " (" + COMMIT + ")" + (DebugLog.isDebugBuild() ? " dbg" : "");
     }
 }

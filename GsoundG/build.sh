@@ -5,9 +5,16 @@
 # developer key, so a plain `./build.sh` just works on this machine.
 #
 # Usage:
-#   ./build.sh [device] [output.prg]
+#   ./build.sh [--debug] [device] [output.prg]
 #
-#   device      Connect IQ device id (default: fenix6pro).
+#   --debug     debug build: keeps the (:debug) diagnostics — the watch log stored in
+#               Application.Storage and forwarded to the phone on "Refresh stats" (logcat tag
+#               Gsound.Watch), plus media-cache snapshots. The watch footer shows "dbg".
+#               Without it (default) the build is a RELEASE build (`monkeyc -r`): that code is
+#               stripped and only plain println output remains.
+#
+#   device      Connect IQ device id (default: fenix6spro — the fēnix 6S Pro this project is
+#               tested on; a build only runs correctly on the device it was built for).
 #               Valid ids come from manifest.xml:
 #               fenix6spro fenix6pro fenix6xpro
 #               fenix843mm fenix847mm fenix8pro47mm fenix8solar47mm fenix8solar51mm
@@ -18,7 +25,8 @@
 #   CIQ_DEVKEY  dev key .der (default: ~/.Garmin/developer_key.der)
 #
 # Examples:
-#   ./build.sh                       # fenix6pro -> build/GsoundG-fenix6pro.prg
+#   ./build.sh                       # release, fenix6spro -> build/GsoundG-fenix6spro.prg
+#   ./build.sh --debug               # debug,   fenix6spro -> build/GsoundG-fenix6spro.prg
 #   ./build.sh fenix847mm            # fenix 8  -> build/GsoundG-fenix847mm.prg
 #   ./build.sh fenix6pro /tmp/g.prg  # explicit output
 set -euo pipefail
@@ -26,8 +34,21 @@ set -euo pipefail
 # Run from the directory this script lives in, so relative paths (monkey.jungle) resolve.
 cd "$(dirname "$0")"
 
-DEVICE="${1:-fenix6pro}"
-OUTPUT="${2:-build/GsoundG-${DEVICE}.prg}"
+# Flags may appear anywhere; everything else is positional (device, output).
+FLAVOR="release"
+POSITIONAL=()
+for arg in "$@"; do
+  case "$arg" in
+    --debug) FLAVOR="debug" ;;
+    --release) FLAVOR="release" ;;
+    -h|--help) sed -n '2,/^set -euo/p' "$0" | sed '$d'; exit 0 ;;
+    -*) echo "build.sh: unknown option $arg" >&2; exit 2 ;;
+    *) POSITIONAL+=("$arg") ;;
+  esac
+done
+
+DEVICE="${POSITIONAL[0]:-fenix6spro}"
+OUTPUT="${POSITIONAL[1]:-build/GsoundG-${DEVICE}.prg}"
 JUNGLE="monkey.jungle"
 
 die() { echo "build.sh: $*" >&2; exit 1; }
@@ -104,7 +125,13 @@ echo "build.sh: SDK    $SDK"
 echo "build.sh: key    $CIQ_DEVKEY"
 echo "build.sh: device $DEVICE"
 echo "build.sh: output $OUTPUT"
+echo "build.sh: flavor $FLAVOR"
 
-"$SDK/bin/monkeyc" -f "$JUNGLE" -d "$DEVICE" -y "$CIQ_DEVKEY" -o "$OUTPUT"
+MONKEYC_FLAGS=()
+if [ "$FLAVOR" = "release" ]; then
+  MONKEYC_FLAGS+=(-r)   # release: strips (:debug)-annotated code
+fi
 
-echo "build.sh: built $OUTPUT"
+"$SDK/bin/monkeyc" -f "$JUNGLE" -d "$DEVICE" -y "$CIQ_DEVKEY" -o "$OUTPUT" "${MONKEYC_FLAGS[@]}"
+
+echo "build.sh: built $OUTPUT ($FLAVOR)"

@@ -29,7 +29,7 @@ GsoundG (watch `.prg`, after installing the Connect IQ SDK):
 
 ```bash
 cd GsoundG
-./build.sh                 # fenix6pro -> build/GsoundG-fenix6pro.prg
+./build.sh                 # fenix6spro -> build/GsoundG-fenix6spro.prg
 ```
 
 ## Pairing & sync (needs both apps)

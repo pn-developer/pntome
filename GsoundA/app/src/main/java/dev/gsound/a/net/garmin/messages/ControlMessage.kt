@@ -130,6 +130,20 @@ data class Stats(
 ) : ControlMessage()
 
 /**
+ * `LOG` (G→A): ONE line of the watch's diagnostic log (debugging aid). The watch sends its unsent
+ * lines one message at a time when it answers a PING (the "Refresh stats" button); the phone writes
+ * each [line] to logcat under the tag `Gsound.Watch`. Flat string payload — deliberately no list.
+ * Never carries secrets.
+ */
+@Serializable
+@SerialName("LOG")
+data class WatchLogLine(
+    @SerialName("pairingId") override val pairingId: String,
+    @SerialName("line") val line: String = "",
+    @SerialName("v") override val v: Int = PROTOCOL_VERSION
+) : ControlMessage()
+
+/**
  * `PING` (both): liveness/connectivity check. No extra payload. [pairingId] is optional
  * because liveness may be checked independently of a pairing.
  */

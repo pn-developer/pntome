@@ -57,6 +57,10 @@ module Messages {
     //! Liveness reply (no payload). Either direction.
     const TYPE_PONG = "PONG";
 
+    //! One watch diagnostic log line: payload line. G → A only (debugging aid, see DebugLog).
+    const TYPE_LOG = "LOG";
+
+
     // --- payload field key names (overview §5.1) -------------------------------
     //
     // Centralized so builders and the Protocol extractors agree on spelling.
@@ -74,6 +78,7 @@ module Messages {
     const FIELD_FILE_COUNT = "fileCount";
     const FIELD_FOLDER_COUNT = "folderCount";
     const FIELD_LAST_SYNC_AT = "lastSyncAt";
+    const FIELD_LINE = "line";
 
     // --- per-track manifest field keys (ManifestTrack, design §8.0) ------------
     //
@@ -205,4 +210,15 @@ module Messages {
     function buildPong(pairingId as String) as Dictionary {
         return envelope(TYPE_PONG, pairingId);
     }
+
+    //! Build a LOG { v, type, pairingId, line } carrying ONE watch diagnostic line (G → A only;
+    //! see DebugLog). Flat, strings only — deliberately no arrays. Outgoing only, so it is not in
+    //! isKnownType().
+    function buildLogLine(pairingId as String, line as String) as Dictionary {
+        var msg = envelope(TYPE_LOG, pairingId);
+        msg.put(FIELD_LINE, line);
+        return msg;
+    }
+
+
 }

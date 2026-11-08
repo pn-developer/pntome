@@ -199,12 +199,30 @@ installed SDK and the developer key, so no flags are needed for the common case:
 git clone <your-repo-url> pn_gsound
 cd pn_gsound/GsoundG
 
-./build.sh                 # fenix6pro  -> build/GsoundG-fenix6pro.prg
+./build.sh                 # release, fenix6spro -> build/GsoundG-fenix6spro.prg
+./build.sh --debug         # debug build (diagnostic log, see below)
 ./build.sh fenix847mm      # fenix 8    -> build/GsoundG-fenix847mm.prg
 ./build.sh fenix6pro /tmp/GsoundG.prg   # explicit output path
 ```
 
-`build.sh [device] [output.prg]` (defaults: `fenix6pro`, `build/GsoundG-<device>.prg`).
+`build.sh [--debug] [device] [output.prg]` (defaults: release, `fenix6spro`,
+`build/GsoundG-<device>.prg`).
+
+**Release vs debug.** The default is a release build (`monkeyc -r`), which strips all
+`(:debug)`-annotated code. Only plain `println` output remains, and that only reaches
+`GARMIN/APPS/LOGS/GSOUNDG-<DEVICE>.TXT` if you create that file by hand. `--debug` keeps the
+diagnostics:
+
+- every log line is also kept in a 40-line ring buffer in app storage, and
+- the lines are forwarded to the phone when you press **Refresh stats** in GsoundA. They show
+  up in logcat under the tag `Gsound.Watch`.
+- media-cache snapshots (size and cached ids) are logged after each sync.
+
+A debug build shows `dbg` after the version in the watch footer, e.g. `v0.1.0 (632f42c) dbg`.
+Build for the exact device you sideload to: a `.prg` built for another model (e.g. `fenix6pro`
+on a fēnix 6S Pro) can misbehave or crash. The watch's model is the `Part-Number` in
+`GARMIN/APPS/LOGS/CIQ_LOG.YAML`; match it against `partNumbers` in
+`~/.Garmin/ConnectIQ/Devices/<id>/compiler.json` (`006-B3288-00` = `fenix6spro`).
 Override the SDK or key via `CIQ_SDK` / `CIQ_DEVKEY` env vars. Supported device ids come
 from `manifest.xml`: `fenix6spro`, `fenix6pro`, `fenix6xpro`, `fenix843mm`, `fenix847mm`,
 `fenix8pro47mm`, `fenix8solar47mm`, `fenix8solar51mm`. (Installed device ids live under
@@ -213,7 +231,7 @@ from `manifest.xml`: `fenix6spro`, `fenix6pro`, `fenix6xpro`, `fenix843mm`, `fen
 Under the hood this just calls `monkeyc`; the equivalent raw command is:
 
 ```bash
-monkeyc -f monkey.jungle -d fenix6pro -y ~/.Garmin/developer_key.der -o build/GsoundG-fenix6pro.prg
+monkeyc -f monkey.jungle -d fenix6pro -y ~/.Garmin/developer_key.der -o build/GsoundG-fenix6pro.prg -r   # drop -r for debug
 ```
 
 > To build **and** run in the simulator in one step, see `./run_in_simulator.sh` in
@@ -271,7 +289,7 @@ packages. Override the container name or base image with `CIQ_CONTAINER` / `CIQ_
 
 ```bash
 cd GsoundG
-./run_in_simulator.sh                      # build fenix6pro, start the sim, attach it
+./run_in_simulator.sh                      # build fenix6spro, start the sim, attach it
 ./run_in_simulator.sh fenix847mm           # same, for fēnix 8
 ./run_in_simulator.sh fenix6pro /tmp/g.prg # attach an existing .prg instead of building
 ```

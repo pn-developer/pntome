@@ -10,6 +10,7 @@ import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.log.GsoundLog
 import dev.gsound.a.net.garmin.messages.ControlMessage
 import dev.gsound.a.net.garmin.messages.MessageCodec
+import dev.gsound.a.net.garmin.messages.WatchLogLine
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -61,6 +62,9 @@ class ConnectIqManager @Inject constructor(
 
     /** Logcat tag for control-channel diagnostics (filter: `adb logcat -s Gsound.CIQ`). */
     private val tag = "Gsound.CIQ"
+
+    /** Logcat tag for lines forwarded from the watch's diagnostic log (filter: `-s Gsound.Watch`). */
+    private val WATCH_LOG_TAG = "Gsound.Watch"
 
     /**
      * Device-enumeration poll window used by [resolveDeviceAndApp].
@@ -128,7 +132,14 @@ class ConnectIqManager @Inject constructor(
             when (val result = MessageCodec.decodeAndValidateFromAny(payload, expectedPairingId)) {
                 is MessageCodec.DecodeResult.Valid -> {
                     // type is a non-secret discriminator; never log the payload (Req 8.4).
-                    GsoundLog.i(tag, "incoming accepted: type=${result.message::class.simpleName}")
+                    val message = result.message
+                    if (message is WatchLogLine) {
+                        // A forwarded watch diagnostic line: write it under its own tag
+                        // (filter: `adb logcat -s Gsound.Watch`) instead of the per-message noise.
+                        GsoundLog.i(WATCH_LOG_TAG, message.line)
+                    } else {
+                        GsoundLog.i(tag, "incoming accepted: type=${message::class.simpleName}")
+                    }
                     // Non-blocking emit; the SharedFlow buffer absorbs bursts.
                     _incoming.tryEmit(result.message)
                 }

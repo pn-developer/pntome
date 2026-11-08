@@ -37,6 +37,36 @@ class MessageCodecTest {
         assertEquals(original, (result as DecodeResult.Valid).message)
     }
 
+    // --- watch diagnostic LOG line (G→A) ----------------------------------------------------
+
+    @Test
+    fun `watch LOG line sent as a flat Map decodes to WatchLogLine`() {
+        // The Connect IQ SDK delivers a watch Dictionary as a Map.
+        val payload = mapOf<String, Any?>(
+            "v" to 1,
+            "type" to "LOG",
+            "pairingId" to pairingId,
+            "line" to "#7 t=48210 PB: getContentIterator folder=Rock start=0",
+        )
+
+        val result = MessageCodec.decodeAndValidateFromAny(payload, expectedPairingId = pairingId)
+
+        assertTrue("expected Valid, got $result", result is DecodeResult.Valid)
+        val log = (result as DecodeResult.Valid).message as WatchLogLine
+        assertEquals("#7 t=48210 PB: getContentIterator folder=Rock start=0", log.line)
+    }
+
+    @Test
+    fun `watch LOG line from a foreign pairing is dropped`() {
+        val payload = mapOf<String, Any?>(
+            "v" to 1, "type" to "LOG", "pairingId" to otherPairingId, "line" to "#1 x",
+        )
+
+        val result = MessageCodec.decodeAndValidateFromAny(payload, expectedPairingId = pairingId)
+
+        assertTrue("expected UnpairedPeer, got $result", result is DecodeResult.UnpairedPeer)
+    }
+
     // --- map round-trip (the pairing-wire-format fix) ----------------------------------------
 
     @Test

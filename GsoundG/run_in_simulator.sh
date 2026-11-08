@@ -10,7 +10,7 @@
 # Usage:
 #   ./run_in_simulator.sh [device] [app.prg]
 #
-#   device    Connect IQ device id (default: fenix6pro). Must be one of the
+#   device    Connect IQ device id (default: fenix6spro). Must be one of the
 #             ids in manifest.xml.
 #   app.prg   a prebuilt .prg to run. If omitted, the script builds one with
 #             ./build.sh for the chosen device.
@@ -24,7 +24,7 @@
 #   -h|--help      show this help.
 #
 # Examples:
-#   ./run_in_simulator.sh                      # build fenix6pro, run it
+#   ./run_in_simulator.sh                      # build fenix6spro, run it
 #   ./run_in_simulator.sh fenix847mm           # build + run for fenix 8
 #   ./run_in_simulator.sh fenix6pro /tmp/g.prg # run an existing prg
 #   ./run_in_simulator.sh --stop               # stop the simulator
@@ -33,7 +33,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 . "./sim/common.sh"
 
-DEVICE="fenix6pro"
+DEVICE="fenix6spro"
 PRG=""
 BUILD_ONLY=0
 NO_BUILD=0
@@ -65,7 +65,8 @@ if [ -z "$PRG" ]; then
     [ -f "$PRG" ] || die "--no-build set but $PRG does not exist"
   else
     info "building $PRG for $DEVICE"
-    ./build.sh "$DEVICE" "$PRG"
+    # Debug flavor: simulator runs are for diagnosing, keep the (:debug) diagnostics.
+    ./build.sh --debug "$DEVICE" "$PRG"
   fi
 else
   [ -f "$PRG" ] || die "prg not found: $PRG"
