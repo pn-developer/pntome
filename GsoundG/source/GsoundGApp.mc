@@ -94,6 +94,7 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! is consistent no matter which mode the system launched it in (Req 7.2).
     //! Wrapped so a storage/parse problem can't crash any launch mode (Req 8.5).
     function onStart(state as Dictionary?) as Void {
+        DebugLog.log("APP", "onStart " + AppVersion.display());
         try {
             _pairing = Repo.loadPairing();
             _stats = Repo.loadStats();
@@ -183,6 +184,11 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         // Best-effort STATS alongside the PONG — never let a failure here affect
         // the PONG that already went out (Req 5.3, 8.5).
         sendStats(control, pairingId);
+
+        // Debug aid: forward unsent watch log lines to the phone, one per message (logcat tag
+        // Gsound.Watch). Only from here — the phone's "Refresh stats" PING — never from the
+        // short-lived sync process. See DebugLog.
+        DebugLog.sendPending(control, pairingId);
     }
 
     //! Send a STATS message carrying the CURRENT persisted library stats to the
@@ -297,6 +303,9 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! with a null folder so it yields the safe empty iterator and the mode still
     //! launches (Req 6.6, 8.5).
     function getContentDelegate(args as Application.PersistableType) as Media.ContentDelegate {
+        DebugLog.log("PB", "getContentDelegate args=" + DebugLog.shape(args) + " " + DebugLog.mem());
+        // No MediaDiag.snapshot here: the playback process is memory-constrained and the cache
+        // walk allocates; the sync process already logs the same snapshot after each sync.
         var folder = null;
         var startIndex = 0;
         if (args instanceof Dictionary) {
@@ -309,6 +318,32 @@ class GsoundGApp extends Application.AudioContentProviderApp {
                 startIndex = s as Number;
             }
         }
+        // args is null when the native player starts/resumes playback by itself (its own Play
+        // button, after the headphone prompt, ...). Returning an empty iterator there means
+        // "nothing to play" — observed on the device log: getContentDelegate args=null →
+        // "returning EMPTY iterator". Fall back to the last selection from our track list, then
+        // to the first synced folder.
+        if (folder == null) {
+            try {
+                var last = Repo.loadPlaybackSelection();
+                if (last != null) {
+                    folder = last.get("folder") as String;
+                    var ls = last.get("startIndex");
+                    startIndex = (ls instanceof Number) ? (ls as Number) : 0;
+                    DebugLog.log("PB", "args null -> last selection");
+                } else {
+                    var folders = Repo.loadFolders();
+                    if (folders.size() > 0 && folders[0] instanceof String) {
+                        folder = folders[0] as String;
+                        startIndex = 0;
+                        DebugLog.log("PB", "args null -> first synced folder");
+                    }
+                }
+            } catch (ex) {
+                DebugLog.log("PB", "args-null fallback FAILED " + DebugLog.describe(ex));
+            }
+        }
+        DebugLog.log("PB", "delegate folder=" + (folder == null ? "null" : folder) + " start=" + startIndex.toString());
         return new GsoundContentDelegate(folder, startIndex);
     }
 

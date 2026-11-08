@@ -1,5 +1,6 @@
 import Toybox.Lang;
 import Toybox.Media;
+import Toybox.System;
 
 //! FolderIterator — a real Media.ContentIterator over one folder's synced tracks
 //! (design §9.3; Req 6.4, 6.5, 8.5, 7.3).
@@ -58,6 +59,8 @@ class FolderIterator extends Media.ContentIterator {
         ContentIterator.initialize();
         _folder = folder;
         _ids = buildIds(folder);
+        DebugLog.log("PB", "FolderIterator folder=" + folder + " tracks=" + _ids.size().toString()
+            + " start=" + startIndex.toString());
         var start = startIndex;
         if (start < 0) {
             start = 0;
@@ -115,23 +118,40 @@ class FolderIterator extends Media.ContentIterator {
     //! real iterator presents the same controls (Req 6.4): skip back / play / skip
     //! forward, no playback notification requirement, no thumbs-down skip.
     function getPlaybackProfile() as Media.PlaybackProfile or Null {
+        DebugLog.log("PB", "iter.getPlaybackProfile");
         var profile = new Media.PlaybackProfile();
         profile.attemptSkipAfterThumbsDown = false;
+        // PLAYBACK FIRST: the SDK notes "the first entry in the array may be used as a hotkey in
+        // the media player (device dependent)". The previous list started with SKIP_BACKWARD
+        // ("skip backward x seconds", a seek), so on a fēnix the START hotkey could seek instead
+        // of play. Track-level previous/next replace the seconds-based skips (we play music).
         profile.playbackControls = [
-            Media.PLAYBACK_CONTROL_SKIP_BACKWARD,
             Media.PLAYBACK_CONTROL_PLAYBACK,
-            Media.PLAYBACK_CONTROL_SKIP_FORWARD
+            Media.PLAYBACK_CONTROL_PREVIOUS,
+            Media.PLAYBACK_CONTROL_NEXT
         ];
-        profile.playbackNotificationThreshold = 1;
-        profile.requirePlaybackNotification = false;
-        profile.skipPreviousThreshold = null;
+        // Ask the player to report song events right away (threshold 0 = as soon as a song
+        // begins). With this false we never saw onSong, so we couldn't tell whether a track
+        // actually started; now ContentDelegate.onSong logs START/PAUSE/COMPLETE.
+        profile.requirePlaybackNotification = true;
+        profile.playbackNotificationThreshold = 0;
+        // Back within the first 5 s goes to the previous track; later it restarts the track.
+        profile.skipPreviousThreshold = 5;
         return profile;
     }
 
     //! The current track's Content, or null if the cursor is out of range (past
     //! either end → end-of-folder) or the entry couldn't be built.
     function get() as Media.Content or Null {
-        return contentAt(_cursor);
+        DebugLog.log("PB", "iter.get cursor=" + _cursor.toString() + " " + DebugLog.mem());
+        var c = contentAt(_cursor);
+        DebugLog.log("PB", "iter.get done " + DebugLog.mem());
+        return c;
+    }
+
+    //! Repeat is off (no wrap, Req 6.5). Implemented explicitly rather than relying on the base.
+    function repeatMode() as Media.RepeatMode or Null {
+        return Media.REPEAT_MODE_OFF;
     }
 
     //! Advance to the next track and return it. If that moves past the last track,
@@ -141,6 +161,7 @@ class FolderIterator extends Media.ContentIterator {
         if (_cursor < _ids.size()) {
             _cursor += 1;
         }
+        DebugLog.log("PB", "iter.next -> cursor=" + _cursor.toString());
         return contentAt(_cursor);
     }
 
@@ -150,16 +171,19 @@ class FolderIterator extends Media.ContentIterator {
         if (_cursor >= 0) {
             _cursor -= 1;
         }
+        DebugLog.log("PB", "iter.previous -> cursor=" + _cursor.toString());
         return contentAt(_cursor);
     }
 
     //! The next track's Content WITHOUT moving the cursor (null at end — no wrap).
     function peekNext() as Media.Content or Null {
+        DebugLog.log("PB", "iter.peekNext cursor=" + _cursor.toString());
         return contentAt(_cursor + 1);
     }
 
     //! The previous track's Content WITHOUT moving the cursor (null at start).
     function peekPrevious() as Media.Content or Null {
+        DebugLog.log("PB", "iter.peekPrevious cursor=" + _cursor.toString());
         return contentAt(_cursor - 1);
     }
 
@@ -187,6 +211,7 @@ class FolderIterator extends Media.ContentIterator {
             }
             var mediaId = entry.get("mediaId");
             if (mediaId == null) {
+                DebugLog.log("PB", "contentAt[" + index.toString() + "] NO mediaId stored");
                 return null;
             }
             var ref = new Media.ContentRef(mediaId, Media.CONTENT_TYPE_AUDIO);
@@ -205,9 +230,28 @@ class FolderIterator extends Media.ContentIterator {
                 metadata.album = album as String;
             }
 
+            // Preferred: ask the SYSTEM for the persisted Content (Garmin's documented way to get a
+            // playable Content for downloaded audio). It throws if the id isn't a String for audio,
+            // or if nothing with that id is cached — exactly the failures we need to see.
+            try {
+                // Returned UNMODIFIED (no setMetadata): the system already knows this item's
+                // metadata from the file, and replacing it on the system's own object is the one
+                // thing we do that Garmin's reference flow doesn't — ruled out as a cause here.
+                var cached = Media.getCachedContentObj(ref);
+                DebugLog.log("PB", "contentAt[" + index.toString() + "] cached OK id=" + DebugLog.shape(mediaId)
+                    + " start=" + cached.getPlaybackStartPosition().toString());
+                return cached;
+            } catch (cex) {
+                DebugLog.log("PB", "contentAt[" + index.toString() + "] getCachedContentObj FAILED id="
+                    + DebugLog.shape(mediaId) + " " + DebugLog.describe(cex));
+            }
+
+            // Fallback (previous behaviour): wrap the stored id in a fresh Content.
+            DebugLog.log("PB", "contentAt[" + index.toString() + "] fallback new Content");
             return new Media.Content(ref, metadata);
         } catch (ex) {
             // A bad entry / unexpected mediaId shape must never crash playback (Req 8.5).
+            DebugLog.log("PB", "contentAt[" + index.toString() + "] FAILED " + DebugLog.describe(ex));
             return null;
         }
     }

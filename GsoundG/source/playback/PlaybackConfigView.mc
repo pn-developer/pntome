@@ -314,9 +314,19 @@ class PlaybackConfigDelegate extends WatchUi.BehaviorDelegate {
     private function openTrack(folder as String, startIndex as Number) as Void {
         try {
             var args = { "folder" => folder, "startIndex" => startIndex };
+            // Remember the choice: when the native player later starts/resumes on its own it calls
+            // getContentDelegate(null), and GsoundGApp falls back to this selection.
+            try {
+                Repo.savePlaybackSelection(folder, startIndex);
+            } catch (sex) {
+                DebugLog.log("PB", "savePlaybackSelection FAILED " + DebugLog.describe(sex));
+            }
+            DebugLog.log("PB", "startPlayback folder=" + folder + " idx=" + startIndex.toString());
             Media.startPlayback(args);
+            DebugLog.log("PB", "startPlayback returned");
         } catch (ex) {
-            // Never crash input handling (Req 8.5).
+            // Never crash input handling (Req 8.5) — but record WHY playback couldn't start.
+            DebugLog.log("PB", "startPlayback FAILED " + DebugLog.describe(ex));
         }
     }
 
