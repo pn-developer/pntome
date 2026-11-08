@@ -110,7 +110,9 @@ Defined in `../gsound-audiobooks/`.
 
 ### 5.2 Data channel (HTTP)
 
-GsoundA hosts endpoints (all require header `X-Gsound-Secret: <sharedSecret>`):
+GsoundA hosts endpoints (all require header `X-Gsound-Secret: <sharedSecret>`).
+The serving address may be the phone's hotspot gateway: station Wi-Fi is preferred, with
+hotspot as fallback (see `../gsound-hotspot/requirements.md` HS-2).
 
 | Method | Path | Returns |
 |--------|------|---------|

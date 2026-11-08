@@ -44,9 +44,9 @@ class WifiGuard @Inject constructor(
      * @return [WifiStatus.Available] with the resolved LAN IPv4, or [WifiStatus.Unavailable].
      */
     fun check(): WifiStatus =
-        when (val ipv4 = wifiAddressResolver.resolveWifiIpv4()) {
+        when (val lan = wifiAddressResolver.resolveLanAddress()) {
             null -> WifiStatus.Unavailable
-            else -> WifiStatus.Available(ipv4)
+            else -> WifiStatus.Available(lan.ipv4, lan.kind)
         }
 
     companion object {
@@ -55,7 +55,7 @@ class WifiGuard @Inject constructor(
          * here so the orchestrator, the server backstop, and the Sync UI all speak with one voice.
          */
         const val GUIDANCE_MESSAGE: String =
-            "Connect both this phone and your watch to the same Wi-Fi network."
+            "Connect this phone and your watch to the same Wi-Fi network, or connect the watch to this phone's hotspot."
     }
 }
 
@@ -72,8 +72,9 @@ sealed interface WifiStatus {
      * display for connectivity verification (Req 5.8).
      *
      * @property ipv4 the phone's Wi-Fi LAN IPv4 address (e.g. `"192.168.1.42"`).
+     * @property kind whether the address is a Wi-Fi or phone-hotspot address.
      */
-    data class Available(val ipv4: String) : WifiStatus
+    data class Available(val ipv4: String, val kind: LanKind = LanKind.WIFI) : WifiStatus
 
     /**
      * Wi-Fi is unavailable: the server must not be started and the user must be told to put both

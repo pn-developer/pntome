@@ -94,7 +94,12 @@ class GsoundHttpServer @Inject constructor(
          * @property host the resolved Wi-Fi LAN address bound to.
          * @property port the actual bound port (concrete even for an ephemeral selection).
          */
-        data class Started(val url: String, val host: String, val port: Int) : StartResult
+        data class Started(
+            val url: String,
+            val host: String,
+            val port: Int,
+            val kind: LanKind = LanKind.WIFI,
+        ) : StartResult
 
         /**
          * Wi-Fi is unavailable, so the server was not started (Req 5.7). The caller should tell
@@ -111,7 +116,7 @@ class GsoundHttpServer @Inject constructor(
     }
 
     /** Internal snapshot of a running server. */
-    private data class Running(val host: String, val port: Int) {
+    private data class Running(val host: String, val port: Int, val kind: LanKind) {
         val url: String get() = "http://$host:$port"
     }
 
@@ -124,11 +129,13 @@ class GsoundHttpServer @Inject constructor(
      */
     suspend fun start(preferredPort: Int = AppSettings.DEFAULT_SERVER_PORT): StartResult =
         lifecycleMutex.withLock {
-            running?.let { return@withLock StartResult.Started(it.url, it.host, it.port) }
+            running?.let { return@withLock StartResult.Started(it.url, it.host, it.port, it.kind) }
 
-            // Req 5.7: no Wi-Fi → do not start; let the caller show "same Wi-Fi network" guidance.
-            val host = wifiAddressResolver.resolveWifiIpv4()
+            // Req 5.7 / HS-2.3: no Wi-Fi and no hotspot → do not start. Bind only to the
+            // single resolved LAN address (never 0.0.0.0).
+            val lan = wifiAddressResolver.resolveLanAddress()
                 ?: return@withLock StartResult.WifiUnavailable
+            val host = lan.ipv4
 
             val selection = PortSelector.select(preferredPort) { candidate ->
                 isPortBindable(host, candidate)
@@ -147,9 +154,11 @@ class GsoundHttpServer @Inject constructor(
                 val boundPort = startedEngine.resolvedPort(fallback = selection.port)
 
                 engine = startedEngine
-                val snapshot = Running(host = host, port = boundPort)
+                val snapshot = Running(host = host, port = boundPort, kind = lan.kind)
                 running = snapshot
-                StartResult.Started(url = snapshot.url, host = host, port = boundPort)
+                StartResult.Started(
+                    url = snapshot.url, host = host, port = boundPort, kind = lan.kind,
+                )
             } catch (t: Throwable) {
                 // Leave no half-started engine behind on failure.
                 runCatching { engine?.stop(gracePeriodMillis = 0, timeoutMillis = 0) }

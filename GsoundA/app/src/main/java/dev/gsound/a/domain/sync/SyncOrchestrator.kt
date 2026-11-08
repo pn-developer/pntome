@@ -5,6 +5,7 @@ import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.data.sync.SyncSummaryStore
 import dev.gsound.a.domain.folders.LibraryRefresher
 import dev.gsound.a.domain.model.PairingRecord
+import dev.gsound.a.net.server.LanKind
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
 import dev.gsound.a.domain.model.Track
@@ -204,9 +205,12 @@ class SyncOrchestrator @Inject constructor(
             // WifiUnavailable branch is a backstop — the guard above normally catches Wi-Fi loss
             // first, but a race (Wi-Fi dropping between the check and the bind) still resolves to
             // the same canonical guidance.
+            var networkKind: LanKind? = null
             val serverUrl = when (val result = httpServer.start()) {
                 is GsoundHttpServer.StartResult.Started -> {
-                    logger.i(tag, "HTTP server started at ${result.url}")
+                    logger.i(tag, "HTTP server started at ${result.url} (${result.kind.name})")
+                    logger.i(tag, "startSync: serving on ${result.kind.name} ${result.host}")
+                    networkKind = result.kind
                     result.url
                 }
                 is GsoundHttpServer.StartResult.WifiUnavailable -> {
@@ -259,7 +263,8 @@ class SyncOrchestrator @Inject constructor(
             val terminal = collectStatuses(
                 pairing,
                 totalTracks = manifest.tracks.size,
-                serverUrl = serverUrl
+                serverUrl = serverUrl,
+                networkKind = networkKind
             )
             logger.i(tag, "sync terminal: ${terminal::class.simpleName}")
             return transition(terminal)
@@ -319,7 +324,8 @@ class SyncOrchestrator @Inject constructor(
     private suspend fun collectStatuses(
         pairing: PairingRecord,
         totalTracks: Int,
-        serverUrl: String
+        serverUrl: String,
+        networkKind: LanKind? = null
     ): SyncState {
         var terminal: SyncState? = null
         // Last values seen from each source, so a progress emission from one doesn't erase the
@@ -406,7 +412,8 @@ class SyncOrchestrator @Inject constructor(
                 bytesTotal = sp?.bytesTotal,
                 currentTrackTitle = sp?.currentTrackTitle,
                 speedBytesPerSec = sp?.speedBytesPerSec,
-                serverUrl = serverUrl // Req 5.8: surface the LAN address to the UI.
+                serverUrl = serverUrl, // Req 5.8: surface the LAN address to the UI.
+                networkKind = networkKind
             )
         }
 

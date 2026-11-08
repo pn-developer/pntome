@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
+import dev.gsound.a.net.server.LanKind
 import dev.gsound.a.ui.theme.GsoundATheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -136,6 +137,40 @@ class SyncContentTest {
         composeRule.onNodeWithText("Sync now").assertDoesNotExist()
         composeRule.onNodeWithText("Cancel").assertIsEnabled().performClick()
         assertEquals(1, cancels)
+    }
+
+    private fun runningWith(kind: LanKind?) = SyncUiState.from(
+        syncState = SyncState.Running(
+            tracksDone = 1,
+            tracksTotal = 2,
+            bytesSent = 0L,
+            serverUrl = "http://192.168.43.1:8080",
+            networkKind = kind,
+        ),
+        isPaired = true,
+        hasFolders = true,
+        lastSummary = null,
+    )
+
+    @Test
+    fun `running hotspot shows Hotspot host-port label`() {
+        setContent(runningWith(LanKind.HOTSPOT))
+
+        composeRule.onNodeWithText("Hotspot · 192.168.43.1:8080").assertExists()
+    }
+
+    @Test
+    fun `running wifi shows Wi-Fi host-port label`() {
+        setContent(runningWith(LanKind.WIFI))
+
+        composeRule.onNodeWithText("Wi-Fi · 192.168.43.1:8080").assertExists()
+    }
+
+    @Test
+    fun `lanAddressLabel formats by kind and keeps bare url when kind unknown`() {
+        assertEquals("Hotspot · 10.0.0.1:80", lanAddressLabel("http://10.0.0.1:80", LanKind.HOTSPOT))
+        assertEquals("Wi-Fi · 10.0.0.1:80", lanAddressLabel("http://10.0.0.1:80", LanKind.WIFI))
+        assertEquals("http://10.0.0.1:80", lanAddressLabel("http://10.0.0.1:80", null))
     }
 
     // --- Error state: message + Retry (Req 6.4) --------------------------------------------

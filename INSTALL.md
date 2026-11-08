@@ -65,3 +65,37 @@ Limitations:
   If the watch powers off or the app is killed mid-chapter, the bookmark keeps the chapter
   but loses the position since the last pause.
 - One book per folder. Nested folders are not supported.
+
+## Sync over the phone's hotspot
+
+No Wi-Fi network nearby? GsoundA can sync while the watch is connected to **the phone's own
+hotspot** (spec `.kiro/specs/gsound-hotspot/`). Nothing changes in the watch app or the
+protocol.
+
+Watch-side setup:
+
+1. Turn on the phone's hotspot and note its name (SSID) and password.
+2. In **Garmin Connect** on the phone, save the hotspot as a Wi-Fi network for the watch
+   (the same place you add a home network).
+3. Use the **2.4 GHz** band for the hotspot. The fēnix 6 Wi-Fi is believed to be 2.4 GHz
+   only (*to be confirmed on fēnix 6*).
+4. Use **WPA2-Personal** security, not WPA3-only (*to be confirmed on fēnix 6*).
+5. Keep **mobile data on**. The hotspot normally needs it, because the watch may check for
+   internet access before it stays connected.
+6. Make sure the watch has joined the hotspot, then tap Sync in GsoundA. The Sync screen
+   shows `Hotspot · <address>:<port>` while the sync runs.
+
+Wi-Fi is preferred:
+- When the phone is connected to a Wi-Fi network, GsoundA always serves on that Wi-Fi
+  address. The hotspot is used only when the phone has no usable Wi-Fi address.
+- The phone can't know which network the watch joined, and there is no setting to prefer
+  the hotspot.
+
+Caveat when both are active:
+- If the watch is on the phone's hotspot while the phone itself is also on Wi-Fi, the sync
+  fails, because the server is bound to the Wi-Fi address and the watch can't reach it.
+  **Turn the phone's Wi-Fi off**, keep the hotspot on, and sync again.
+
+If neither a Wi-Fi network nor a hotspot is available, the sync is refused with: "Connect
+this phone and your watch to the same Wi-Fi network, or connect the watch to this phone's
+hotspot."

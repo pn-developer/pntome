@@ -17,6 +17,8 @@ import dev.gsound.a.net.garmin.FakeControlChannel
 import dev.gsound.a.net.garmin.messages.SyncManifest
 import dev.gsound.a.net.garmin.messages.SyncStatus
 import dev.gsound.a.net.server.GsoundHttpServer
+import dev.gsound.a.net.server.LanAddress
+import dev.gsound.a.net.server.LanKind
 import dev.gsound.a.net.server.ServerTransferMonitor
 import dev.gsound.a.net.server.SyncSessionHolder
 import dev.gsound.a.net.server.WifiAddressResolver
@@ -297,6 +299,40 @@ class SyncOrchestratorTest {
         Unit
     }
 
+    @Test
+    fun `Running carries WIFI networkKind from the server start result`() = runBlocking {
+        assertRunningNetworkKind(LanKind.WIFI)
+    }
+
+    @Test
+    fun `Running carries HOTSPOT networkKind from the server start result`() = runBlocking {
+        assertRunningNetworkKind(LanKind.HOTSPOT)
+    }
+
+    private suspend fun CoroutineScope.assertRunningNetworkKind(kind: LanKind) {
+        resolver.kind = kind
+        pairingStore.save(pairing)
+        seedTracks(track("a"), track("b"))
+
+        val run = startSyncAsync()
+        awaitSent()
+        channel.emitIncoming(
+            SyncStatus(
+                pairingId = pairing.pairingId,
+                state = "transferring",
+                done = 1,
+                total = 2,
+                bytesDone = 100L,
+                error = null
+            )
+        )
+        awaitUntil("state becomes Running") { orchestrator.state.value is SyncState.Running }
+        assertEquals(kind, (orchestrator.state.value as SyncState.Running).networkKind)
+
+        channel.emitIncoming(terminalStatus(done = 2, total = 2, bytes = 2_000L))
+        awaitTerminal(run)
+    }
+
     // --- Watch-reported error -------------------------------------------------------------------
 
     @Test
@@ -540,7 +576,10 @@ class SyncOrchestratorTest {
 
     /** Fake [WifiAddressResolver] whose address can be toggled per test (null = Wi-Fi down). */
     private class MutableWifiAddressResolver(var ipv4: String?) : WifiAddressResolver {
+        /** Network kind reported alongside [ipv4] by [resolveLanAddress] (HS-2.4). */
+        var kind: LanKind = LanKind.WIFI
         override fun resolveWifiIpv4(): String? = ipv4
+        override fun resolveLanAddress(): LanAddress? = ipv4?.let { LanAddress(it, kind) }
     }
 
     private companion object {

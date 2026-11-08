@@ -1,0 +1,289 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Add `net/server/HotspotAddressFinder.kt` with `IfaceInfo` and `find(ifaces)`:": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978083
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139983164
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140027151
+      }
+    ],
+    "1.2 Add `HotspotAddressFinderTest` with the cases in design §5.": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978161
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140029832
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140071202
+      }
+    ],
+    "2.1 Add `LanKind`, `LanAddress` and": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978202
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140073586
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140111984
+      }
+    ],
+    "2.2 `ConnectivityWifiAddressResolver`: override it (Wi-Fi first, else hotspot), with an": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978249
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140115790
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140163315
+      }
+    ],
+    "2.3 Tests for the Wi-Fi-preferred / hotspot / none choice using a fake provider.": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978297
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140166384
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140239068
+      }
+    ],
+    "3.1 `GsoundHttpServer.start()` binds to `resolveLanAddress()`, and": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978361
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140242130
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140290513
+      }
+    ],
+    "3.2 `WifiGuard.check()` uses `resolveLanAddress()`. `WifiStatus.Available` gets": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978396
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140293279
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140331947
+      }
+    ],
+    "3.3 Update or extend `WifiGuardTest` and the server tests: the HOTSPOT path and the": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978428
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140334658
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140401629
+      }
+    ],
+    "4.1 `SyncState.Running.networkKind`, filled by `SyncOrchestrator`, and log": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978461
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140404407
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140448596
+      }
+    ],
+    "4.2 `SyncScreen` shows `Wi-Fi · host:port` or `Hotspot · host:port`.": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978493
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140451410
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140499200
+      }
+    ],
+    "4.3 Tests: `SyncOrchestratorTest` (kind propagated) and `SyncContentTest` (label).": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978525
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140502951
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140567115
+      }
+    ],
+    "5.1 Add a \"Sync over the phone's hotspot\" section to INSTALL.md (the watch-side setup": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978552
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140569700
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140596340
+      }
+    ],
+    "5.2 product-overview §5.2: the serving address may be the hotspot gateway.": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978583
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140598973
+      },
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140614764
+      }
+    ],
+    "6.1 Hotspot only. Expect:": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978616
+      }
+    ],
+    "6.2 No network → the new guidance message.": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978647
+      }
+    ],
+    "6.3 Home Wi-Fi: unchanged behaviour (regression).": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978680
+      }
+    ],
+    "6.4 Confirm the fēnix 6 band and security limits (2.4 GHz, WPA2), then update HS-3.3": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794139978712
+      }
+    ],
+    "1. Hotspot address detection (pure core)": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140071265
+      }
+    ],
+    "2. Resolver: LAN address with kind": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140239112
+      }
+    ],
+    "3. Server and guard use the LAN address": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140401664
+      }
+    ],
+    "4. Orchestrator + UI": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140567148
+      }
+    ],
+    "5. Docs": [
+      {
+        "executionId": "fab79611-45b4-4106-a0fe-52ad19eb56c6",
+        "chatSessionId": "sess_f9aa0e01-6280-4c1b-a26d-df89c4bc2a1f",
+        "timestamp": 1794140614796
+      }
+    ]
+  }
+}

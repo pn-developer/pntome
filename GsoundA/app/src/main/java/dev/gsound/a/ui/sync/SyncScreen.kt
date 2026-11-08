@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
+import dev.gsound.a.net.server.LanKind
 import dev.gsound.a.ui.permissions.rememberNotificationPermissionRequester
 import dev.gsound.a.ui.util.ByteSizeFormatter
 import java.text.DateFormat
@@ -301,7 +302,7 @@ private fun RunningState(running: SyncState.Running) {
     }
 
     running.serverUrl?.let { url ->
-        LanAddress(url = url)
+        LanAddress(url = url, kind = running.networkKind)
     }
 }
 
@@ -384,7 +385,7 @@ private fun LastSyncSummary(summary: SyncSummary) {
  * the same network (Req 5.8). Only the address is shown — never the shared secret (Req 8.4).
  */
 @Composable
-private fun LanAddress(url: String) {
+private fun LanAddress(url: String, kind: LanKind?) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
@@ -397,11 +398,24 @@ private fun LanAddress(url: String) {
                 style = MaterialTheme.typography.labelMedium,
             )
             Text(
-                text = url,
+                text = lanAddressLabel(url, kind),
                 style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
             )
         }
     }
+}
+
+/**
+ * Format the serving address as `Wi-Fi · host:port` or `Hotspot · host:port` (HS-3.2). The
+ * scheme is stripped from [url]; when [kind] is null the bare [url] is returned unchanged.
+ */
+internal fun lanAddressLabel(url: String, kind: LanKind?): String {
+    val prefix = when (kind) {
+        LanKind.WIFI -> "Wi-Fi"
+        LanKind.HOTSPOT -> "Hotspot"
+        null -> return url
+    }
+    return "$prefix · ${url.substringAfter("://")}"
 }
 
 /** Format the transferred/total bytes for the running progress line (Req 6.2). */

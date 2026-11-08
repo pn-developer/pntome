@@ -6,6 +6,7 @@ import android.net.LinkAddress
 import android.net.NetworkCapabilities
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.Inet4Address
+import java.net.NetworkInterface
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -34,6 +35,35 @@ interface WifiAddressResolver {
      * @return the dotted-quad address string (e.g. `"192.168.1.42"`) or `null`.
      */
     fun resolveWifiIpv4(): String?
+
+    /**
+     * The chosen serving address: station Wi-Fi first, else hotspot (HS-2.1). The default keeps
+     * existing Wi-Fi-only implementations and fakes working (HS-1.3).
+     */
+    fun resolveLanAddress(): LanAddress? = resolveWifiIpv4()?.let { LanAddress(it, LanKind.WIFI) }
+}
+
+/** Which network the phone serves the watch on. */
+enum class LanKind { WIFI, HOTSPOT }
+
+/** The chosen serving address. */
+data class LanAddress(val ipv4: String, val kind: LanKind)
+
+/** Supplies the device's network interfaces; injectable so the resolver is JVM-testable. */
+fun interface InterfaceListProvider {
+    fun interfaces(): List<IfaceInfo>
+}
+
+/** Default [InterfaceListProvider] backed by [NetworkInterface]; returns empty on any failure. */
+internal object NetworkInterfaceListProvider : InterfaceListProvider {
+    override fun interfaces(): List<IfaceInfo> = runCatching {
+        NetworkInterface.getNetworkInterfaces()?.toList().orEmpty().map { ni ->
+            IfaceInfo(
+                ni.name, ni.isUp, ni.isLoopback, ni.isVirtual,
+                ni.inetAddresses.toList().filterIsInstance<Inet4Address>().map { it.hostAddress!! },
+            )
+        }
+    }.getOrDefault(emptyList())
 }
 
 /**
@@ -62,9 +92,27 @@ interface WifiAddressResolver {
  * safe Req 5.7 path.
  */
 @Singleton
-class ConnectivityWifiAddressResolver @Inject constructor(
-    @ApplicationContext private val context: Context
+open class ConnectivityWifiAddressResolver(
+    private val context: Context,
+    private val interfaceProvider: InterfaceListProvider,
 ) : WifiAddressResolver {
+
+    /** Hilt entry point: uses the real [NetworkInterface] adapter. */
+    @Inject
+    constructor(@ApplicationContext context: Context) :
+        this(context, NetworkInterfaceListProvider)
+
+    /**
+     * Station Wi-Fi first, else the phone's own hotspot (HS-2.1, 2.2). Evaluated on every call,
+     * never cached (HS-1.3), and never throws.
+     */
+    override fun resolveLanAddress(): LanAddress? = try {
+        resolveWifiIpv4()?.let { LanAddress(it, LanKind.WIFI) }
+            ?: HotspotAddressFinder.find(interfaceProvider.interfaces())
+                ?.let { LanAddress(it, LanKind.HOTSPOT) }
+    } catch (_: Exception) {
+        null
+    }
 
     override fun resolveWifiIpv4(): String? {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager

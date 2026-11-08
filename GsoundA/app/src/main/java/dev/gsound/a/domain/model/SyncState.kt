@@ -1,5 +1,7 @@
 package dev.gsound.a.domain.model
 
+import dev.gsound.a.net.server.LanKind
+
 /**
  * Live state of a sync operation, exposed by the `SyncOrchestrator` as a `Flow<SyncState>`
  * and rendered by the `SyncViewModel`/Sync screen (design §5.6, Req 6).
@@ -28,6 +30,8 @@ sealed interface SyncState {
      *   server, or null until it can be estimated.
      * @property serverUrl the LAN `http://ip:port` the music server is bound to, surfaced so the
      *   UI can display it for connectivity verification (Req 5.8); null when not yet known.
+     * @property networkKind which network (Wi-Fi or hotspot) the server is serving on, or null
+     *   when not yet known (HS-2.4, HS-3.2).
      */
     data class Running(
         val tracksDone: Int,
@@ -36,7 +40,8 @@ sealed interface SyncState {
         val bytesTotal: Long? = null,
         val currentTrackTitle: String? = null,
         val speedBytesPerSec: Long? = null,
-        val serverUrl: String? = null
+        val serverUrl: String? = null,
+        val networkKind: LanKind? = null
     ) : SyncState
 
     /** Sync finished successfully; carries the summary shown to the user (Req 6.3). */
