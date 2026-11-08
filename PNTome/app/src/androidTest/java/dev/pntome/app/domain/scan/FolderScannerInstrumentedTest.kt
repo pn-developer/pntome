@@ -1,12 +1,12 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.settings.SettingsStore
-import dev.gsound.a.domain.model.AppSettings
-import dev.gsound.a.domain.model.ScanProgress
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.settings.SettingsStore
+import dev.pntome.app.domain.model.AppSettings
+import dev.pntome.app.domain.model.ScanProgress
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.junit.After

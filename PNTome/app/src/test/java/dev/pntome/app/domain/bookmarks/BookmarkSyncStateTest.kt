@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.BookmarkEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking

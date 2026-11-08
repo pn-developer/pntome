@@ -1,14 +1,14 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 
 import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.domain.sync.NaturalOrder
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.domain.sync.NaturalOrder
 
 /**
  * Builds the playback queue for a folder (gsound-player design §2, PL-1.6).
@@ -72,9 +72,9 @@ class QueueBuilder(private val artworkUri: Uri? = null) {
 
     companion object {
         /** [MediaMetadata] extras key: true when the item belongs to an audiobook folder. */
-        const val EXTRA_AUDIOBOOK = "dev.gsound.a.extra.AUDIOBOOK"
+        const val EXTRA_AUDIOBOOK = "dev.pntome.app.extra.AUDIOBOOK"
 
         /** [MediaMetadata] extras key: `Folder.id` of the item's folder (the bookmark key). */
-        const val EXTRA_FOLDER_ID = "dev.gsound.a.extra.FOLDER_ID"
+        const val EXTRA_FOLDER_ID = "dev.pntome.app.extra.FOLDER_ID"
     }
 }

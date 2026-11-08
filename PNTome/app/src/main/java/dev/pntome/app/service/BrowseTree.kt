@@ -1,14 +1,15 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.session.LibraryResult
+import androidx.media3.session.SessionError
 import com.google.common.collect.ImmutableList
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.domain.model.Folder
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.domain.model.Folder
 
 /**
  * The Android Auto browse tree (gsound-player design §3, PL-2.2, 2.5, 2.7). Pure of Android
@@ -25,6 +26,7 @@ import dev.gsound.a.domain.model.Folder
  *
  * Errors are [LibraryResult.RESULT_ERROR_BAD_VALUE] (unknown / wrong-kind id).
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class BrowseTree(
     private val folders: FolderRepository,
     private val bookmarks: BookmarkDao,
@@ -32,7 +34,7 @@ class BrowseTree(
     private val artworkUri: Uri? = null,
 ) {
     /** The root node returned from `onGetLibraryRoot`. */
-    fun root(): MediaItem = node(ROOT_ID, "Gsound")
+    fun root(): MediaItem = node(ROOT_ID, "PNTome")
 
     suspend fun getItem(mediaId: String): LibraryResult<MediaItem> {
         val item: MediaItem? = when {
@@ -121,7 +123,7 @@ class BrowseTree(
         return MediaItem.Builder().setMediaId(id).setMediaMetadata(md.build()).build()
     }
 
-    private fun <T : Any> bad(): LibraryResult<T> = LibraryResult.ofError<T>(LibraryResult.RESULT_ERROR_BAD_VALUE)
+    private fun <T : Any> bad(): LibraryResult<T> = LibraryResult.ofError<T>(SessionError.ERROR_BAD_VALUE)
 
     companion object {
         const val ROOT_ID = "root"

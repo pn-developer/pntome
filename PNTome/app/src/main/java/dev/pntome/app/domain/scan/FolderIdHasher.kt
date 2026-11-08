@@ -1,14 +1,14 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import java.security.MessageDigest
 
 /**
- * Derives the stable [dev.gsound.a.domain.model.Folder.id] used to dedupe selected folders
+ * Derives the stable [dev.pntome.app.domain.model.Folder.id] used to dedupe selected folders
  * (Req 1.4) and as the foreign-key target for cached tracks.
  *
  * The id is `sha1(normalizedTreeUri)` rendered as a lowercase hex string (design §4 / §5.1).
  * Hashing the normalized SAF tree URI means re-selecting the same folder yields the same id,
- * so [dev.gsound.a.data.folders.FolderRepository.addFolderIfAbsent] can reject it as a
+ * so [dev.pntome.app.data.folders.FolderRepository.addFolderIfAbsent] can reject it as a
  * duplicate rather than inserting a second row.
  *
  * Mirrors [TrackIdHasher]: pure Kotlin, no Android dependencies, so it is unit-testable on

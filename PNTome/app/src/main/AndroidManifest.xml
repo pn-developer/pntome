@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
          ============================================================================================
          Permission policy (task 11.1, Req 9.2 — request only what is necessary)
          ============================================================================================
-         GsoundA intentionally declares a minimal permission set. Each <uses-permission> below has a
+         PNTome intentionally declares a minimal permission set. Auto-backup is disabled
+         (allowBackup="false"): the app stores pairing data and SAF folder grants that are
+         meaningless on another device, and nothing in it should leave the phone. Each <uses-permission> below has a
          one-line justification. Two deliberate NON-declarations are documented here because the
          absence is itself a design decision (Req 9.2):
 
@@ -63,17 +66,19 @@
          Req 9.3). See ui/permissions/NotificationPermission.kt + its use in SyncScreen. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Voice search (MEDIA_PLAY_FROM_SEARCH) is not offered: the library only browses and plays. -->
     <application
-        android:name=".GsoundApplication"
-        android:allowBackup="true"
+        tools:ignore="MissingIntentFilterForMediaSearch"
+        android:name=".PNTomeApplication"
+        android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GsoundA">
+        android:theme="@style/Theme.PNTome">
 
-        <!-- Android Auto: advertises GsoundA as a media app (gsound-player PL-2.1, design §3). -->
+        <!-- Android Auto: advertises PNTome as a media app (gsound-player PL-2.1, design §3). -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc" />
@@ -81,7 +86,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.GsoundA">
+            android:theme="@style/Theme.PNTome">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

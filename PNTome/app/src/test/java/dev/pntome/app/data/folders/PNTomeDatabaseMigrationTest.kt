@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -21,16 +21,16 @@ import java.io.File
  *
  * Builds a REAL version-1 database from the exported `schemas/.../1.json` (the same create
  * statements Room shipped in v1, plus its identity hash), seeds rows, then opens it with the
- * production builder + [GsoundDatabase.MIGRATION_1_2]. Room runs the migration and validates the
+ * production builder + [PNTomeDatabase.MIGRATION_1_2]. Room runs the migration and validates the
  * resulting tables against the v2 entities on open — a missing/mistyped column or default fails
  * this test. (The instrumented variant with MigrationTestHelper lives in androidTest.)
  */
 @RunWith(RobolectricTestRunner::class)
-class GsoundDatabaseMigrationTest {
+class PNTomeDatabaseMigrationTest {
 
     private val dbName = "migration-test.db"
     private lateinit var context: Context
-    private var db: GsoundDatabase? = null
+    private var db: PNTomeDatabase? = null
 
     @Before
     fun setUp() {
@@ -48,7 +48,7 @@ class GsoundDatabaseMigrationTest {
 
     /** Create the given version's schema exactly as exported, with Room's master table + hash. */
     private fun createVersion(version: Int, seed: (SQLiteDatabase) -> Unit) {
-        val schemaFile = File("schemas/dev.gsound.a.data.folders.GsoundDatabase/$version.json")
+        val schemaFile = File("schemas/dev.pntome.app.data.folders.PNTomeDatabase/$version.json")
         val database = JSONObject(schemaFile.readText()).getJSONObject("database")
         val path = context.getDatabasePath(dbName).apply { parentFile?.mkdirs() }
         SQLiteDatabase.openOrCreateDatabase(path, null).use { sql ->
@@ -85,8 +85,8 @@ class GsoundDatabaseMigrationTest {
             )
         }
 
-        val migrated = Room.databaseBuilder(context, GsoundDatabase::class.java, dbName)
-            .addMigrations(GsoundDatabase.MIGRATION_1_2, GsoundDatabase.MIGRATION_2_3)
+        val migrated = Room.databaseBuilder(context, PNTomeDatabase::class.java, dbName)
+            .addMigrations(PNTomeDatabase.MIGRATION_1_2, PNTomeDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
             .also { db = it }
@@ -122,8 +122,8 @@ class GsoundDatabaseMigrationTest {
             )
         }
 
-        val migrated = Room.databaseBuilder(context, GsoundDatabase::class.java, dbName)
-            .addMigrations(GsoundDatabase.MIGRATION_2_3)
+        val migrated = Room.databaseBuilder(context, PNTomeDatabase::class.java, dbName)
+            .addMigrations(PNTomeDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
             .also { db = it }
@@ -151,8 +151,8 @@ class GsoundDatabaseMigrationTest {
                     "VALUES ('f1', 'content://tree/x', 'Dune', 0, 0, 1)"
             )
         }
-        val migrated = Room.databaseBuilder(context, GsoundDatabase::class.java, dbName)
-            .addMigrations(GsoundDatabase.MIGRATION_1_2, GsoundDatabase.MIGRATION_2_3)
+        val migrated = Room.databaseBuilder(context, PNTomeDatabase::class.java, dbName)
+            .addMigrations(PNTomeDatabase.MIGRATION_1_2, PNTomeDatabase.MIGRATION_2_3)
             .allowMainThreadQueries()
             .build()
             .also { db = it }

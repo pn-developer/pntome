@@ -1,28 +1,28 @@
-package dev.gsound.a.domain.sync
+package dev.pntome.app.domain.sync
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.log.NoopLogger
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.data.sync.SyncSummaryStore
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.FakeControlChannel
-import dev.gsound.a.net.garmin.messages.SyncManifest
-import dev.gsound.a.net.garmin.messages.SyncStatus
-import dev.gsound.a.net.server.GsoundHttpServer
-import dev.gsound.a.net.server.LanAddress
-import dev.gsound.a.net.server.LanKind
-import dev.gsound.a.net.server.ServerTransferMonitor
-import dev.gsound.a.net.server.SyncSessionHolder
-import dev.gsound.a.net.server.WifiAddressResolver
-import dev.gsound.a.net.server.WifiGuard
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.log.NoopLogger
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.data.sync.SyncSummaryStore
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.FakeControlChannel
+import dev.pntome.app.net.garmin.messages.SyncManifest
+import dev.pntome.app.net.garmin.messages.SyncStatus
+import dev.pntome.app.net.server.PNTomeHttpServer
+import dev.pntome.app.net.server.LanAddress
+import dev.pntome.app.net.server.LanKind
+import dev.pntome.app.net.server.ServerTransferMonitor
+import dev.pntome.app.net.server.SyncSessionHolder
+import dev.pntome.app.net.server.WifiAddressResolver
+import dev.pntome.app.net.server.WifiGuard
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -54,10 +54,10 @@ import org.robolectric.RobolectricTestRunner
  *
  * - **ControlChannel** → the shared [FakeControlChannel]: records every [SyncManifest] sent and
  *   replays scripted [SyncStatus] replies via [FakeControlChannel.emitIncoming].
- * - **FolderRepository** → the real repository over an in-memory [GsoundDatabase] (Robolectric),
+ * - **FolderRepository** → the real repository over an in-memory [PNTomeDatabase] (Robolectric),
  *   following the precedent in `ScanAndCacheUseCaseTest`. Tracks are seeded with
  *   `upsertFolder` + `upsertTracks` so `getAllTracks()` drives a real manifest.
- * - **GsoundHttpServer** → the **real** server, constructed with a fake [WifiAddressResolver]
+ * - **PNTomeHttpServer** → the **real** server, constructed with a fake [WifiAddressResolver]
  *   returning `127.0.0.1` and no routing modules, so `start()` binds a real Ktor CIO socket on
  *   loopback (the "in-memory server" for this unit test) and `stop()` releases it. This genuinely
  *   exercises the start/stop lifecycle and the `WifiUnavailable` path (fake resolver → null).
@@ -84,13 +84,13 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class SyncOrchestratorTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var pairingStore: FakePairingStore
     private lateinit var summaryStore: SyncSummaryStore
     private lateinit var channel: FakeControlChannel
     private lateinit var resolver: MutableWifiAddressResolver
-    private lateinit var httpServer: GsoundHttpServer
+    private lateinit var httpServer: PNTomeHttpServer
     private lateinit var sessionHolder: SyncSessionHolder
     private lateinit var transferMonitor: ServerTransferMonitor
     private lateinit var wifiGuard: WifiGuard
@@ -109,7 +109,7 @@ class SyncOrchestratorTest {
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
 
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         repository = FolderRepository(db.folderDao(), db.trackDao())
@@ -118,7 +118,7 @@ class SyncOrchestratorTest {
         summaryStore = SyncSummaryStore(app)
         channel = FakeControlChannel(initialState = ConnectionState.Connected)
         resolver = MutableWifiAddressResolver("127.0.0.1")
-        httpServer = GsoundHttpServer(resolver, emptySet())
+        httpServer = PNTomeHttpServer(resolver, emptySet())
         sessionHolder = SyncSessionHolder()
         transferMonitor = ServerTransferMonitor()
         wifiGuard = WifiGuard(resolver)
@@ -138,7 +138,7 @@ class SyncOrchestratorTest {
     }
 
     /** Fake rescan: counts calls and runs an optional action (to mutate the cache mid-refresh). */
-    private class FakeRefresher : dev.gsound.a.domain.folders.LibraryRefresher {
+    private class FakeRefresher : dev.pntome.app.domain.folders.LibraryRefresher {
         var calls = 0
         var onRefresh: suspend () -> Unit = {}
         override suspend fun refreshAll(): Int {
@@ -504,7 +504,7 @@ class SyncOrchestratorTest {
      * times out (this is what intermittently failed the cancel test). Gating on
      * [FakeControlChannel.subscriptionCount] makes every status-driven test deterministic.
      */
-    private suspend fun awaitSent(): dev.gsound.a.net.garmin.messages.ControlMessage {
+    private suspend fun awaitSent(): dev.pntome.app.net.garmin.messages.ControlMessage {
         awaitUntil("a control message to be sent") { channel.sent.isNotEmpty() }
         awaitUntil("the orchestrator to subscribe to incoming statuses") {
             channel.subscriptionCount.value > 0

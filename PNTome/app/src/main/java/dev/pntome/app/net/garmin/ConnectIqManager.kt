@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 import android.bluetooth.BluetoothManager
 import android.content.Context
@@ -6,11 +6,11 @@ import com.garmin.android.connectiq.ConnectIQ
 import com.garmin.android.connectiq.IQApp
 import com.garmin.android.connectiq.IQDevice
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.net.garmin.messages.ControlMessage
-import dev.gsound.a.net.garmin.messages.MessageCodec
-import dev.gsound.a.net.garmin.messages.WatchLogLine
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.net.garmin.messages.ControlMessage
+import dev.pntome.app.net.garmin.messages.MessageCodec
+import dev.pntome.app.net.garmin.messages.WatchLogLine
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,8 +30,8 @@ import kotlin.coroutines.resume
  * Connect IQ Mobile SDK-backed implementation of [ControlChannel] (design §5.3, task 6.2).
  *
  * Bridges the SDK's callback-style API into coroutines/[kotlinx.coroutines.flow.Flow]:
- * - [connect] initializes the SDK, resolves a connected [IQDevice], locates the GsoundG
- *   [IQApp] by its shared [GsoundAppId], and registers message/device listeners (Req 4.1).
+ * - [connect] initializes the SDK, resolves a connected [IQDevice], locates the PNTomeGo
+ *   [IQApp] by its shared [PNTomeAppId], and registers message/device listeners (Req 4.1).
  * - [incoming] re-emits decoded [ControlMessage]s received from the watch.
  * - [send] encodes a message to JSON and hands it to [ConnectIQ.sendMessage].
  * - [close] unregisters listeners and shuts the SDK down.
@@ -60,11 +60,11 @@ class ConnectIqManager @Inject constructor(
     /** Backoff policy applied to outgoing sends (Req 10.2). */
     private val retryPolicy = OutgoingRetry.RetryPolicy()
 
-    /** Logcat tag for control-channel diagnostics (filter: `adb logcat -s Gsound.CIQ`). */
-    private val tag = "Gsound.CIQ"
+    /** Logcat tag for control-channel diagnostics (filter: `adb logcat -s PNTome.CIQ`). */
+    private val tag = "PNTome.CIQ"
 
-    /** Logcat tag for lines forwarded from the watch's diagnostic log (filter: `-s Gsound.Watch`). */
-    private val WATCH_LOG_TAG = "Gsound.Watch"
+    /** Logcat tag for lines forwarded from the watch's diagnostic log (filter: `-s PNTome.Watch`). */
+    private val WATCH_LOG_TAG = "PNTome.Watch"
 
     /**
      * Device-enumeration poll window used by [resolveDeviceAndApp].
@@ -112,8 +112,8 @@ class ConnectIqManager @Inject constructor(
     private var device: IQDevice? = null
     private var app: IQApp? = null
 
-    /** The GsoundG app identity used for info lookup, event registration, and sends. */
-    private val gsoundApp = IQApp(GsoundAppId.VALUE)
+    /** The PNTomeGo app identity used for info lookup, event registration, and sends. */
+    private val pntomeApp = IQApp(PNTomeAppId.VALUE)
 
     /**
      * Receives incoming SDK message batches, validates each payload via [MessageCodec], and
@@ -125,7 +125,7 @@ class ConnectIqManager @Inject constructor(
         // Snapshot the active pairing once per batch; the SDK delivers on its own thread, so a
         // short blocking read of the persisted record is acceptable (control payloads are tiny).
         val expectedPairingId = runBlocking { pairingStore.get()?.pairingId }
-        GsoundLog.d(tag, "incoming batch: ${messageData.size} payload(s)")
+        PNTomeLog.d(tag, "incoming batch: ${messageData.size} payload(s)")
         for (payload in messageData) {
             // The SDK delivers structured values: a watch-side Dictionary arrives as a Map.
             // decodeAndValidateFromAny handles that (and tolerates a legacy JSON String).
@@ -135,10 +135,10 @@ class ConnectIqManager @Inject constructor(
                     val message = result.message
                     if (message is WatchLogLine) {
                         // A forwarded watch diagnostic line: write it under its own tag
-                        // (filter: `adb logcat -s Gsound.Watch`) instead of the per-message noise.
-                        GsoundLog.i(WATCH_LOG_TAG, message.line)
+                        // (filter: `adb logcat -s PNTome.Watch`) instead of the per-message noise.
+                        PNTomeLog.i(WATCH_LOG_TAG, message.line)
                     } else {
-                        GsoundLog.i(tag, "incoming accepted: type=${message::class.simpleName}")
+                        PNTomeLog.i(tag, "incoming accepted: type=${message::class.simpleName}")
                     }
                     // Non-blocking emit; the SharedFlow buffer absorbs bursts.
                     _incoming.tryEmit(result.message)
@@ -146,10 +146,10 @@ class ConnectIqManager @Inject constructor(
 
                 // Invalid envelope/schema or an unpaired peer: ignore (Req 10.3).
                 is MessageCodec.DecodeResult.Invalid -> {
-                    GsoundLog.w(tag, "incoming dropped: invalid envelope/schema")
+                    PNTomeLog.w(tag, "incoming dropped: invalid envelope/schema")
                 }
                 is MessageCodec.DecodeResult.UnpairedPeer -> {
-                    GsoundLog.w(tag, "incoming dropped: unpaired/foreign peer (pairingId mismatch)")
+                    PNTomeLog.w(tag, "incoming dropped: unpaired/foreign peer (pairingId mismatch)")
                 }
             }
         }
@@ -162,14 +162,14 @@ class ConnectIqManager @Inject constructor(
      * [ConnectionState.Connected] (task 6.4).
      */
     private val deviceEventListener = ConnectIQ.IQDeviceEventListener { eventDevice, status ->
-        GsoundLog.i(tag, "deviceEvent: device=${eventDevice?.friendlyName} id=${eventDevice?.deviceIdentifier} status=$status")
+        PNTomeLog.i(tag, "deviceEvent: device=${eventDevice?.friendlyName} id=${eventDevice?.deviceIdentifier} status=$status")
         when (val outcome = SdkStateMapper.mapDeviceStatus(status)) {
             is SdkStateMapper.DeviceOutcome.Connected -> {
                 // Capture the device from the event so a send has a target even if this CONNECTED
                 // arrived outside a full connect()/resolveDeviceAndApp pass (e.g. a BT reconnect
                 // after unpair/reboot). Without this the state could be Connected while `device`
                 // stayed null, and sends failed with "not connected (device=false)". `app` is
-                // still bound by resolveDeviceAndApp / falls back to gsoundApp in sendOnce.
+                // still bound by resolveDeviceAndApp / falls back to pntomeApp in sendOnce.
                 if (eventDevice != null) {
                     device = eventDevice
                 }
@@ -189,13 +189,13 @@ class ConnectIqManager @Inject constructor(
         // re-check a refresh wants.
         val existing = connectIq
         if (sdkInitialized && existing != null) {
-            GsoundLog.i(tag, "connect(): SDK already initialized; re-resolving device (refresh)")
+            PNTomeLog.i(tag, "connect(): SDK already initialized; re-resolving device (refresh)")
             _connectionState.value = ConnectionState.Connecting
             resolveDeviceAndApp(existing)
             return@withLock
         }
 
-        GsoundLog.i(tag, "connect(): initializing Connect IQ SDK (transport=WIRELESS, via Garmin Connect)")
+        PNTomeLog.i(tag, "connect(): initializing Connect IQ SDK (transport=WIRELESS, via Garmin Connect)")
         _connectionState.value = ConnectionState.Connecting
 
         val iq = ConnectIQ.getInstance(context, ConnectIQ.IQConnectType.WIRELESS)
@@ -206,20 +206,20 @@ class ConnectIqManager @Inject constructor(
         val ready = CompletableDeferred<Boolean>()
         val listener = object : ConnectIQ.ConnectIQListener {
             override fun onSdkReady() {
-                GsoundLog.i(tag, "onSdkReady: SDK bound to Garmin Connect; resolving device")
+                PNTomeLog.i(tag, "onSdkReady: SDK bound to Garmin Connect; resolving device")
                 sdkInitialized = true
                 if (!ready.isCompleted) ready.complete(true)
             }
 
             override fun onInitializeError(status: ConnectIQ.IQSdkErrorStatus) {
-                GsoundLog.e(tag, "onInitializeError: status=$status (is Garmin Connect installed/updated?)")
+                PNTomeLog.e(tag, "onInitializeError: status=$status (is Garmin Connect installed/updated?)")
                 sdkInitialized = false
                 _connectionState.value = SdkStateMapper.mapInitError(status)
                 if (!ready.isCompleted) ready.complete(false)
             }
 
             override fun onSdkShutDown() {
-                GsoundLog.i(tag, "onSdkShutDown")
+                PNTomeLog.i(tag, "onSdkShutDown")
                 sdkInitialized = false
                 _connectionState.value = ConnectionState.Disconnected
             }
@@ -228,7 +228,7 @@ class ConnectIqManager @Inject constructor(
         try {
             iq.initialize(context, /* autoUI = */ false, listener)
         } catch (t: Throwable) {
-            GsoundLog.e(tag, "initialize() threw: ${t.javaClass.simpleName}", t)
+            PNTomeLog.e(tag, "initialize() threw: ${t.javaClass.simpleName}", t)
             _connectionState.value = SdkStateMapper.mapThrowable(t)
             return@withLock
         }
@@ -242,7 +242,7 @@ class ConnectIqManager @Inject constructor(
     }
 
     /**
-     * After the SDK is ready: pick the first CONNECTED device, confirm the GsoundG app is
+     * After the SDK is ready: pick the first CONNECTED device, confirm the PNTomeGo app is
      * installed, register listeners, and move to [ConnectionState.Connected]. SDK throws are
      * mapped via [mapThrowable]; missing device/app map to the matching reasons.
      */
@@ -265,27 +265,27 @@ class ConnectIqManager @Inject constructor(
             // No reachable device after the full poll window. Let the mapper decide between
             // "Bluetooth is off" and "no device" using the phone's current adapter state
             // (task 6.4, Req 4.2).
-            GsoundLog.w(tag, "no CONNECTED device after poll window (btEnabled=${isBluetoothEnabled()}) -> NO_DEVICE/BLUETOOTH_OFF")
+            PNTomeLog.w(tag, "no CONNECTED device after poll window (btEnabled=${isBluetoothEnabled()}) -> NO_DEVICE/BLUETOOTH_OFF")
             _connectionState.value = SdkStateMapper.resolveConnectivityError(isBluetoothEnabled())
             return
         }
         device = connected
-        GsoundLog.i(tag, "resolved device: name=${connected.friendlyName} id=${connected.deviceIdentifier} status=${connected.status}")
+        PNTomeLog.i(tag, "resolved device: name=${connected.friendlyName} id=${connected.deviceIdentifier} status=${connected.status}")
 
-        // Confirm the GsoundG app is installed, then register for events (Req 4.1).
+        // Confirm the PNTomeGo app is installed, then register for events (Req 4.1).
         val appInstalled = suspendCancellableCoroutine { cont ->
             iq.getApplicationInfo(
-                GsoundAppId.VALUE,
+                PNTomeAppId.VALUE,
                 connected,
                 object : ConnectIQ.IQApplicationInfoListener {
                     override fun onApplicationInfoReceived(iqApp: IQApp) {
-                        GsoundLog.i(tag, "GsoundG app found on watch (appId=${GsoundAppId.VALUE})")
+                        PNTomeLog.i(tag, "PNTomeGo app found on watch (appId=${PNTomeAppId.VALUE})")
                         app = iqApp
                         if (cont.isActive) cont.resume(true)
                     }
 
                     override fun onApplicationNotInstalled(applicationId: String) {
-                        GsoundLog.w(tag, "GsoundG app NOT installed on watch (appId=$applicationId)")
+                        PNTomeLog.w(tag, "PNTomeGo app NOT installed on watch (appId=$applicationId)")
                         if (cont.isActive) cont.resume(false)
                     }
                 },
@@ -303,17 +303,17 @@ class ConnectIqManager @Inject constructor(
             return
         }
 
-        val resolvedApp = app ?: gsoundApp
+        val resolvedApp = app ?: pntomeApp
         try {
             iq.registerForAppEvents(connected, resolvedApp, appEventListener)
             iq.registerForDeviceEvents(connected, deviceEventListener)
         } catch (t: Throwable) {
-            GsoundLog.e(tag, "registerForEvents threw: ${t.javaClass.simpleName}", t)
+            PNTomeLog.e(tag, "registerForEvents threw: ${t.javaClass.simpleName}", t)
             _connectionState.value = SdkStateMapper.mapThrowable(t)
             return
         }
 
-        GsoundLog.i(tag, "control channel CONNECTED (device + GsoundG app ready)")
+        PNTomeLog.i(tag, "control channel CONNECTED (device + PNTomeGo app ready)")
         _connectionState.value = ConnectionState.Connected
     }
 
@@ -361,13 +361,13 @@ class ConnectIqManager @Inject constructor(
                     } catch (t: Throwable) {
                         // Registration failure is not fatal to resolution: fall back to polling
                         // getDeviceStatus below. A genuinely broken SDK surfaces via that call.
-                        GsoundLog.w(tag, "registerForDeviceEvents(candidate) failed: ${t.javaClass.simpleName}")
+                        PNTomeLog.w(tag, "registerForDeviceEvents(candidate) failed: ${t.javaClass.simpleName}")
                     }
                 }
 
                 // Authoritative live status (not the stale IQDevice.status placeholder).
                 val liveStatus = runCatching { iq.getDeviceStatus(candidate) }.getOrNull()
-                GsoundLog.d(tag, "candidate=${candidate.friendlyName} liveStatus=$liveStatus (field=${candidate.status})")
+                PNTomeLog.d(tag, "candidate=${candidate.friendlyName} liveStatus=$liveStatus (field=${candidate.status})")
                 if (liveStatus == IQDevice.IQDeviceStatus.CONNECTED) {
                     return candidate
                 }
@@ -376,7 +376,7 @@ class ConnectIqManager @Inject constructor(
             if (elapsed >= devicePollTotalMs) {
                 return null
             }
-            GsoundLog.d(tag, "device not CONNECTED yet; waiting (elapsed=${elapsed}ms/${devicePollTotalMs}ms)")
+            PNTomeLog.d(tag, "device not CONNECTED yet; waiting (elapsed=${elapsed}ms/${devicePollTotalMs}ms)")
             delay(devicePollIntervalMs)
             elapsed += devicePollIntervalMs
         }
@@ -393,7 +393,7 @@ class ConnectIqManager @Inject constructor(
         val connectedList = iq.connectedDevices.orEmpty()
         val knownList = iq.knownDevices.orEmpty()
         // Diagnostic (non-secret): friendlyName + status are not sensitive.
-        GsoundLog.d(
+        PNTomeLog.d(
             tag,
             "enumerate: connectedDevices=${connectedList.size} ${connectedList.describe()} | " +
                 "knownDevices=${knownList.size} ${knownList.describe()}",
@@ -415,22 +415,22 @@ class ConnectIqManager @Inject constructor(
         // Redaction policy (Req 8.4, design §5.7): the encoded [payload] / [message] may carry
         // sensitive pairing values (the 6-digit code / secret in a PAIR_REQUEST). Do NOT log the
         // payload or message contents. If diagnostics are needed, log only the non-secret
-        // discriminator and pairingId (e.g. via dev.gsound.a.log.GsoundLog), and route any secret
-        // through dev.gsound.a.log.Redact.redact first.
+        // discriminator and pairingId (e.g. via dev.pntome.app.log.PNTomeLog), and route any secret
+        // through dev.pntome.app.log.Redact.redact first.
         // Log only the non-secret message type — never the encoded payload, which may carry the
         // PAIR_REQUEST code/secret (Req 8.4).
-        GsoundLog.i(tag, "send: type=${message::class.simpleName}")
+        PNTomeLog.i(tag, "send: type=${message::class.simpleName}")
         // Send a STRUCTURED Map, not a JSON String: the Connect IQ SDK marshals a Map to a
-        // Monkey C Dictionary on the watch, which is what GsoundG's Protocol.validate requires.
+        // Monkey C Dictionary on the watch, which is what PNTomeGo's Protocol.validate requires.
         // A JSON String would arrive as a watch String and be dropped as INVALID_NOT_DICT.
         val payload = MessageCodec.encodeToMap(message)
         val result = OutgoingRetry.retryWithBackoff(policy = retryPolicy) {
             sendOnce(payload)
         }
         if (result.isSuccess) {
-            GsoundLog.i(tag, "send ok: type=${message::class.simpleName}")
+            PNTomeLog.i(tag, "send ok: type=${message::class.simpleName}")
         } else {
-            GsoundLog.w(tag, "send FAILED: type=${message::class.simpleName} cause=${result.exceptionOrNull()?.javaClass?.simpleName}")
+            PNTomeLog.w(tag, "send FAILED: type=${message::class.simpleName} cause=${result.exceptionOrNull()?.javaClass?.simpleName}")
         }
         return result
     }
@@ -449,15 +449,15 @@ class ConnectIqManager @Inject constructor(
         // while the watch is actually reachable. This was the cause of PAIR_REQUEST failing with
         // device=false right after the channel reported Connected.
         if (device == null) {
-            GsoundLog.i(tag, "sendOnce: no resolved device yet; resolving on demand before send")
+            PNTomeLog.i(tag, "sendOnce: no resolved device yet; resolving on demand before send")
             runCatching { connect() }
-                .onFailure { GsoundLog.w(tag, "sendOnce: on-demand connect() threw: ${it.javaClass.simpleName}") }
+                .onFailure { PNTomeLog.w(tag, "sendOnce: on-demand connect() threw: ${it.javaClass.simpleName}") }
             iq = connectIq
         }
         val targetDevice = device
-        val targetApp = app ?: gsoundApp
+        val targetApp = app ?: pntomeApp
         if (iq == null || targetDevice == null) {
-            GsoundLog.w(tag, "sendOnce: not connected (iq=${iq != null}, device=${targetDevice != null})")
+            PNTomeLog.w(tag, "sendOnce: not connected (iq=${iq != null}, device=${targetDevice != null})")
             return Result.failure(
                 IllegalStateException("Control channel not connected; call connect() first"),
             )
@@ -474,7 +474,7 @@ class ConnectIqManager @Inject constructor(
                         if (status == ConnectIQ.IQMessageStatus.SUCCESS) {
                             cont.resume(Result.success(Unit))
                         } else {
-                            GsoundLog.w(tag, "sendMessage transport status=$status (will retry if budget remains)")
+                            PNTomeLog.w(tag, "sendMessage transport status=$status (will retry if budget remains)")
                             cont.resume(
                                 Result.failure(
                                     SendFailedException(status),

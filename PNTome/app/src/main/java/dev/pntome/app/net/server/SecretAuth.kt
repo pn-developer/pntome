@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -11,10 +11,10 @@ import java.security.MessageDigest
  *
  * The HTTP header carrying the credential.
  */
-const val SECRET_HEADER = "X-Gsound-Secret"
+const val SECRET_HEADER = "X-PNTome-Secret"
 
 /**
- * Whether a request bearing [presented] (the `X-Gsound-Secret` header value, or `null`/empty when
+ * Whether a request bearing [presented] (the `X-PNTome-Secret` header value, or `null`/empty when
  * absent) is authorized given the [expected] secret.
  *
  * Rules (fail closed):
@@ -28,7 +28,7 @@ const val SECRET_HEADER = "X-Gsound-Secret"
  * timing side channel that could let an attacker recover the secret byte-by-byte. Neither
  * argument is logged (Req 8.4).
  *
- * @param presented the value of the `X-Gsound-Secret` header, or `null` when the header is absent.
+ * @param presented the value of the `X-PNTome-Secret` header, or `null` when the header is absent.
  * @param expected the secret the request must match, or `null` when nothing can be authenticated.
  */
 fun isSecretAuthorized(presented: String?, expected: String?): Boolean {

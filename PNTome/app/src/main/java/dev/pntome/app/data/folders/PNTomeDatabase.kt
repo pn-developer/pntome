@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -6,7 +6,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
- * The app's Room database (`gsound.db`, design §5.7).
+ * The app's Room database (`pntome.db`, design §5.7).
  *
  * Holds the relational, queryable persistence for folders and their cached tracks, surviving
  * app and device restarts (Req 8.1, 8.2). Small structured state (pairing, settings, sync
@@ -23,13 +23,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     version = 3,
     exportSchema = true
 )
-abstract class GsoundDatabase : RoomDatabase() {
+abstract class PNTomeDatabase : RoomDatabase() {
     abstract fun folderDao(): FolderDao
     abstract fun trackDao(): TrackDao
     abstract fun bookmarkDao(): BookmarkDao
 
     companion object {
-        const val NAME = "gsound.db"
+        const val NAME = "pntome.db"
 
         /**
          * v1 → v2: two additive columns with defaults. Existing folders become music folders

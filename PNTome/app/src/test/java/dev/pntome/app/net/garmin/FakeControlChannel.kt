@@ -1,6 +1,6 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
-import dev.gsound.a.net.garmin.messages.ControlMessage
+import dev.pntome.app.net.garmin.messages.ControlMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Capabilities:
  * - **Push incoming**: [emitIncoming] replays a validated [ControlMessage] to [incoming]
  *   collectors (callers decide what is "valid"; the real validation lives in
- *   [dev.gsound.a.net.garmin.messages.MessageCodec]).
+ *   [dev.pntome.app.net.garmin.messages.MessageCodec]).
  * - **Record sent**: every [send] appends to [sent] so tests can assert what was transmitted.
  * - **Script send results**: [sendResults] is a FIFO queue of outcomes [send] returns in order
  *   (e.g. two failures then a success to exercise retry); when empty, [defaultSendResult] is

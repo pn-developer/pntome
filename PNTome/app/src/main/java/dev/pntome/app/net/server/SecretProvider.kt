@@ -1,15 +1,15 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.data.pairing.PairingStore
+import dev.pntome.app.data.pairing.PairingStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Supplies the secret the HTTP data-channel auth interceptor expects in the `X-Gsound-Secret`
+ * Supplies the secret the HTTP data-channel auth interceptor expects in the `X-PNTome-Secret`
  * header (Req 5.3, design §5.5/§8).
  *
  * ## Why an interface
- * The auth check (see [installGsoundRouting]) must be driven by a fake in the Ktor test-host
+ * The auth check (see [installPNTomeRouting]) must be driven by a fake in the Ktor test-host
  * tests (task 8.4) without an Android `Context`, DataStore, or a running sync. Hiding "what is
  * the current expected secret?" behind this one small, suspendable method keeps the interceptor
  * free of those dependencies and makes `401`/success paths trivially scriptable.
@@ -45,7 +45,7 @@ interface SecretProvider {
  *    watch agree even if the persisted pairing were rotated mid-sync.
  * 2. [PairingStore.get]`()?.sharedSecret` — when no session is active (e.g. a bare `/manifest`
  *    probe between syncs) the persisted pairing's secret is used, matching the design's
- *    "`X-Gsound-Secret == pairing.sharedSecret`".
+ *    "`X-PNTome-Secret == pairing.sharedSecret`".
  *
  * When neither exists (unpaired, no session) the result is `null` and the interceptor fails
  * closed with `401`.

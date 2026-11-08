@@ -1,11 +1,11 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 import com.garmin.android.connectiq.ConnectIQ
 import com.garmin.android.connectiq.IQApp
 import com.garmin.android.connectiq.IQDevice
 import com.garmin.android.connectiq.exception.InvalidStateException
 import com.garmin.android.connectiq.exception.ServiceUnavailableException
-import dev.gsound.a.net.garmin.ConnectionState.Error.Reason
+import dev.pntome.app.net.garmin.ConnectionState.Error.Reason
 
 /**
  * Pure, JVM-testable mapping of Connect IQ Mobile SDK states/exceptions to the app's
@@ -79,7 +79,7 @@ object SdkStateMapper {
      * so callers get an explicit [Connected] signal and exhaustive handling.
      */
     sealed interface DeviceOutcome {
-        /** The device is connected and usable; proceed to resolve the GsoundG app. */
+        /** The device is connected and usable; proceed to resolve the PNTomeGo app. */
         data object Connected : DeviceOutcome
 
         /** The device is not usable; carries the mapped actionable error. */
@@ -127,10 +127,10 @@ object SdkStateMapper {
     // --- App status ----------------------------------------------------------------------------
 
     /**
-     * Outcome of inspecting the GsoundG app's [IQApp.IQAppStatus] on the device.
+     * Outcome of inspecting the PNTomeGo app's [IQApp.IQAppStatus] on the device.
      */
     sealed interface AppOutcome {
-        /** The GsoundG app is installed and usable; the channel can proceed to Connected. */
+        /** The PNTomeGo app is installed and usable; the channel can proceed to Connected. */
         data object Installed : AppOutcome
 
         /** The app is not usable; carries the mapped actionable error. */
@@ -138,16 +138,16 @@ object SdkStateMapper {
     }
 
     /**
-     * Map the GsoundG app's [IQApp.IQAppStatus] to an [AppOutcome].
+     * Map the PNTomeGo app's [IQApp.IQAppStatus] to an [AppOutcome].
      *
      * - [IQApp.IQAppStatus.INSTALLED] → [AppOutcome.Installed].
      * - [IQApp.IQAppStatus.NOT_INSTALLED] / [IQApp.IQAppStatus.NOT_SUPPORTED] →
-     *   [Reason.APP_NOT_INSTALLED] (the user must install GsoundG on the watch; a watch that
+     *   [Reason.APP_NOT_INSTALLED] (the user must install PNTomeGo on the watch; a watch that
      *   does not support the app is, from the user's point of view, the same actionable
      *   "install/get a compatible build" step).
      * - [IQApp.IQAppStatus.UNKNOWN] → treated conservatively as [Reason.APP_NOT_INSTALLED]: when
      *   the SDK cannot confirm the app is present we must not claim the channel is ready, and the
-     *   safe, actionable guidance is to check that GsoundG is installed on the watch.
+     *   safe, actionable guidance is to check that PNTomeGo is installed on the watch.
      */
     fun mapAppStatus(status: IQApp.IQAppStatus): AppOutcome = when (status) {
         IQApp.IQAppStatus.INSTALLED -> AppOutcome.Installed
@@ -155,21 +155,21 @@ object SdkStateMapper {
         IQApp.IQAppStatus.NOT_INSTALLED -> AppOutcome.Error(
             ConnectionState.Error(
                 reason = Reason.APP_NOT_INSTALLED,
-                detail = "GsoundG is not installed on the watch. Install it from the Connect IQ store.",
+                detail = "PNTomeGo is not installed on the watch. Install it from the Connect IQ store.",
             ),
         )
 
         IQApp.IQAppStatus.NOT_SUPPORTED -> AppOutcome.Error(
             ConnectionState.Error(
                 reason = Reason.APP_NOT_INSTALLED,
-                detail = "GsoundG is not supported on this watch. Install a compatible build on the watch.",
+                detail = "PNTomeGo is not supported on this watch. Install a compatible build on the watch.",
             ),
         )
 
         IQApp.IQAppStatus.UNKNOWN -> AppOutcome.Error(
             ConnectionState.Error(
                 reason = Reason.APP_NOT_INSTALLED,
-                detail = "Could not confirm GsoundG on the watch. Make sure it is installed on the watch.",
+                detail = "Could not confirm PNTomeGo on the watch. Make sure it is installed on the watch.",
             ),
         )
     }

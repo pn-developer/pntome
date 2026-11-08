@@ -1,8 +1,8 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
-import dev.gsound.a.service.BookmarkResolver
-import dev.gsound.a.service.QueueBuilder
-import dev.gsound.a.service.ResumePoint
+import dev.pntome.app.service.BookmarkResolver
+import dev.pntome.app.service.QueueBuilder
+import dev.pntome.app.service.ResumePoint
 import javax.inject.Inject
 import javax.inject.Singleton
 

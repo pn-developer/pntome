@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

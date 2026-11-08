@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,11 +31,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.SyncSummary
-import dev.gsound.a.net.server.LanKind
-import dev.gsound.a.ui.permissions.rememberNotificationPermissionRequester
-import dev.gsound.a.ui.util.ByteSizeFormatter
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.SyncSummary
+import dev.pntome.app.net.server.LanKind
+import dev.pntome.app.ui.permissions.rememberNotificationPermissionRequester
+import dev.pntome.app.ui.util.ByteSizeFormatter
 import java.text.DateFormat
 import java.util.Date
 

@@ -1,11 +1,11 @@
-package dev.gsound.a.ui.player
+package dev.pntome.app.ui.player
 
 import android.content.ComponentName
 import android.content.Context
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import dev.gsound.a.service.PlaybackService
+import dev.pntome.app.service.PlaybackService
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException

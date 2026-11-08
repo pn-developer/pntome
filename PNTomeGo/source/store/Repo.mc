@@ -874,8 +874,8 @@ module Repo {
     // same, so the "must fetch" decision has to survive in Application.Storage
     // right next to the pending manifest it describes.
     //
-    // Wire note: GsoundA's SYNC_MANIFEST carries pairingId/serverUrl/tracks/v only
-    // — there is NO expected-count/total field on the message (GsoundA
+    // Wire note: PNTome's SYNC_MANIFEST carries pairingId/serverUrl/tracks/v only
+    // — there is NO expected-count/total field on the message (PNTome
     // ControlMessage.SyncManifest). So in v1 the ONLY detectable fallback trigger
     // is an empty `tracks` list; a count that is merely truncated below some
     // "expected" total cannot be distinguished from a genuinely short library

@@ -316,7 +316,7 @@ class PlaybackConfigDelegate extends WatchUi.BehaviorDelegate {
     //!
     //! Uses the ACP content-delegate path: Media.startPlayback(args) relaunches the
     //! app in playback mode, handing `args` back to
-    //! GsoundGApp.getContentDelegate(args), which rebuilds a GsoundContentDelegate
+    //! PNTomeGoApp.getContentDelegate(args), which rebuilds a PNTomeContentDelegate
     //! for this folder → its getContentIterator() returns a FolderIterator seeded at
     //! `startIndex`. So we encode the folder + start index as a Dictionary (a valid
     //! PersistableType) and call startPlayback — we do NOT build the iterator here.

@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * Progress of an in-flight folder scan, emitted as a `Flow<ScanProgress>` by the

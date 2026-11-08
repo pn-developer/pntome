@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.util
+package dev.pntome.app.ui.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

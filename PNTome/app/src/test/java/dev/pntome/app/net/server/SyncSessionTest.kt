@@ -1,7 +1,7 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.net.garmin.messages.Manifest
-import dev.gsound.a.net.garmin.messages.ManifestTrack
+import dev.pntome.app.net.garmin.messages.Manifest
+import dev.pntome.app.net.garmin.messages.ManifestTrack
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

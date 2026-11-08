@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 /**
  * Pure, JVM-testable selection of an available local HTTP server port with fallback
@@ -6,7 +6,7 @@ package dev.gsound.a.net.server
  *
  * ## Why a dedicated object
  * The Wi-Fi server (task 8.1) prefers a stable, user-visible port (default 8080, see
- * [dev.gsound.a.domain.model.AppSettings.serverPort]) so the LAN address shown to the user
+ * [dev.pntome.app.domain.model.AppSettings.serverPort]) so the LAN address shown to the user
  * (Req 5.8) is predictable across syncs. But that port can already be taken by another app, so
  * the server must gracefully fall back to another port rather than fail the whole sync. The
  * "which port do we actually bind" decision is therefore a small policy worth isolating from
@@ -15,7 +15,7 @@ package dev.gsound.a.net.server
  * ## Purity / testability
  * [select] takes the preferred port plus an injectable [isBindable] predicate and returns a
  * [Selection]. No sockets, no Ktor, no Android — tests drive it with a fake predicate. The real
- * server supplies a predicate backed by an actual bind probe (see [GsoundHttpServer]).
+ * server supplies a predicate backed by an actual bind probe (see [PNTomeHttpServer]).
  *
  * ## Strategy
  * 1. Try the [preferredPort] first (the predictable default).
@@ -80,7 +80,7 @@ object PortSelector {
     /**
      * Pick a port to bind, preferring [preferredPort] and falling back as described above.
      *
-     * @param preferredPort the port to try first (e.g. [dev.gsound.a.domain.model.AppSettings.serverPort],
+     * @param preferredPort the port to try first (e.g. [dev.pntome.app.domain.model.AppSettings.serverPort],
      *   default 8080). Values outside the valid `1..65535` fixed-port space skip straight to the
      *   ephemeral fallback.
      * @param isBindable predicate answering "can the server bind this port right now?" — injected

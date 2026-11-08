@@ -1,13 +1,13 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.scan.FolderIdHasher
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.scan.FolderIdHasher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject

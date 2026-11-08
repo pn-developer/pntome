@@ -1,14 +1,14 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [34])
 class QueueBuilderTest {
-    private val art = Uri.parse("android.resource://dev.gsound.a/drawable/ic_launcher_foreground")
+    private val art = Uri.parse("android.resource://dev.pntome.app/drawable/ic_launcher_foreground")
     private val builder = QueueBuilder(art)
 
     private fun folder(book: Boolean) = Folder(
@@ -151,9 +151,9 @@ class QueueBuilderTest {
         assertEquals(listOf("b", "a", "c"), builder.build(repo, f.id).map { it.mediaId })
     }
 
-    private fun withRepository(block: suspend (FolderRepository, GsoundDatabase) -> Unit) {
+    private fun withRepository(block: suspend (FolderRepository, PNTomeDatabase) -> Unit) {
         val db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), GsoundDatabase::class.java
+            ApplicationProvider.getApplicationContext<Context>(), PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         try {
             runBlocking { block(FolderRepository(db.folderDao(), db.trackDao()), db) }

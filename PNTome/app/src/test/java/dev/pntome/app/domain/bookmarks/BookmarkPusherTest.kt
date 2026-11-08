@@ -1,18 +1,18 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.FakeControlChannel
-import dev.gsound.a.net.garmin.messages.Bookmark
-import dev.gsound.a.net.garmin.messages.Stats
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.FakeControlChannel
+import dev.pntome.app.net.garmin.messages.Bookmark
+import dev.pntome.app.net.garmin.messages.Stats
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -33,7 +33,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class BookmarkPusherTest {
     private val pairingId = "11111111-2222-3333-4444-555555555555"
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repo: FolderRepository
     private lateinit var channel: FakeControlChannel
 
@@ -48,7 +48,7 @@ class BookmarkPusherTest {
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries().build()
         repo = FolderRepository(db.folderDao(), db.trackDao())
         channel = FakeControlChannel(initialState = ConnectionState.Connected)
@@ -130,8 +130,8 @@ class BookmarkPusherTest {
     fun `concurrent call is guarded`() = runBlocking {
         folder("a", "A"); bm("a", "A", 7)
         val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
-        val slow = object : dev.gsound.a.net.garmin.ControlChannel by channel {
-            override suspend fun send(message: dev.gsound.a.net.garmin.messages.ControlMessage): Result<Unit> {
+        val slow = object : dev.pntome.app.net.garmin.ControlChannel by channel {
+            override suspend fun send(message: dev.pntome.app.net.garmin.messages.ControlMessage): Result<Unit> {
                 gate.await()
                 return channel.send(message)
             }

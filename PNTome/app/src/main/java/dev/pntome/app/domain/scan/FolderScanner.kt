@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import android.content.ContentResolver
 import android.content.Context
@@ -7,10 +7,10 @@ import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.DocumentsContract
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.settings.SettingsStore
-import dev.gsound.a.domain.model.AppSettings
-import dev.gsound.a.domain.model.ScanProgress
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.settings.SettingsStore
+import dev.pntome.app.domain.model.AppSettings
+import dev.pntome.app.domain.model.ScanProgress
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive

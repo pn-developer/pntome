@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">GsoundA</string>
+    <string name="app_name">PNTome</string>
 
     <!-- Sync foreground service (task 9.2) -->
     <string name="sync_channel_name">Sync</string>
@@ -8,10 +8,12 @@
     <string name="sync_notification_preparing">Preparing…</string>
     <string name="sync_notification_progress">%1$d of %2$d tracks</string>
     <string name="sync_action_cancel">Cancel</string>
+    <string name="sync_timeout_title">Sync stopped</string>
+    <string name="sync_timeout_message">Android limits how long a sync can run in the background. Open PNTome to start it again.</string>
 
     <!-- Notification permission rationale (task 11.1, Req 9.3) -->
     <string name="notif_perm_rationale_title">Show sync progress?</string>
-    <string name="notif_perm_rationale_body">GsoundA uses notifications only to show a progress bar while music syncs to your watch. Syncing still works without it — you just won\'t see progress in your notification shade.</string>
+    <string name="notif_perm_rationale_body">PNTome uses notifications only to show a progress bar while music syncs to your watch. Syncing still works without it — you just won\'t see progress in your notification shade.</string>
     <string name="notif_perm_rationale_continue">Continue</string>
     <string name="notif_perm_rationale_dismiss">Not now</string>
 </resources>

@@ -1,4 +1,4 @@
-package dev.gsound.a.data.pairing
+package dev.pntome.app.data.pairing
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer

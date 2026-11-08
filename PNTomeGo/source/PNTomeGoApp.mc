@@ -6,7 +6,7 @@ import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.System;
 
-//! GsoundGApp — Audio Content Provider application entry point.
+//! PNTomeGoApp — Audio Content Provider application entry point.
 //!
 //! Task 2.1: the AudioContentProviderApp lifecycle. onStart() loads persisted
 //! state (pairing, stats, track index) via Repo; onStop() saves state back
@@ -22,8 +22,8 @@ import Toybox.System;
 //! bin/templates/audio-content-provider-app/simple/source/App.mc):
 //!   - getSyncConfigurationView()     — sync-config mode   -> [view, delegate].
 //!   - getPlaybackConfigurationView() — playback-config    -> [view, delegate].
-//!   - getContentDelegate(args)       — playback           -> GsoundContentDelegate.
-//!   - getSyncDelegate()              — system sync        -> GsoundSyncDelegate.
+//!   - getContentDelegate(args)       — playback           -> PNTomeContentDelegate.
+//!   - getSyncDelegate()              — system sync        -> PNTomeSyncDelegate.
 //!   - getProviderIconInfo()          — music-apps list    -> provider icon.
 //! IMPORTANT: AudioContentProviderApp does NOT define getInitialView(); an ACP app
 //! is never launched through a standalone initial view, and overriding AppBase's
@@ -48,7 +48,7 @@ import Toybox.System;
 //! that requires a display and libwebkit2gtk-4.0 (only 4.1 is present here), so it
 //! cannot run headlessly. Simulator per-mode launch should be confirmed on a
 //! workstation with the SDK GUI, and on hardware as part of tasks 9.5 / 11.
-class GsoundGApp extends Application.AudioContentProviderApp {
+class PNTomeGoApp extends Application.AudioContentProviderApp {
 
     //! Restored pairing record { pairingId, peerName, secret, createdAt }, or null
     //! when unpaired. Never log the secret (Req 7.3).
@@ -101,16 +101,16 @@ class GsoundGApp extends Application.AudioContentProviderApp {
             _index = Repo.loadIndex();
             // Diagnostic: confirm whether a pairing record survived a reboot. Non-sensitive — we
             // log only whether a record exists and its pairingId (never the secret, Req 7.3).
-            // Visible in the simulator console / `monkeydo` output as "Gsound: onStart ...".
+            // Visible in the simulator console / `monkeydo` output as "PNTome: onStart ...".
             if (_pairing != null) {
                 var pid = _pairing.get(Protocol.KEY_PAIRING_ID);
-                System.println("Gsound: onStart pairing RESTORED pairingId=" + (pid != null ? pid.toString() : "?"));
+                System.println("PNTome: onStart pairing RESTORED pairingId=" + (pid != null ? pid.toString() : "?"));
             } else {
-                System.println("Gsound: onStart NO pairing persisted (unpaired)");
+                System.println("PNTome: onStart NO pairing persisted (unpaired)");
             }
         } catch (ex) {
             // Corrupt/unavailable storage must not crash launch; fall back to empty state.
-            System.println("Gsound: onStart storage read FAILED -> treating as unpaired");
+            System.println("PNTome: onStart storage read FAILED -> treating as unpaired");
             _pairing = null;
             _stats = null;
             _index = [];
@@ -148,9 +148,9 @@ class GsoundGApp extends Application.AudioContentProviderApp {
             _syncController = syncController;
             // Diagnostic: the pairing manager restores STATE_PAIRED in its initialize() when a
             // record was persisted, so this line tells you the status the UI will show.
-            System.println("Gsound: onStart control channel UP; paired=" + pairingManager.isPaired());
+            System.println("PNTome: onStart control channel UP; paired=" + pairingManager.isPaired());
         } catch (ex) {
-            System.println("Gsound: onStart control channel FAILED to come up -> UI shows unpaired");
+            System.println("PNTome: onStart control channel FAILED to come up -> UI shows unpaired");
             _control = null;
             _pairingManager = null;
             _syncController = null;
@@ -197,7 +197,7 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         BookmarkSender.sendAll(control.method(:transmit), pairingId);
 
         // Debug aid: forward unsent watch log lines to the phone, one per message (logcat tag
-        // Gsound.Watch). Only from here — the phone's "Refresh stats" PING — never from the
+        // PNTome.Watch). Only from here — the phone's "Refresh stats" PING — never from the
         // short-lived sync process. See DebugLog.
         DebugLog.sendPending(control, pairingId);
     }
@@ -309,7 +309,7 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     //! `args` is the PersistableType passed to Media.startPlayback from the
     //! playback-config track list (PlaybackConfigView) — a Dictionary carrying the
     //! selected folder under "folder" and the chosen start index under "startIndex".
-    //! Parse it null-safely into GsoundContentDelegate (task 9.4). Defensive: if
+    //! Parse it null-safely into PNTomeContentDelegate (task 9.4). Defensive: if
     //! args is null / not a Dictionary / has no String "folder", build a delegate
     //! with a null folder so it yields the safe empty iterator and the mode still
     //! launches (Req 6.6, 8.5).
@@ -369,16 +369,16 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         }
         DebugLog.log("PB", "delegate folder=" + (folder == null ? "null" : folder) + " start=" + startIndex.toString()
             + " pos=" + startPos.toString() + " book=" + isBook.toString());
-        return new GsoundContentDelegate(folder, startIndex, startPos, isBook);
+        return new PNTomeContentDelegate(folder, startIndex, startPos, isBook);
     }
 
     //! System sync: return the sync delegate driving downloads (task 7.1's
-    //! GsoundSyncDelegate, which replaced GsoundSyncDelegateStub). Wrapped so a
+    //! PNTomeSyncDelegate, which replaced PNTomeSyncDelegateStub). Wrapped so a
     //! construction failure can't crash the sync launch mode — fall back to null,
     //! which the system treats as "no sync provider" (Req 8.5).
     function getSyncDelegate() as Communications.SyncDelegate or Null {
         try {
-            return new GsoundSyncDelegate();
+            return new PNTomeSyncDelegate();
         } catch (ex) {
             return null;
         }
@@ -425,7 +425,7 @@ class GsoundGApp extends Application.AudioContentProviderApp {
     }
 
     //! The control-channel gateway, or null if it failed to come up at app start.
-    //! GsoundSyncDelegate (task 7) uses this to transmit SYNC_STATUS to the phone
+    //! PNTomeSyncDelegate (task 7) uses this to transmit SYNC_STATUS to the phone
     //! (e.g. a non-null `error` when a sync aborts for a missing pairing/secret).
     //! Mirrors getSyncController(); added in task 7.1.
     function getControl() as ControlChannel? {
@@ -434,6 +434,6 @@ class GsoundGApp extends Application.AudioContentProviderApp {
 }
 
 //! Convenience accessor for the application instance.
-function getApp() as GsoundGApp {
-    return Application.getApp() as GsoundGApp;
+function getApp() as PNTomeGoApp {
+    return Application.getApp() as PNTomeGoApp;
 }

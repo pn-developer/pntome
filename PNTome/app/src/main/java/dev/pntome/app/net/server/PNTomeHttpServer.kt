@@ -1,6 +1,6 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.domain.model.AppSettings
+import dev.pntome.app.domain.model.AppSettings
 import io.ktor.server.application.Application
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.ApplicationEngine
@@ -57,7 +57,7 @@ import javax.inject.Singleton
  *   real sockets (defaults to a real TCP bind probe on the resolved host).
  */
 @Singleton
-class GsoundHttpServer @Inject constructor(
+class PNTomeHttpServer @Inject constructor(
     private val wifiAddressResolver: WifiAddressResolver,
     private val modules: Set<@JvmSuppressWildcards Application.() -> Unit>,
 ) {

@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.theme
+package dev.pntome.app.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -27,7 +27,7 @@ private val LightColorScheme = lightColorScheme(
  * the static light/dark schemes above.
  */
 @Composable
-fun GsoundATheme(
+fun PNTomeTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit,

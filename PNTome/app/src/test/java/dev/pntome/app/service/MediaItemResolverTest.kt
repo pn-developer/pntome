@@ -1,4 +1,4 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import android.net.Uri
@@ -6,12 +6,12 @@ import androidx.media3.common.MediaItem
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.data.folders.BookmarkRepository
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkRepository
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -43,9 +43,9 @@ class MediaItemResolverTest {
 
     private fun idOnly(id: String) = MediaItem.Builder().setMediaId(id).build()
 
-    private fun withResolver(block: suspend (MediaItemResolver, GsoundDatabase) -> Unit) {
+    private fun withResolver(block: suspend (MediaItemResolver, PNTomeDatabase) -> Unit) {
         val db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), GsoundDatabase::class.java
+            ApplicationProvider.getApplicationContext<Context>(), PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         try {
             runBlocking {

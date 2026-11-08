@@ -1,0 +1,510 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Capture a baseline and rename the two app folders": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853081
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161858462
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161939067
+      }
+    ],
+    "2.1 Move the Kotlin package and rewrite identifiers": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853131
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161941714
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162002319
+      }
+    ],
+    "2.2 Rename Gsound-prefixed symbols, constants, schema folder and resources": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853180
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162004870
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162132877
+      }
+    ],
+    "2.3 Compile and run the JVM tests after the rename": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853232
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162135729
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162259980
+      }
+    ],
+    "3. Checkpoint - Android rename compiles and passes": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853265
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172749900
+      }
+    ],
+    "4.1 Rename watch resources, classes and shared protocol values": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853300
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161942287
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162001761
+      }
+    ],
+    "4.2 Update watch scripts and skill paths": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853332
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162005214
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162133367
+      }
+    ],
+    "4.3 Build the renamed watch app for all products": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853366
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162136181
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162260517
+      }
+    ],
+    "5.1 Add release signing, AAB settings and ignore rules to the Android build": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853399
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162268282
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170367854
+      }
+    ],
+    "5.2 Update the manifest and handle the dataSync timeout": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853432
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162268386
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170367966
+      }
+    ],
+    "5.3 Add `--export` to the watch build script": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853466
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162268414
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170368672
+      }
+    ],
+    "5.4 Add license, third-party list and root ignore rules": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853499
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162268963
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170369286
+      }
+    ],
+    "6.1 Create Google Play and fastlane metadata": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853535
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170372285
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170435458
+      }
+    ],
+    "6.2 Create F-Droid self-hosted repository files": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853569
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170372952
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170435569
+      }
+    ],
+    "6.3 Create Garmin Connect IQ Store files": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853605
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170373755
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170436430
+      }
+    ],
+    "7.1 Update the root README and INSTALL": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853646
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170439712
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170510244
+      }
+    ],
+    "7.2 Update the Android INSTALL guide and manual checklist": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853670
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170440336
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170510900
+      }
+    ],
+    "7.3 Update the Garmin INSTALL guide": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853705
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170440987
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170511435
+      }
+    ],
+    "7.4 Create PRIVACY, CHANGELOG and the release checklist": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853744
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170374182
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170436933
+      }
+    ],
+    "8.1 Create `scripts/check-release.sh` with the legacy-name and package checks": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853767
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170515326
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170703664
+      }
+    ],
+    "8.2 Add the contract, version and F-Droid checks": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853802
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170704305
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170863567
+      }
+    ],
+    "8.3 Add the store-text, permission, secret and placeholder checks": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853836
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170864247
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171021362
+      }
+    ],
+    "8.4 Write the shell test for the script": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853878
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171021997
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171402180
+      }
+    ],
+    "9.1 Verify the Android build, tests and signing offline": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853902
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171404839
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172655314
+      }
+    ],
+    "9.2 Verify the watch builds, unit tests and export": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853936
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171405611
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172655349
+      }
+    ],
+    "9.3 Run the release-check and fix leftovers": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161853980
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172657912
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172745947
+      }
+    ],
+    "10. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161854002
+      },
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172749932
+      }
+    ],
+    "1. Baseline and top-level folder rename": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794161939102
+      }
+    ],
+    "2. Rename the Android app to PNTome": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162260003
+      }
+    ],
+    "4. Rename the Garmin app to PNTomeGo": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794162260550
+      }
+    ],
+    "5. Release engineering for Android and Garmin": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170369320
+      }
+    ],
+    "6. Store metadata": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170436451
+      }
+    ],
+    "7. Documentation": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794170511462
+      }
+    ],
+    "8. Release-check script": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794171402225
+      }
+    ],
+    "9. Verification without physical devices": [
+      {
+        "executionId": "b20f3422-d08f-47ce-b246-8922b06d05cb",
+        "chatSessionId": "sess_cb326a85-8734-497d-97cd-c073f830add0",
+        "timestamp": 1794172745985
+      }
+    ]
+  }
+}

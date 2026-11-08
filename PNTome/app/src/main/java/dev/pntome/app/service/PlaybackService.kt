@@ -1,4 +1,5 @@
-package dev.gsound.a.service
+
+package dev.pntome.app.service
 
 import android.content.Context
 import android.content.Intent
@@ -15,10 +16,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import dagger.hilt.android.AndroidEntryPoint
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.BookmarkRepository
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.di.PlayerModule
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.BookmarkRepository
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.di.PlayerModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,6 +50,7 @@ import javax.inject.Inject
  * `ParcelFileDescriptor` (design §9 R1). Nothing else in this class changes.
  */
 @AndroidEntryPoint
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class PlaybackService : MediaLibraryService() {
 
     /** Injected for the queue/controller path (tasks 3.x, 6.x); unused by the 2.1 spike entry. */
@@ -157,8 +159,8 @@ class PlaybackService : MediaLibraryService() {
         const val BOOK_SEEK_MS = 30_000L
 
         /** Spike action: play the SAF document URI in [Intent.getData]. */
-        const val ACTION_PLAY_URI = "dev.gsound.a.action.PLAY_URI"
-        const val EXTRA_TITLE = "dev.gsound.a.extra.TITLE"
+        const val ACTION_PLAY_URI = "dev.pntome.app.action.PLAY_URI"
+        const val EXTRA_TITLE = "dev.pntome.app.extra.TITLE"
 
         /** Starts the service and plays a single [uri] (task 2.1 spike entry point). */
         fun play(context: Context, uri: Uri, title: String? = null) {
@@ -175,6 +177,7 @@ class PlaybackService : MediaLibraryService() {
  * Exposes 30 s seek back/forward increments for audiobook items and the default 15 s for music
  * (the increment is a builder-only setting on ExoPlayer, so it is applied per current item here).
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 internal class BookSeekPlayer(player: Player) : ForwardingPlayer(player) {
     private fun isBook() = BookCustomLayout.isBook(currentMediaItem)
 
@@ -204,6 +207,7 @@ internal class BookSeekPlayer(player: Player) : ForwardingPlayer(player) {
  * report a short message instead of stopping or crashing. On the last item, the player is left
  * idle after the message.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 internal class UnreadableFileSkipper(
     private val player: Player,
     private val message: (String) -> Unit,

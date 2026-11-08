@@ -1,11 +1,11 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.SyncRequest
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.SyncRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,7 +21,7 @@ import javax.inject.Singleton
  * A watch-initiated sync must work even when the Sync screen is not open, so this cannot live in
  * a ViewModel (those only collect while their screen is alive). Every other inbound-message
  * observer in the app is transient; this is the one always-on collector, started once from
- * [dev.gsound.a.GsoundApplication.onCreate] and never torn down for the process lifetime.
+ * [dev.pntome.app.PNTomeApplication.onCreate] and never torn down for the process lifetime.
  *
  * ## What it does
  * Collects [SyncRequest] (`SYNC_REQUEST`, G→A) from [ControlChannel.incoming], verifies the
@@ -37,7 +37,7 @@ class WatchSyncRequestListener @Inject constructor(
     private val pairingStore: PairingStore,
 ) {
 
-    private val tag = "Gsound.Sync"
+    private val tag = "PNTome.Sync"
 
     /** App-lifetime scope; a failed collection of one message must not kill the listener. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -55,17 +55,17 @@ class WatchSyncRequestListener @Inject constructor(
                 .collect { request ->
                     val currentPairingId = pairingStore.get()?.pairingId
                     if (currentPairingId == null) {
-                        GsoundLog.w(tag, "SYNC_REQUEST ignored: not paired")
+                        PNTomeLog.w(tag, "SYNC_REQUEST ignored: not paired")
                         return@collect
                     }
                     if (request.pairingId != currentPairingId) {
-                        GsoundLog.w(
+                        PNTomeLog.w(
                             tag,
                             "SYNC_REQUEST ignored: pairingId mismatch (got=${request.pairingId})",
                         )
                         return@collect
                     }
-                    GsoundLog.i(tag, "SYNC_REQUEST from watch -> starting sync service")
+                    PNTomeLog.i(tag, "SYNC_REQUEST from watch -> starting sync service")
                     SyncForegroundService.start(context)
                 }
         }

@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.ContentResolver
 import android.content.Context

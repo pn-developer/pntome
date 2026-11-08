@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
@@ -19,7 +19,7 @@ import kotlinx.serialization.json.doubleOrNull
  *
  * This object is the single place that turns wire JSON into trusted [ControlMessage]s and
  * back. It is intentionally free of any Connect IQ SDK / Android types so it can be exercised
- * directly in JVM unit tests and reused by [dev.gsound.a.net.garmin.ConnectIqManager] in the
+ * directly in JVM unit tests and reused by [dev.pntome.app.net.garmin.ConnectIqManager] in the
  * incoming listener.
  *
  * ## Validation performed by [decodeAndValidate]
@@ -27,7 +27,7 @@ import kotlinx.serialization.json.doubleOrNull
  *    subtype. Malformed JSON or an unknown `type` discriminator → [DecodeResult.Invalid].
  * 2. **Protocol version** — `v` must equal [PROTOCOL_VERSION]; a mismatch → [DecodeResult.Invalid]
  *    so we never act on a message framed by an incompatible protocol.
- * 3. **Pairing binding (Req 10.3)** — when an [expectedPairingId] is supplied (i.e. GsoundA is
+ * 3. **Pairing binding (Req 10.3)** — when an [expectedPairingId] is supplied (i.e. PNTome is
  *    paired), a message carrying a *different* `pairingId` is treated as coming from an
  *    unpaired peer and dropped as [DecodeResult.UnpairedPeer].
  *
@@ -69,15 +69,15 @@ object MessageCodec {
         data class UnpairedPeer(val pairingId: String) : DecodeResult
     }
 
-    /** Serialize [message] to its wire JSON using the shared [GsoundJson] codec. */
-    fun encode(message: ControlMessage): String = GsoundJson.encodeToString(message)
+    /** Serialize [message] to its wire JSON using the shared [PNTomeJson] codec. */
+    fun encode(message: ControlMessage): String = PNTomeJson.encodeToString(message)
 
     /**
      * Decode and validate a single incoming [json] payload against the active pairing.
      *
      * @param json the raw JSON string received over the control channel.
-     * @param expectedPairingId the `pairingId` of the active [dev.gsound.a.domain.model.PairingRecord],
-     *   or `null` when GsoundA is not paired. When non-null, messages carrying a different
+     * @param expectedPairingId the `pairingId` of the active [dev.pntome.app.domain.model.PairingRecord],
+     *   or `null` when PNTome is not paired. When non-null, messages carrying a different
      *   non-null `pairingId` are rejected as [DecodeResult.UnpairedPeer] (Req 10.3). When null,
      *   pairing matching is skipped (nothing to match against yet).
      * @return a [DecodeResult] describing whether the message is [DecodeResult.Valid],
@@ -85,7 +85,7 @@ object MessageCodec {
      */
     fun decodeAndValidate(json: String, expectedPairingId: String?): DecodeResult {
         val message = try {
-            GsoundJson.decodeFromString<ControlMessage>(json)
+            PNTomeJson.decodeFromString<ControlMessage>(json)
         } catch (t: Throwable) {
             // Malformed JSON, unknown `type` discriminator, missing required fields, etc.
             return DecodeResult.Invalid(
@@ -117,21 +117,21 @@ object MessageCodec {
      * ## Why a Map, not a JSON String (the pairing bug fix)
      * The Connect IQ Mobile SDK MARSHALS structured values across the link: a phone-side
      * `Map<String, Any?>` arrives on the watch as a Monkey C `Dictionary`, a `List` as an
-     * `Array`, primitives as themselves. GsoundG's `ControlChannel`/`Protocol.validate`
+     * `Array`, primitives as themselves. PNTomeGo's `ControlChannel`/`Protocol.validate`
      * REQUIRES the inbound payload to be a `Dictionary` and silently drops anything else
-     * (`INVALID_NOT_DICT`). Previously GsoundA pre-serialized each message to a JSON *String*
+     * (`INVALID_NOT_DICT`). Previously PNTome pre-serialized each message to a JSON *String*
      * and sent that string, so the watch received a `String`, failed `instanceof Dictionary`,
      * and dropped every message (e.g. a `PAIR_REQUEST` never surfaced a code on the watch).
-     * Sending a Map — which the SDK delivers as a Dictionary — matches GsoundG's contract.
+     * Sending a Map — which the SDK delivers as a Dictionary — matches PNTomeGo's contract.
      *
-     * The message is first serialized to a [JsonObject] with the SAME [GsoundJson] codec (so the
+     * The message is first serialized to a [JsonObject] with the SAME [PNTomeJson] codec (so the
      * `type` discriminator and every `@SerialName` field name are identical to before), then
      * converted to a plain [Map] of JSON-primitive Kotlin values ([String]/[Int]/[Long]/
      * [Double]/[Boolean]/nested [Map]/[List]). The `v` field serializes as a number, matching
      * `Protocol.validate`'s `v instanceof Number` check on the watch.
      */
     fun encodeToMap(message: ControlMessage): Map<String, Any?> {
-        val element = GsoundJson.encodeToJsonElement(ControlMessage.serializer(), message)
+        val element = PNTomeJson.encodeToJsonElement(ControlMessage.serializer(), message)
         @Suppress("UNCHECKED_CAST")
         return jsonElementToKotlin(element as JsonObject) as Map<String, Any?>
     }
@@ -160,7 +160,7 @@ object MessageCodec {
         }
 
         val message = try {
-            GsoundJson.decodeFromJsonElement(ControlMessage.serializer(), element)
+            PNTomeJson.decodeFromJsonElement(ControlMessage.serializer(), element)
         } catch (t: Throwable) {
             return DecodeResult.Invalid("undecodable payload: ${t.message ?: t::class.simpleName}")
         }
@@ -184,7 +184,7 @@ object MessageCodec {
     // --- JsonElement <-> plain Kotlin value conversion -----------------------------------------
     // The Connect IQ SDK carries plain Kotlin values (Map/List/String/Number/Boolean), so we
     // bridge between kotlinx.serialization's JsonElement tree and those plain values. This keeps
-    // the @Serializable classes + GsoundJson as the single source of truth for the wire shape.
+    // the @Serializable classes + PNTomeJson as the single source of truth for the wire shape.
 
     /** Convert a [JsonElement] tree to plain Kotlin values (Map/List/String/Long/Double/Boolean/null). */
     private fun jsonElementToKotlin(element: JsonElement): Any? = when (element) {

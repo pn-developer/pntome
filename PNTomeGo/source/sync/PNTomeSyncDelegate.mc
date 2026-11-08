@@ -2,8 +2,8 @@ import Toybox.Lang;
 import Toybox.Communications;
 import Toybox.System;
 
-//! GsoundSyncDelegate — the system-driven sync entry point
-//! (design.md §8.2; Req 4.1, 4.2, 8.5). Replaces GsoundSyncDelegateStub.
+//! PNTomeSyncDelegate — the system-driven sync entry point
+//! (design.md §8.2; Req 4.1, 4.2, 8.5). Replaces PNTomeSyncDelegateStub.
 //!
 //! The Audio Content Provider framework launches a dedicated sync process, calls
 //! isSyncNeeded() to decide whether to offer/run a sync, and — once the user
@@ -28,7 +28,7 @@ import Toybox.System;
 //! Resilience: every SDK callback body (isSyncNeeded/onStartSync/onCancelSync and
 //! the HTTP response callback) is wrapped so no exception escapes into the SDK and
 //! crashes the sync process (Req 8.5). Nothing logs the pairing secret (Req 7.3).
-class GsoundSyncDelegate extends Communications.SyncDelegate {
+class PNTomeSyncDelegate extends Communications.SyncDelegate {
 
     //! The Downloader for the in-progress sync, created in onStartSync once the
     //! manifest + pairing are resolved. Held so onCancelSync can reach it to
@@ -67,7 +67,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     //! Begin the sync (design §8.2). Order of operations:
     //!   1. Validate pairing/secret — if there is no stored pairing or it carries
     //!      no non-empty secret, ABORT IMMEDIATELY: finish with an error (the
-    //!      downloader needs the secret for the X-Gsound-Secret header; Req 4.2).
+    //!      downloader needs the secret for the X-PNTome-Secret header; Req 4.2).
     //!   2. Resolve the manifest:
     //!        - fetch flag set → fetch GET {serverUrl}/manifest over HTTP (§6.1)
     //!          and continue in the HTTP callback,
@@ -145,7 +145,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     // --- GET /manifest fallback (design §6.1) ----------------------------------
 
     //! Kick off the GET {serverUrl}/manifest HTTP fetch for the §6.1 fallback,
-    //! authenticated with the X-Gsound-Secret header, expecting a JSON body of the
+    //! authenticated with the X-PNTome-Secret header, expecting a JSON body of the
     //! shape { "tracks": [ ManifestTrack, ... ] } (same shape the inline manifest
     //! carries). The response is handled in onManifestFetched, which parses the
     //! tracks defensively (ManifestParser) and starts the Downloader. The server
@@ -166,7 +166,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
 
         var options = {
             :method => Communications.HTTP_REQUEST_METHOD_GET,
-            :headers => { "X-Gsound-Secret" => secret },
+            :headers => { "X-PNTome-Secret" => secret },
             :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON
         };
 
@@ -244,7 +244,7 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
     private function startDownload(manifest as Dictionary, pairing as Dictionary) as Void {
         var tracks = manifest.get(Messages.FIELD_TRACKS);
         var count = (tracks instanceof Array) ? (tracks as Array).size() : 0;
-        System.println("Gsound: startDownload() work=" + count + " track(s)");
+        System.println("PNTome: startDownload() work=" + count + " track(s)");
         var control = resolveControl();
         _downloader = new Downloader(manifest, pairing, control);
         _downloader.start();

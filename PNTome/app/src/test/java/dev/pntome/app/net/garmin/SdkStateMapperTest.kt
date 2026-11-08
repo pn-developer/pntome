@@ -1,11 +1,11 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 import com.garmin.android.connectiq.ConnectIQ
 import com.garmin.android.connectiq.IQApp
 import com.garmin.android.connectiq.IQDevice
 import com.garmin.android.connectiq.exception.InvalidStateException
 import com.garmin.android.connectiq.exception.ServiceUnavailableException
-import dev.gsound.a.net.garmin.ConnectionState.Error.Reason
+import dev.pntome.app.net.garmin.ConnectionState.Error.Reason
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

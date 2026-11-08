@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * User-configurable application settings (design §5.5, Req 8.1).

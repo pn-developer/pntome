@@ -1,8 +1,8 @@
-package dev.gsound.a
+package dev.pntome.app
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp
-import dev.gsound.a.service.WatchSyncRequestListener
+import dev.pntome.app.service.WatchSyncRequestListener
 import javax.inject.Inject
 
 /**
@@ -12,7 +12,7 @@ import javax.inject.Inject
  * serves as the parent for all other Hilt components in the app.
  */
 @HiltAndroidApp
-class GsoundApplication : Application() {
+class PNTomeApplication : Application() {
 
     /**
      * App-lifetime listener that lets the watch initiate a sync (`SYNC_REQUEST`). Field-injected
@@ -24,7 +24,7 @@ class GsoundApplication : Application() {
 
     /** App-lifetime collector of watch `BOOKMARK` messages (gsound-player PL-4.3). */
     @Inject
-    lateinit var bookmarkSync: dev.gsound.a.domain.bookmarks.BookmarkSync
+    lateinit var bookmarkSync: dev.pntome.app.domain.bookmarks.BookmarkSync
 
     override fun onCreate() {
         super.onCreate()

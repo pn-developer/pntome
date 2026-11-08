@@ -1,11 +1,11 @@
-package dev.gsound.a.data.pairing
+package dev.pntome.app.data.pairing
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.domain.model.PairingRecord
+import dev.pntome.app.domain.model.PairingRecord
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -19,9 +19,9 @@ import javax.inject.Singleton
  * `suspend` writes for pairing/unpairing. v1 supports a single active pairing (Req 4.8); a null
  * value represents "not paired".
  *
- * Behind an interface (mirroring [dev.gsound.a.net.garmin.ControlChannel] and the pairing seams)
- * so collaborators like [dev.gsound.a.ui.pairing.PairingViewModel] and
- * [dev.gsound.a.net.garmin.ConnectIqManager] depend on the abstraction. Production uses the Proto
+ * Behind an interface (mirroring [dev.pntome.app.net.garmin.ControlChannel] and the pairing seams)
+ * so collaborators like [dev.pntome.app.ui.pairing.PairingViewModel] and
+ * [dev.pntome.app.net.garmin.ConnectIqManager] depend on the abstraction. Production uses the Proto
  * DataStore-backed [DataStorePairingStore]; unit tests substitute a deterministic in-memory fake
  * (task 7.3) without an Android `Context` or DataStore IO.
  */

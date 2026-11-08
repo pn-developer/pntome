@@ -1,10 +1,10 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.BookmarkEntity
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

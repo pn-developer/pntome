@@ -1,16 +1,16 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import androidx.media3.common.MediaItem
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.data.folders.BookmarkRepository
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkRepository
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -43,11 +43,11 @@ class SearchVoiceTest {
         .setRequestMetadata(MediaItem.RequestMetadata.Builder().setSearchQuery(query).build())
         .build()
 
-    private class Env(val tree: BrowseTree, val resolver: MediaItemResolver, val repo: FolderRepository, val db: GsoundDatabase)
+    private class Env(val tree: BrowseTree, val resolver: MediaItemResolver, val repo: FolderRepository, val db: PNTomeDatabase)
 
     private fun run(seed: Boolean = true, block: suspend (Env) -> Unit) {
         val db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), GsoundDatabase::class.java
+            ApplicationProvider.getApplicationContext<Context>(), PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         try {
             runBlocking {

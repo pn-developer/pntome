@@ -1,12 +1,12 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 /**
  * Pure validation/sanitization for the `/media/{trackId}` path segment (design §8: "Validate and
  * sanitize `trackId` path segments (no traversal; IDs are opaque hashes)").
  *
  * ## Threat model
- * `trackId` arrives from the network and is therefore untrusted. In GsoundA a track id is an
- * **opaque hash** produced by [dev.gsound.a.domain.scan.TrackIdHasher]
+ * `trackId` arrives from the network and is therefore untrusted. In PNTome a track id is an
+ * **opaque hash** produced by [dev.pntome.app.domain.scan.TrackIdHasher]
  * (`sha1(path|size|lastModified)` → lowercase hex). The server already resists path traversal
  * structurally: [MediaSource.openTrack] looks the id up as a **map key** against the current
  * manifest and never concatenates it into a filesystem path, so a value like `../../etc/passwd`

@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
-import dev.gsound.a.domain.model.AppSettings
-import dev.gsound.a.domain.scan.FormatFilter.AudioFormat
+import dev.pntome.app.domain.model.AppSettings
+import dev.pntome.app.domain.scan.FormatFilter.AudioFormat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

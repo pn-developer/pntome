@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.folders
+package dev.pntome.app.ui.folders
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,7 +27,7 @@ class AddFolderLauncher internal constructor(
  * Remember a reusable [AddFolderLauncher] for the SAF folder picker (design §5.1).
  *
  * On a successful selection the non-null tree URI is passed to [onFolderSelected] — callers
- * (task 4.2) forward it to [dev.gsound.a.domain.folders.AddFolderUseCase] to take the
+ * (task 4.2) forward it to [dev.pntome.app.domain.folders.AddFolderUseCase] to take the
  * persistable permission and persist the folder. When the user cancels, the contract yields a
  * `null` URI and this helper does nothing, leaving the folder list unchanged (Req 1.5).
  *

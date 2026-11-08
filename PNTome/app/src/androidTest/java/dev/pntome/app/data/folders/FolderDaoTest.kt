@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 /**
  * Instrumented tests for [FolderDao] (Req 8.1 persist folder list, Req 8.2 restore on launch).
  *
- * Runs against an in-memory [GsoundDatabase] so each test starts from a clean, isolated schema.
+ * Runs against an in-memory [PNTomeDatabase] so each test starts from a clean, isolated schema.
  * Verifies: insert + reactive observe via [kotlinx.coroutines.flow.Flow], dedupe/upsert keyed on
  * the stable folder id (Req 1.4), insert-ignore semantics, and that removing a folder cascades to
  * its cached tracks via the entity foreign key (Req 2.2).
@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class FolderDaoTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var folderDao: FolderDao
     private lateinit var trackDao: TrackDao
 
@@ -33,7 +33,7 @@ class FolderDaoTest {
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            GsoundDatabase::class.java
+            PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         folderDao = db.folderDao()
         trackDao = db.trackDao()

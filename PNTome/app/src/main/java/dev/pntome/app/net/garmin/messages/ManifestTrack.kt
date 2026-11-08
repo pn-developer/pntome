@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -26,7 +26,7 @@ import kotlinx.serialization.Serializable
  * ```
  *
  * This is a protocol/wire type — keep it separate from the domain model
- * `dev.gsound.a.domain.model.Track` (task 2.1).
+ * `dev.pntome.app.domain.model.Track` (task 2.1).
  *
  * @property id stable content/path hash of the track (overview §5.1).
  * @property folder playlist/folder name used to group the track on the watch.
@@ -41,7 +41,7 @@ import kotlinx.serialization.Serializable
  *   spec gsound-audiobooks AB-2.3, AB-3.1). Optional/additive: a watch that doesn't know it
  *   ignores it; null from an older phone means "index order".
  * @property book true when the track's folder is marked as an audiobook (AB-3.1). Optional.
- * @property fid id of the owning phone folder ([dev.gsound.a.domain.model.Folder.id]); the
+ * @property fid id of the owning phone folder ([dev.pntome.app.domain.model.Folder.id]); the
  *   stable join key for bookmarks (spec gsound-player PL-4.3, design R2). [folder] is not
  *   usable for that: it is a sub-folder path for nested files. Optional/additive.
  */

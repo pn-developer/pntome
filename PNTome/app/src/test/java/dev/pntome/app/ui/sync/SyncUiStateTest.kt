@@ -1,7 +1,7 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.SyncSummary
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.SyncSummary
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

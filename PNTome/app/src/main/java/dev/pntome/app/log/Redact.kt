@@ -1,14 +1,14 @@
-package dev.gsound.a.log
+package dev.pntome.app.log
 
 /**
- * Pure, framework-free redaction helpers for log output (Req 8.4: GsoundA SHALL NOT retain
+ * Pure, framework-free redaction helpers for log output (Req 8.4: PNTome SHALL NOT retain
  * unencrypted secrets in logs; design §5.7 "No secrets written to logs; a Redacting logger wraps
  * sensitive fields").
  *
  * ## What counts as a secret
  * The values that MUST never reach a log sink in cleartext are:
- * - [dev.gsound.a.domain.model.PairingRecord.sharedSecret] (the HTTP data-channel credential),
- * - the `X-Gsound-Secret` header value (same secret, as presented by the watch),
+ * - [dev.pntome.app.domain.model.PairingRecord.sharedSecret] (the HTTP data-channel credential),
+ * - the `X-PNTome-Secret` header value (same secret, as presented by the watch),
  * - the pairing `secret`/6-digit confirmation code generated during pairing.
  *
  * The `pairingId` (an opaque UUID) and message `type` are **not** secrets and may be logged as-is
@@ -18,7 +18,7 @@ package dev.gsound.a.log
  * ## Why pure (no Android)
  * [redact] contains the only logic worth testing (that the output never contains the raw secret
  * and has a stable shape); keeping it off `android.util.Log` lets it be pinned by JVM unit tests
- * (see `RedactTest`). The thin Android sink lives in [GsoundLog].
+ * (see `RedactTest`). The thin Android sink lives in [PNTomeLog].
  *
  * ## Contract
  * [redact] returns a short, **non-reversible** placeholder describing a value's presence and

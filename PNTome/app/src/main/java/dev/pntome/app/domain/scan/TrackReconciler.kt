@@ -1,10 +1,10 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Track
 
 /**
  * Pure reconcile/aggregate logic for caching a folder scan in Room (task 5.3), extracted from
- * [dev.gsound.a.domain.folders.ScanAndCacheUseCase] so the diff is unit-testable on the JVM
+ * [dev.pntome.app.domain.folders.ScanAndCacheUseCase] so the diff is unit-testable on the JVM
  * without Android or a database (consistent with [TrackIdHasher]/[ScanPaths]).
  *
  * ## Incremental rescan by stable id (Req 3.5, design §5.2/§7)

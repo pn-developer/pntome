@@ -1,7 +1,7 @@
 import Toybox.Lang;
 
 //! SyncNeed — the single "is a sync needed?" decision (design §8.2), shared by:
-//!   - GsoundSyncDelegate.isSyncNeeded() — the system's gate in sync mode, and
+//!   - PNTomeSyncDelegate.isSyncNeeded() — the system's gate in sync mode, and
 //!   - SyncController's auto-start — so we only call Communications.startSync() when the system
 //!     will actually run onStartSync().
 //!

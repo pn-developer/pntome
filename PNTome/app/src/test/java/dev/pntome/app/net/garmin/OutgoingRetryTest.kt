@@ -1,7 +1,7 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
-import dev.gsound.a.net.garmin.OutgoingRetry.RetryPolicy
-import dev.gsound.a.net.garmin.messages.Ping
+import dev.pntome.app.net.garmin.OutgoingRetry.RetryPolicy
+import dev.pntome.app.net.garmin.messages.Ping
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay

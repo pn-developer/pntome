@@ -1,0 +1,32 @@
+Categories:
+  - Multimedia
+License: GPL-3.0-or-later
+AuthorName: PNTome contributors
+WebSite: https://example.invalid/pntome
+SourceCode: https://example.invalid/pntome
+IssueTracker: https://example.invalid/pntome/issues
+Changelog: https://example.invalid/pntome/blob/main/CHANGELOG.md
+
+AntiFeatures:
+  NonFreeDep:
+    en-US: Depends on the proprietary Garmin Connect IQ Mobile SDK and needs the proprietary Garmin Connect Mobile app to talk to the watch.
+
+AutoName: PNTome
+
+RepoType: git
+Repo: https://example.invalid/pntome.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: PNTome/app
+    gradle:
+      - yes
+    # No prebuild steps: the Connect IQ AAR is fetched from Maven Central by Gradle.
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: PNTome/app/build.gradle.kts|versionCode\s*=\s*(\d+)|.|versionName\s*=\s*"([^"]+)"
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

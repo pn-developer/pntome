@@ -1,13 +1,13 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.scan.FolderIdHasher
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.scan.FolderIdHasher
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 /**
  * Unit tests for [AddFolderUseCase] (Req 1.3, 1.4) running on the JVM via Robolectric.
  *
- * Exercises the dedupe guarantee end-to-end against a real in-memory [GsoundDatabase]: the
+ * Exercises the dedupe guarantee end-to-end against a real in-memory [PNTomeDatabase]: the
  * first add of a tree URI yields [AddFolderResult.Added], and re-selecting the same folder
  * yields [AddFolderResult.Duplicate] without growing the list (Req 1.4). Also confirms the
  * persistable read permission is taken on add (Req 1.2).
@@ -28,7 +28,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class AddFolderUseCaseTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var resolver: RecordingContentResolver
     private lateinit var useCase: AddFolderUseCase
@@ -39,7 +39,7 @@ class AddFolderUseCaseTest {
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         repository = FolderRepository(db.folderDao(), db.trackDao())
@@ -97,7 +97,7 @@ class AddFolderUseCaseTest {
         // Seed the repository so findFolder(id) returns a folder before any insert attempt.
         assertTrue(
             repository.addFolderIfAbsent(
-                dev.gsound.a.domain.model.Folder(
+                dev.pntome.app.domain.model.Folder(
                     id = id,
                     treeUri = treeUri.toString(),
                     displayName = "Seeded",

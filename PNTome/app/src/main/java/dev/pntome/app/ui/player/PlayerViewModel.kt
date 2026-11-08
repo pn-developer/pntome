@@ -1,13 +1,13 @@
-package dev.gsound.a.ui.player
+package dev.pntome.app.ui.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.service.PlaybackService
-import dev.gsound.a.service.QueueBuilder
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.service.PlaybackService
+import dev.pntome.app.service.QueueBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

@@ -1,11 +1,11 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.Bookmark
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.Bookmark
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,7 +40,7 @@ class BookmarkSync internal constructor(
         bookmarkDao: BookmarkDao,
     ) : this(controlChannel, pairingStore, folders, bookmarkDao, { System.currentTimeMillis() / 1000 })
 
-    private val tag = "Gsound.Bookmark"
+    private val tag = "PNTome.Bookmark"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     @Volatile
@@ -55,7 +55,7 @@ class BookmarkSync internal constructor(
                 try {
                     handle(msg)
                 } catch (e: Exception) {
-                    GsoundLog.w(tag, "BOOKMARK handling failed", e)
+                    PNTomeLog.w(tag, "BOOKMARK handling failed", e)
                 }
             }
         }
@@ -65,12 +65,12 @@ class BookmarkSync internal constructor(
     suspend fun handle(msg: Bookmark): Boolean {
         val current = pairingStore.get()?.pairingId
         if (current == null || msg.pairingId != current) {
-            GsoundLog.w(tag, "BOOKMARK ignored: not for the current pairing")
+            PNTomeLog.w(tag, "BOOKMARK ignored: not for the current pairing")
             return false
         }
         val folder = resolveFolder(msg)
         if (folder == null) {
-            GsoundLog.w(tag, "BOOKMARK ignored: no matching audiobook folder for '${msg.folder}'")
+            PNTomeLog.w(tag, "BOOKMARK ignored: no matching audiobook folder for '${msg.folder}'")
             return false
         }
         val merged = BookmarkMerge.merge(
@@ -81,15 +81,15 @@ class BookmarkSync internal constructor(
             now = nowSec(),
         )
         if (merged == null) {
-            GsoundLog.d(tag, "BOOKMARK for '${folder.displayName}' not newer; kept local")
+            PNTomeLog.d(tag, "BOOKMARK for '${folder.displayName}' not newer; kept local")
             return false
         }
         bookmarkDao.upsert(merged)
-        GsoundLog.i(tag, "BOOKMARK for '${folder.displayName}' taken from watch")
+        PNTomeLog.i(tag, "BOOKMARK for '${folder.displayName}' taken from watch")
         return true
     }
 
-    private suspend fun resolveFolder(msg: Bookmark): dev.gsound.a.domain.model.Folder? {
+    private suspend fun resolveFolder(msg: Bookmark): dev.pntome.app.domain.model.Folder? {
         val fid = msg.fid
         if (!fid.isNullOrEmpty()) {
             val byId = folders.findFolder(fid)

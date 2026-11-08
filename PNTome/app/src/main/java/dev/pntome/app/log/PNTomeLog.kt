@@ -1,4 +1,4 @@
-package dev.gsound.a.log
+package dev.pntome.app.log
 
 import android.util.Log
 
@@ -8,7 +8,7 @@ import android.util.Log
  * ## Policy
  * Secrets MUST NOT be written to logs. Specifically, callers MUST pass the following through
  * [Redact.redact] before including them in any log message:
- * - the pairing `sharedSecret` and the `X-Gsound-Secret` header value,
+ * - the pairing `sharedSecret` and the `X-PNTome-Secret` header value,
  * - the pairing `secret` and the 6-digit confirmation code.
  *
  * Non-secret identifiers used for diagnostics — the `pairingId` (opaque UUID) and a message
@@ -18,11 +18,11 @@ import android.util.Log
  * [android.util.Log] is a static Android API that no-ops (and warns) under plain JVM unit tests.
  * Hiding it behind [Logger] lets production code depend on a tiny tag+level surface, lets tests
  * substitute [NoopLogger] (or a capturing fake) without Robolectric, and gives us one choke point
- * where the redaction policy is documented. The default production instance is [GsoundLog].
+ * where the redaction policy is documented. The default production instance is [PNTomeLog].
  *
  * This type adds **no** new runtime logging on its own; it exists so that any logging added later
  * routes secrets through [Redact]. Current call sites deliberately avoid logging secret-bearing
- * values at all (see `ConnectIqManager`, `SecretAuth`, `SecretProvider`, `GsoundRouting`).
+ * values at all (see `ConnectIqManager`, `SecretAuth`, `SecretProvider`, `PNTomeRouting`).
  */
 interface Logger {
     fun d(tag: String, message: String)
@@ -45,7 +45,7 @@ interface Logger {
  * guarantees beyond the platform call is the [Logger.dRedacted] helper from the interface, which
  * runs values through [Redact] (Req 8.4).
  */
-object GsoundLog : Logger {
+object PNTomeLog : Logger {
     override fun d(tag: String, message: String) { Log.d(tag, message) }
     override fun i(tag: String, message: String) { Log.i(tag, message) }
     override fun w(tag: String, message: String, throwable: Throwable?) { Log.w(tag, message, throwable) }

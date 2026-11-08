@@ -1,10 +1,10 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Base type for every control-channel message exchanged between GsoundA (phone) and GsoundG
+ * Base type for every control-channel message exchanged between PNTome (phone) and PNTomeGo
  * (watch) over the Garmin Connect IQ Mobile SDK message channel (overview §5.1).
  *
  * All messages share the common envelope:
@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
  * { "v": 1, "type": <string>, "pairingId": <uuid>, ... }
  * ```
  *
- * The `type` field is the polymorphic class discriminator (configured on the [GsoundJson]
+ * The `type` field is the polymorphic class discriminator (configured on the [PNTomeJson]
  * instance). Concrete subtypes pin their discriminator value with [SerialName] so the wire
  * strings match the shared contract exactly:
  * `PAIR_REQUEST`, `PAIR_CONFIRM`, `UNPAIR`, `SYNC_MANIFEST`, `SYNC_STATUS`, `STATS`,
@@ -113,7 +113,7 @@ data class SyncStatus(
 ) : ControlMessage()
 
 /**
- * `STATS` (G→A): watch-side stats shown in GsoundA.
+ * `STATS` (G→A): watch-side stats shown in PNTome.
  *
  * @property fileCount number of files currently on the watch.
  * @property folderCount number of folders currently on the watch.
@@ -132,7 +132,7 @@ data class Stats(
 /**
  * `LOG` (G→A): ONE line of the watch's diagnostic log (debugging aid). The watch sends its unsent
  * lines one message at a time when it answers a PING (the "Refresh stats" button); the phone writes
- * each [line] to logcat under the tag `Gsound.Watch`. Flat string payload — deliberately no list.
+ * each [line] to logcat under the tag `PNTome.Watch`. Flat string payload — deliberately no list.
  * Never carries secrets.
  */
 @Serializable

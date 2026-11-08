@@ -1,6 +1,6 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
-import dev.gsound.a.net.garmin.messages.Stats
+import dev.pntome.app.net.garmin.messages.Stats
 
 /**
  * Render-ready projection of the watch's reported stats (Req 7.1).

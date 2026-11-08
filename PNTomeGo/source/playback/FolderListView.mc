@@ -7,7 +7,7 @@ import Toybox.Graphics;
 //!
 //! Task 9.1 (this file): replace the FolderListStub view/delegate with the real
 //! pair. The playback-config mode is what the user lands in from the device's
-//! native music player when they pick Gsound as a provider and choose what to
+//! native music player when they pick PNTomeGo as a provider and choose what to
 //! play. The view LISTS the synced folder names (Repo.loadFolders()); the delegate
 //! maps the user's up/down/select input onto that list and, on Select, navigates
 //! toward playback of the chosen folder.

@@ -1,10 +1,10 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.ui.theme.GsoundATheme
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.ui.theme.PNTomeTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,7 +21,7 @@ class BookmarkSectionTest {
 
     private fun show(rows: List<BookmarkRow>, paired: Boolean = true) {
         composeRule.setContent {
-            GsoundATheme(dynamicColor = false) {
+            PNTomeTheme(dynamicColor = false) {
                 SyncContent(
                     state = SyncUiState.from(SyncState.Idle, paired, true, null, null, rows),
                     onSyncClicked = {}, onCancelClicked = {}, onRetryClicked = {}, onRefreshStatsClicked = {},

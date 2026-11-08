@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 import kotlinx.coroutines.delay
 

@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.net.garmin.messages.Bookmark
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.net.garmin.messages.Bookmark
 
 /**
  * Bookmark merge rule (spec gsound-player PL-6, design §8). Pure.
@@ -9,7 +9,7 @@ import dev.gsound.a.net.garmin.messages.Bookmark
  * The newer `at` wins; equal or older keeps the local bookmark. `finished` is not special: it only
  * wins by being newer. Incoming timestamps are clamped to `now + 300 s` against bad future values.
  *
- * Shared decision table (identical in GsoundG/source/sync/BookmarkMerge.mc); all times are epoch
+ * Shared decision table (identical in PNTomeGo/source/sync/BookmarkMerge.mc); all times are epoch
  * seconds, inAt = min(incomingAt, now + 300):
  *
  *   | local at | incoming at       | finished flags   | result                          |

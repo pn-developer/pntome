@@ -1,63 +1,88 @@
-# Gsound
+# PNTome
 
-Gsound syncs music folders from your Android phone to a Garmin watch over your local
-Wi-Fi network. This repository contains **GsoundA**, the Android companion app, and
-**GsoundG**, the Garmin Connect IQ watch app.
+PNTome syncs audiobooks and music from your Android phone to a Garmin watch over your
+local Wi-Fi network. This repository contains **PNTome**, the Android app, and
+**PNTomeGo**, the Garmin Connect IQ watch app.
 
-- You pick music folders on the phone with the system folder picker.
-- You pair the phone with the watch app (GsoundG) using a 6-digit confirmation code.
+- You pick folders on the phone with the system folder picker.
+- You pair the phone with the watch app (PNTomeGo) using a 6-digit confirmation code.
 - When you sync, the phone starts a small local HTTP server and the watch pulls the
   selected tracks down over Wi-Fi.
+- On the watch you play music and audiobooks, with bookmarks and resume.
 
 Control messages (pairing, manifest, progress) travel over the Garmin Connect IQ Mobile
-SDK channel; the bulk audio transfer goes over the local HTTP data channel.
+SDK channel; the bulk audio transfer goes over the local HTTP data channel. No data
+leaves your local network. See [PRIVACY.md](PRIVACY.md).
+
+## Install
+
+| Channel | App | Notes |
+|---------|-----|-------|
+| Google Play | PNTome | Store listing text lives in [`store/play/`](store/play/). |
+| F-Droid repo (self-hosted) | PNTome | Setup in [`fdroid/README.md`](fdroid/README.md). |
+| Connect IQ Store | PNTomeGo | Submission notes in [`store/garmin/`](store/garmin/). |
+| Build from source | both | See [INSTALL.md](INSTALL.md). |
+
+PNTomeGo requires PNTome on the phone and Garmin Connect Mobile. Release builds are
+described in [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md).
 
 ## Repository layout
 
 ```
 pn_gsound/
-├── GsoundA/                      # Android app (Gradle project, package dev.gsound.a)
+├── PNTome/                       # Android app (Gradle project, package dev.pntome.app)
 │   ├── app/                      # :app module
 │   │   ├── src/main/             # application code + AndroidManifest + resources
 │   │   ├── src/test/             # JVM unit tests (incl. Robolectric, Ktor test-host)
 │   │   └── src/androidTest/      # instrumented tests (Room, SAF scanner)
 │   ├── docs/
 │   │   └── manual-e2e-checklist.md   # manual hardware test runbook
+│   ├── fastlane/                 # F-Droid / Play metadata (descriptions, changelogs)
 │   ├── gradle/                   # version catalog + wrapper
 │   ├── gradlew / gradlew.bat     # Gradle wrapper (Gradle 8.9)
-│   └── INSTALL.md                # build & run GsoundA (Ubuntu / Manjaro)
-├── GsoundG/                      # Garmin Connect IQ app (Monkey C, audio content provider)
+│   └── INSTALL.md                # build & run PNTome (Ubuntu / Manjaro)
+├── PNTomeGo/                     # Garmin Connect IQ app (Monkey C, audio content provider)
 │   ├── manifest.xml              # app id, device list, permissions
 │   ├── monkey.jungle             # build config
 │   ├── source/ resources/        # Monkey C source + resources
-│   ├── build.sh                  # monkeyc wrapper (autodetects SDK + dev key)
+│   ├── build.sh                  # monkeyc wrapper (autodetects SDK + dev key; --export for .iq)
 │   ├── run_in_simulator.sh       # build + run a .prg in the simulator (via container)
-│   ├── sim/                      # Ubuntu 22.04 webkit-4.0 container utility (Manjaro/Ubuntu)
-│   └── INSTALL.md                # build & run GsoundG (Ubuntu / Manjaro)
-├── .kiro/specs/gsound-android/   # requirements, design, and tasks for the Android app
-├── .kiro/specs/gsound-garmin/    # requirements, design, and tasks for the watch app
+│   ├── sim/                      # Ubuntu 22.04 webkit-4.0 container utility
+│   └── INSTALL.md                # build & run PNTomeGo (Ubuntu / Manjaro)
+├── store/
+│   ├── play/                     # Google Play listing, data safety, permissions
+│   └── garmin/                   # Connect IQ Store listing, images, submission checklist
+├── fdroid/                       # self-hosted F-Droid repo: metadata + config example
+├── docs/
+│   └── RELEASE_CHECKLIST.md      # release steps
+├── .kiro/specs/                  # specs (see "Specs" below)
+├── CHANGELOG.md                  # release notes (Keep a Changelog)
+├── PRIVACY.md                    # privacy policy
+├── THIRD_PARTY.md                # third-party dependencies and licenses
+├── LICENSE                       # GPL-3.0-or-later
 ├── README.md                     # this file
-└── INSTALL.md                    # install index → links to GsoundA / GsoundG guides
+└── INSTALL.md                    # install index, links to PNTome / PNTomeGo guides
 ```
 
 ## Features
 
-- **Folder selection & management** — add folders via the Storage Access Framework with
+- **Folder selection & management**: add folders via the Storage Access Framework with
   persisted read access; dedupe, remove-with-confirm, and restore across restarts.
-- **Scanning** — recursive enumeration, format filtering (MP3 required; AAC/M4A, WAV,
+- **Scanning**: recursive enumeration, format filtering (MP3 required; AAC/M4A, WAV,
   FLAC optional via settings), metadata extraction with filename fallback, stable track
   ids, and live progress.
-- **Pairing** — Connect IQ discovery, 6-digit code with dual confirmation (local + watch),
+- **Pairing**: Connect IQ discovery, 6-digit code with dual confirmation (local + watch),
   ~120 s timeout, single active pairing, unpair.
-- **Local HTTP server** — Ktor CIO bound to the Wi-Fi interface; `GET /health`,
-  `/manifest`, `/media/{trackId}` with `X-Gsound-Secret` auth, `Range` support, and 404
+- **Local HTTP server**: Ktor CIO bound to the Wi-Fi interface; `GET /health`,
+  `/manifest`, `/media/{trackId}` with `X-PNTome-Secret` auth, `Range` support, and 404
   for unknown/missing tracks.
-- **Sync** — manifest build, server lifecycle, `SYNC_MANIFEST`/`SYNC_STATUS` handling,
+- **Sync**: manifest build, server lifecycle, `SYNC_MANIFEST`/`SYNC_STATUS` handling,
   summary + last-sync timestamp, a foreground service with a progress notification and
-  Cancel, a Wi-Fi availability guard, and a single-sync guard.
-- **Watch stats** — file/folder counts and last-sync time from `STATS`, "unknown" when
+  Cancel, a Wi-Fi availability guard, and a single-sync guard. Hotspot sync is supported.
+- **Audiobooks**: mark a folder as one audiobook; chapters, resume and bookmarks on the watch.
+- **Watch stats**: file/folder counts and last-sync time from `STATS`, "unknown" when
   unavailable, refresh via `PING`.
-- **Hardening** — minimal permissions, a redacting logger (secrets never logged), and
+- **Hardening**: minimal permissions, a redacting logger (secrets never logged), and
   `trackId` sanitization against path traversal.
 
 ## Tech stack
@@ -77,20 +102,20 @@ pn_gsound/
 ## Quick start
 
 ```bash
-cd GsoundA
+cd PNTome
 ./gradlew assembleDebug
 # APK at app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Full environment setup for **Ubuntu** and **Manjaro** is split per app:
-[GsoundA/INSTALL.md](GsoundA/INSTALL.md) (Android) and
-[GsoundG/INSTALL.md](GsoundG/INSTALL.md) (Garmin). The top-level
+[PNTome/INSTALL.md](PNTome/INSTALL.md) (Android) and
+[PNTomeGo/INSTALL.md](PNTomeGo/INSTALL.md) (Garmin). The top-level
 [INSTALL.md](INSTALL.md) is an index linking to both.
 
 ## Testing
 
 ```bash
-cd GsoundA
+cd PNTome
 ./gradlew testDebugUnitTest          # full JVM unit suite (no device needed)
 ./gradlew assembleDebugAndroidTest   # compile instrumented tests
 ./gradlew connectedDebugAndroidTest  # run instrumented tests (needs a device/emulator)
@@ -104,17 +129,28 @@ end-to-end sync additionally requires:
 
 - **Garmin Connect Mobile** installed and signed in on the phone.
 - A paired Garmin watch, or the **Connect IQ simulator** with a device profile.
-- The **GsoundG** watch app (in this repo under `GsoundG/`, built per
-  [GsoundG/INSTALL.md](GsoundG/INSTALL.md)) installed on the watch/simulator.
-- The GsoundG app UUID wired into `app/src/main/java/dev/gsound/a/net/garmin/GsoundAppId.kt`.
-  It currently holds a placeholder (`00000000000000000000000000000000`); until it matches
-  the GsoundG manifest id, the SDK reports the app as not installed.
-- Both devices on the **same Wi-Fi/LAN**.
+- The **PNTomeGo** watch app (in this repo under `PNTomeGo/`, built per
+  [PNTomeGo/INSTALL.md](PNTomeGo/INSTALL.md)) installed on the watch/simulator.
+- Both devices on the **same Wi-Fi/LAN** (or the watch on the phone's hotspot).
 
-See [`GsoundA/docs/manual-e2e-checklist.md`](GsoundA/docs/manual-e2e-checklist.md) for the
+The Connect IQ app id is shared by both apps (PNTomeGo `manifest.xml` `id`, PNTome
+`PNTomeAppId.kt`) and already matches.
+
+See [`PNTome/docs/manual-e2e-checklist.md`](PNTome/docs/manual-e2e-checklist.md) for the
 full manual test runbook.
 
-## Spec
+## Specs
 
-The app was built from a spec under `.kiro/specs/gsound-android/` — see `requirements.md`,
-`design.md`, and `tasks.md` for the detailed behavior and rationale.
+The current release work is specified under `.kiro/specs/pntome-store-release/`.
+
+The `.kiro/specs/gsound-*` specs are historical. They predate the rename to PNTome /
+PNTomeGo and still use the old names and paths.
+
+## License
+
+PNTome and PNTomeGo are licensed under **GPL-3.0-or-later**
+(SPDX: `GPL-3.0-or-later`). See [LICENSE](LICENSE).
+
+- [PRIVACY.md](PRIVACY.md): privacy policy
+- [CHANGELOG.md](CHANGELOG.md): release notes
+- [THIRD_PARTY.md](THIRD_PARTY.md): third-party dependencies and their licenses

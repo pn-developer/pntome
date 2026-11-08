@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.log.GsoundLog
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.log.PNTomeLog
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,13 +24,13 @@ class ScanLibraryRefresher @Inject constructor(
     private val scanAndCacheUseCase: ScanAndCacheUseCase,
 ) : LibraryRefresher {
 
-    private val tag = "Gsound.Sync"
+    private val tag = "PNTome.Sync"
 
     override suspend fun refreshAll(): Int {
         var failed = 0
         for (folder in folderRepository.getFolders()) {
             when (val result = scanAndCacheUseCase.scanAndCache(folder.id)) {
-                is ScanAndCacheResult.Success -> GsoundLog.i(
+                is ScanAndCacheResult.Success -> PNTomeLog.i(
                     tag,
                     "rescan '${folder.displayName}': ${result.trackCount} track(s) " +
                         "(+${result.addedCount} -${result.removedCount}, skipped ${result.skippedCount})",
@@ -39,7 +39,7 @@ class ScanLibraryRefresher @Inject constructor(
                     // Keep the cached tracks rather than treating a failed scan as "empty":
                     // that would make the watch delete the folder's music on a transient error.
                     failed++
-                    GsoundLog.w(tag, "rescan '${folder.displayName}' FAILED (cache kept): ${result.message}", result.cause)
+                    PNTomeLog.w(tag, "rescan '${folder.displayName}' FAILED (cache kept): ${result.message}", result.cause)
                 }
                 ScanAndCacheResult.FolderNotFound -> Unit
             }

@@ -1,11 +1,11 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Track
 
 /**
  * Terminal result of a completed folder scan (task 5.2).
  *
- * [dev.gsound.a.domain.model.ScanProgress] is intentionally a lightweight, framework-free
+ * [dev.pntome.app.domain.model.ScanProgress] is intentionally a lightweight, framework-free
  * progress signal for the UI (Req 3.6) and does not carry the discovered tracks, so the
  * scanner delivers the full outcome here: the eligible [tracks] (Req 3.2) and the number of
  * files skipped because they were unsupported (Req 3.3).

@@ -1,6 +1,6 @@
-package dev.gsound.a.domain.sync
+package dev.pntome.app.domain.sync
 
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Track
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

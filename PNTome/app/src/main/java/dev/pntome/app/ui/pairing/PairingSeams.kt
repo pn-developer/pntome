@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.pairing
+package dev.pntome.app.ui.pairing
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,7 +21,7 @@ class SystemPairingClock @Inject constructor() : PairingClock {
 /**
  * Supplies the watch peer's display name for the [PairingRecord] (Req 4.5).
  *
- * Deferred note: the SDK-free [dev.gsound.a.net.garmin.ControlChannel] / `ConnectionState`
+ * Deferred note: the SDK-free [dev.pntome.app.net.garmin.ControlChannel] / `ConnectionState`
  * deliberately expose no device identity, so the resolved Garmin device friendly name is not
  * available here yet. v1 uses a stable placeholder; wiring the real device name (surfaced from
  * `ConnectIqManager`'s resolved `IQDevice`, or carried on a future `PAIR_CONFIRM`) is left to a

@@ -1,4 +1,4 @@
-package dev.gsound.a.data.sync
+package dev.pntome.app.data.sync
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer

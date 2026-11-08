@@ -13,9 +13,9 @@
 #   4. Verifies webkit 4.0 + the shared SDK are visible from inside.
 #
 # Usage:
-#   GsoundG/sim/setup_container.sh            # create/provision + verify
-#   GsoundG/sim/setup_container.sh --verify   # verify only, make no changes
-#   GsoundG/sim/setup_container.sh --recreate # destroy + rebuild from scratch
+#   PNTomeGo/sim/setup_container.sh            # create/provision + verify
+#   PNTomeGo/sim/setup_container.sh --verify   # verify only, make no changes
+#   PNTomeGo/sim/setup_container.sh --recreate # destroy + rebuild from scratch
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -136,7 +136,7 @@ main() {
   esac
 
   if verify; then
-    info "OK — '$CIQ_CONTAINER' is ready. Run an app with: GsoundG/run_in_simulator.sh"
+    info "OK — '$CIQ_CONTAINER' is ready. Run an app with: PNTomeGo/run_in_simulator.sh"
   else
     die "setup finished but verification failed; check the messages above."
   fi

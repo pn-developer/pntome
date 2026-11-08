@@ -1,10 +1,10 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.folders.FolderRepository
+import dev.pntome.app.data.folders.FolderRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -51,7 +51,7 @@ class RemoveFolderUseCase @Inject constructor(
     /**
      * Remove the folder identified by [id].
      *
-     * @param id the stable folder id (see [dev.gsound.a.domain.scan.FolderIdHasher]).
+     * @param id the stable folder id (see [dev.pntome.app.domain.scan.FolderIdHasher]).
      * @return [RemoveFolderResult.Removed] on success, [RemoveFolderResult.NotFound] when no such
      *   folder exists, or [RemoveFolderResult.Error] when the delete itself fails.
      */

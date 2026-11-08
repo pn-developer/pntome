@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +39,7 @@ data class TransferProgress(
  * the watch does not report (observed in the field: manifest sent, server serving, but the UI
  * stuck on "Preparing"), there was no other progress signal. This monitor watches the bytes the
  * local HTTP server actually streams out of `/media/{trackId}` and turns them into progress the
- * orchestrator can project onto [dev.gsound.a.domain.model.SyncState.Running].
+ * orchestrator can project onto [dev.pntome.app.domain.model.SyncState.Running].
  *
  * ## How counting works (Range-safe)
  * The watch may issue multiple ranged `GET`s per file (resume/retry), each re-opening the stream.

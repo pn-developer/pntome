@@ -10,7 +10,7 @@ import Toybox.Timer;
 //! Every line is:
 //!   1. printed with System.println → simulator console, or on a real watch the file
 //!      /GARMIN/APPS/LOGS/<PRGNAME>.TXT (only if that file already exists), and
-//!   2. appended to a small ring buffer in Application.Storage so it survives across GsoundG's
+//!   2. appended to a small ring buffer in Application.Storage so it survives across PNTomeGo's
 //!      separate processes (sync / playback / control channel).
 //!
 //! Forwarding to the phone (sendPending): triggered from the PING handler (the phone's
@@ -18,7 +18,7 @@ import Toybox.Timer;
 //! { v, type:"LOG", pairingId, line } dictionary — only strings, no arrays — and strictly one at a
 //! time: the next line is sent only from the previous transmit's onComplete. A line is marked sent
 //! only after its transmit completes, so an error just stops the chain and the rest go next time.
-//! The phone writes each line to logcat under the tag `Gsound.Watch`.
+//! The phone writes each line to logcat under the tag `PNTome.Watch`.
 //!
 //! Why this shape: an earlier version sent one LOG message carrying an Array of 20 lines, at the
 //! end of a sync (just before that process exits), and the phone's Connect IQ SDK then crashed
@@ -67,7 +67,7 @@ module DebugLog {
     function log(tag as String, msg as String) as Void {
         var body = tag + ": " + msg;
         try {
-            System.println("Gsound." + body);
+            System.println("PNTome." + body);
         } catch (ex) {
         }
         store(body);

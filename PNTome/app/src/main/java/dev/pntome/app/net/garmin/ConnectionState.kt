@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 /**
  * Hardware-independent view of the Garmin control-channel connection (design §5.3, §10).
@@ -17,12 +17,12 @@ sealed interface ConnectionState {
 
     /**
      * A connection attempt is in progress: initializing the SDK, resolving the Garmin device,
-     * and locating the GsoundG app (Req 4.1).
+     * and locating the PNTomeGo app (Req 4.1).
      */
     data object Connecting : ConnectionState
 
     /**
-     * The GsoundG app on a connected Garmin device is reachable and control messages can be
+     * The PNTomeGo app on a connected Garmin device is reachable and control messages can be
      * exchanged (Req 4.1).
      */
     data object Connected : ConnectionState
@@ -51,7 +51,7 @@ sealed interface ConnectionState {
             /** No paired Garmin device is available (e.g., Garmin Connect not running). */
             NO_DEVICE,
 
-            /** A device is present but the GsoundG Connect IQ app is not installed on it. */
+            /** A device is present but the PNTomeGo Connect IQ app is not installed on it. */
             APP_NOT_INSTALLED,
 
             /** Bluetooth is turned off on the phone. */

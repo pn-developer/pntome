@@ -1,4 +1,4 @@
-package dev.gsound.a.di
+package dev.pntome.app.di
 
 import android.content.ContentResolver
 import android.content.Context
@@ -8,10 +8,10 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dev.gsound.a.R
-import dev.gsound.a.service.QueueBuilder
-import dev.gsound.a.ui.player.MediaControllerConnector
-import dev.gsound.a.ui.player.PlayerConnector
+import dev.pntome.app.R
+import dev.pntome.app.service.QueueBuilder
+import dev.pntome.app.ui.player.MediaControllerConnector
+import dev.pntome.app.ui.player.PlayerConnector
 
 /**
  * Hilt wiring for the phone player (gsound-player design §2, task 2.4).

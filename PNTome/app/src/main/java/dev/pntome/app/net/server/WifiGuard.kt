@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -7,7 +7,7 @@ import javax.inject.Singleton
  * Wi-Fi precondition guard for sync (Req 5.7, 5.8, 6.1).
  *
  * ## Why this exists
- * Req 5.7 says GsoundA must **not** start the local HTTP server when Wi-Fi is unavailable and
+ * Req 5.7 says PNTome must **not** start the local HTTP server when Wi-Fi is unavailable and
  * must tell the user both devices have to be on the same Wi-Fi network. Req 5.8 says it must be
  * able to show its LAN address. Both of those are "is there a usable Wi-Fi LAN address, and if
  * so what is it?" questions.

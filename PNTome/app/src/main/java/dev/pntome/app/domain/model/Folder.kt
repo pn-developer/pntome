@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * A user-selected music folder, backed by a persisted Storage Access Framework (SAF) tree URI.

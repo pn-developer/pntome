@@ -1,9 +1,9 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.log.Logger
-import dev.gsound.a.net.garmin.messages.GsoundJson
-import dev.gsound.a.net.garmin.messages.Manifest
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.log.Logger
+import dev.pntome.app.net.garmin.messages.PNTomeJson
+import dev.pntome.app.net.garmin.messages.Manifest
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -27,14 +27,14 @@ import io.ktor.utils.io.jvm.javaio.toByteReadChannel
 import kotlinx.serialization.Serializable
 import java.io.IOException
 
-/** Logcat tag for HTTP data-channel diagnostics (filter: `adb logcat -s Gsound.HTTP`). */
-private const val HTTP_TAG = "Gsound.HTTP"
+/** Logcat tag for HTTP data-channel diagnostics (filter: `adb logcat -s PNTome.HTTP`). */
+private const val HTTP_TAG = "PNTome.HTTP"
 
 /**
- * Installs the Gsound data-channel HTTP routes and their supporting plugins onto a Ktor
+ * Installs the PNTome data-channel HTTP routes and their supporting plugins onto a Ktor
  * [Application] (task 8.2, design §5.5, Req 5.2, 5.4, 5.5, 10.1, 10.4).
  *
- * This is the routing "module" plugged into [GsoundHttpServer] via the Hilt-multibound
+ * This is the routing "module" plugged into [PNTomeHttpServer] via the Hilt-multibound
  * `Set<Application.() -> Unit>` seam declared in `ServerModule`. The server stays agnostic of
  * the routes; everything endpoint-specific lives here and in [MediaSource].
  *
@@ -47,7 +47,7 @@ private const val HTTP_TAG = "Gsound.HTTP"
  *   (Req 5.5, 10.1).
  *
  * ## Plugins
- * - **ContentNegotiation** (kotlinx.serialization) using the shared [GsoundJson] codec, so the
+ * - **ContentNegotiation** (kotlinx.serialization) using the shared [PNTomeJson] codec, so the
  *   `/manifest` and `/health` bodies serialize exactly like the control-channel types.
  * - **PartialContent** — turns a response carrying a known `Content-Length` into a
  *   `Range`-aware one: it emits `Accept-Ranges: bytes`, honors `Range`, and replies `206
@@ -63,7 +63,7 @@ private const val HTTP_TAG = "Gsound.HTTP"
  *
  * ## Secret auth (task 8.3, Req 5.3)
  * An interceptor installed at the [ApplicationCallPipeline.Plugins] phase runs **before** route
- * resolution: for every path except the exempt `/health` it reads the `X-Gsound-Secret` header
+ * resolution: for every path except the exempt `/health` it reads the `X-PNTome-Secret` header
  * and compares it (constant-time, [isSecretAuthorized]) against [SecretProvider.expectedSecret].
  * A missing or non-matching header short-circuits the pipeline with `401` via
  * [io.ktor.server.application.ApplicationCall.respond] + `finish()`, so the `/manifest` and
@@ -78,22 +78,22 @@ private const val HTTP_TAG = "Gsound.HTTP"
  * `{"ok":true}`. Every other route requires the secret.
  *
  * @param mediaSource the read-only view of the active sync session (manifest + openable tracks).
- * @param secretProvider supplies the current expected secret for the `X-Gsound-Secret` check.
- * @param logger sink for request diagnostics; defaults to [GsoundLog] in production. The Ktor
- *   test host passes [dev.gsound.a.log.NoopLogger] so JVM tests don't touch `android.util.Log`.
+ * @param secretProvider supplies the current expected secret for the `X-PNTome-Secret` check.
+ * @param logger sink for request diagnostics; defaults to [PNTomeLog] in production. The Ktor
+ *   test host passes [dev.pntome.app.log.NoopLogger] so JVM tests don't touch `android.util.Log`.
  */
-fun Application.installGsoundRouting(
+fun Application.installPNTomeRouting(
     mediaSource: MediaSource,
     secretProvider: SecretProvider,
-    logger: Logger = GsoundLog,
+    logger: Logger = PNTomeLog,
 ) {
     install(ContentNegotiation) {
-        json(GsoundJson)
+        json(PNTomeJson)
     }
     install(PartialContent)
     install(AutoHeadResponse)
 
-    // Request-level diagnostics (filter: `adb logcat -s Gsound.HTTP`). This is the single most
+    // Request-level diagnostics (filter: `adb logcat -s PNTome.HTTP`). This is the single most
     // useful signal when a sync "hangs": it tells you definitively whether the WATCH ever reached
     // the phone's server over Wi-Fi, which endpoint it hit, and the status it got back —
     // independent of whether the watch sends SYNC_STATUS. One line is logged as each request

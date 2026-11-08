@@ -1,6 +1,6 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
-import dev.gsound.a.net.server.LanKind
+import dev.pntome.app.net.server.LanKind
 
 /**
  * Live state of a sync operation, exposed by the `SyncOrchestrator` as a `Flow<SyncState>`

@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.navigation
+package dev.pntome.app.ui.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,13 +24,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import dev.gsound.a.ui.folders.FolderListScreen
-import dev.gsound.a.ui.pairing.PairingScreen
-import dev.gsound.a.ui.player.PlayerScreen
-import dev.gsound.a.ui.player.PlayerViewModel
-import dev.gsound.a.ui.sync.SyncScreen
-import dev.gsound.a.ui.theme.StatusOffline
-import dev.gsound.a.ui.theme.StatusOnline
+import dev.pntome.app.ui.folders.FolderListScreen
+import dev.pntome.app.ui.pairing.PairingScreen
+import dev.pntome.app.ui.player.PlayerScreen
+import dev.pntome.app.ui.player.PlayerViewModel
+import dev.pntome.app.ui.sync.SyncScreen
+import dev.pntome.app.ui.theme.StatusOffline
+import dev.pntome.app.ui.theme.StatusOnline
 
 /**
  * Root composable: a Material 3 [Scaffold] with a bottom [NavigationBar] hosting the three
@@ -40,7 +40,7 @@ import dev.gsound.a.ui.theme.StatusOnline
  * in later tasks.
  */
 @Composable
-fun GsoundApp(
+fun PNTomeApp(
     modifier: Modifier = Modifier,
     navStatusViewModel: NavBarStatusViewModel = hiltViewModel(),
     // Activity-scoped: one controller shared by the Folders mini-player and the player screen.

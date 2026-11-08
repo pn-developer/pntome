@@ -15,8 +15,8 @@
             collision with real providers on the device.
         -->
         <provider
-            android:name="dev.gsound.a.domain.scan.SeededDocumentsProvider"
-            android:authorities="dev.gsound.a.test.seededdocs"
+            android:name="dev.pntome.app.domain.scan.SeededDocumentsProvider"
+            android:authorities="dev.pntome.app.test.seededdocs"
             android:exported="true"
             android:grantUriPermissions="true"
             android:permission="android.permission.MANAGE_DOCUMENTS">

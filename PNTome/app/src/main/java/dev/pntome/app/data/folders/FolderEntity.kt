@@ -1,9 +1,9 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import dev.gsound.a.domain.model.Folder
+import dev.pntome.app.domain.model.Folder
 
 /**
  * Room persistence representation of a [Folder].
@@ -13,7 +13,7 @@ import dev.gsound.a.domain.model.Folder
  * domain model is done via [toDomain]/[toEntity].
  *
  * @property id stable hash of [treeUri]; primary key and foreign key target for tracks.
- * @property isAudiobook audiobook flag (DB v2, [GsoundDatabase.MIGRATION_1_2]); the column
+ * @property isAudiobook audiobook flag (DB v2, [PNTomeDatabase.MIGRATION_1_2]); the column
  *   default matches the migration's `DEFAULT 0`.
  */
 @Entity(tableName = "folders")

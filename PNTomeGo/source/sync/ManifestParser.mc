@@ -7,7 +7,7 @@ import Toybox.Lang;
 //! so BOTH manifest sources parse identically:
 //!   - the inline SYNC_MANIFEST `tracks[]` (SyncController.onManifest, task 6), and
 //!   - the HTTP `GET /manifest` fallback body fetched at sync start by
-//!     GsoundSyncDelegate.onStartSync (design §6.1) — both yield the same
+//!     PNTomeSyncDelegate.onStartSync (design §6.1) — both yield the same
 //!     `ManifestTrack` shape, so the downloader consumes one representation.
 //!
 //! Every entry is turned from a hostile-until-proven dict into a clean,

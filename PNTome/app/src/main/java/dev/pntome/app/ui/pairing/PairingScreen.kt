@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.pairing
+package dev.pntome.app.ui.pairing
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,10 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.gsound.a.R
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.ui.theme.StatusOffline
-import dev.gsound.a.ui.theme.StatusOnline
+import dev.pntome.app.R
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.ui.theme.StatusOffline
+import dev.pntome.app.ui.theme.StatusOnline
 import java.text.DateFormat
 import java.util.Date
 
@@ -154,7 +154,7 @@ private fun PairPrompt(onStartPairing: () -> Unit) {
         style = MaterialTheme.typography.headlineSmall,
     )
     Text(
-        text = "Connect GsoundA to your Garmin watch so it can download your music.",
+        text = "Connect PNTome to your Garmin watch so it can download your music.",
         style = MaterialTheme.typography.bodyMedium,
         textAlign = TextAlign.Center,
     )
@@ -163,7 +163,7 @@ private fun PairPrompt(onStartPairing: () -> Unit) {
     }
 }
 
-/** Discovering state: resolving the watch and GsoundG app before a code is shown (Req 4.1). */
+/** Discovering state: resolving the watch and PNTomeGo app before a code is shown (Req 4.1). */
 @Composable
 private fun Discovering() {
     CircularProgressIndicator(

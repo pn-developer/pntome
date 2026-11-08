@@ -1,4 +1,5 @@
-package dev.gsound.a.service
+
+package dev.pntome.app.service
 
 import android.os.Bundle
 import androidx.media3.common.MediaItem
@@ -7,6 +8,7 @@ import androidx.media3.session.MediaLibraryService.LibraryParams
 import androidx.media3.session.MediaLibraryService.MediaLibrarySession
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
@@ -24,6 +26,7 @@ import kotlinx.coroutines.launch
  *
  * @param onDisconnect called when a controller disconnects (final bookmark flush).
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class LibraryCallback(
     private val tree: BrowseTree,
     private val scope: CoroutineScope,
@@ -58,7 +61,7 @@ class LibraryCallback(
     ): ListenableFuture<SessionResult> =
         Futures.immediateFuture(
             BookCustomLayout.execute(customCommand, session.player)
-                ?: SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED)
+                ?: SessionResult(SessionError.ERROR_NOT_SUPPORTED)
         )
 
     override fun onGetLibraryRoot(
@@ -69,7 +72,7 @@ class LibraryCallback(
         if (isCallerAllowed(browser)) {
             immediate(LibraryResult.ofItem(tree.root(), params))
         } else {
-            immediate(LibraryResult.ofError<MediaItem>(LibraryResult.RESULT_ERROR_PERMISSION_DENIED))
+            immediate(LibraryResult.ofError<MediaItem>(SessionError.ERROR_PERMISSION_DENIED))
         }
 
     override fun onGetChildren(
@@ -146,7 +149,7 @@ class LibraryCallback(
                 future.cancel(false)
                 throw e
             } catch (e: Exception) {
-                future.set(LibraryResult.ofError<Void>(LibraryResult.RESULT_ERROR_UNKNOWN))
+                future.set(LibraryResult.ofError<Void>(SessionError.ERROR_UNKNOWN))
             }
         }
         return future
@@ -172,7 +175,7 @@ class LibraryCallback(
             try {
                 future.set(block())
             } catch (e: Exception) {
-                future.set(LibraryResult.ofError<T>(LibraryResult.RESULT_ERROR_UNKNOWN))
+                future.set(LibraryResult.ofError<T>(SessionError.ERROR_UNKNOWN))
             }
         }
         return future

@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -15,7 +15,7 @@ import javax.inject.Singleton
  * Req 5.1, Req 5.7).
  *
  * ## Why an interface
- * The HTTP server ([GsoundHttpServer]) must bind to the Wi-Fi interface, and must *refuse to
+ * The HTTP server ([PNTomeHttpServer]) must bind to the Wi-Fi interface, and must *refuse to
  * start* when Wi-Fi is unavailable so the caller can show the Req 5.7 guidance ("both devices
  * must be on the same Wi-Fi network"). The actual address lookup needs Android
  * ([ConnectivityManager]), which is awkward to unit-test. Hiding it behind this one-method

@@ -1,10 +1,11 @@
-package dev.gsound.a.service
+
+package dev.pntome.app.service
 
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.session.MediaSession
-import dev.gsound.a.data.folders.BookmarkRepository
-import dev.gsound.a.data.folders.FolderRepository
+import dev.pntome.app.data.folders.BookmarkRepository
+import dev.pntome.app.data.folders.FolderRepository
 
 /**
  * Turns the (possibly id-only) items a controller sends into a playable queue
@@ -22,6 +23,7 @@ import dev.gsound.a.data.folders.FolderRepository
  *
  * A null result means nothing playable could be resolved.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class MediaItemResolver(
     private val folders: FolderRepository,
     private val bookmarks: BookmarkRepository,
@@ -100,7 +102,7 @@ class MediaItemResolver(
         if (q.isNotEmpty()) {
             val all = folders.getFolders()
             val matches = all.filter { it.displayName.contains(q, ignoreCase = true) }
-            fun best(list: List<dev.gsound.a.domain.model.Folder>) =
+            fun best(list: List<dev.pntome.app.domain.model.Folder>) =
                 list.firstOrNull { it.displayName.equals(q, ignoreCase = true) } ?: list.firstOrNull()
             val folder = best(matches.filter { it.isAudiobook }) ?: best(matches.filterNot { it.isAudiobook })
             if (folder != null) expandFolder(folder.id)?.let { return it }

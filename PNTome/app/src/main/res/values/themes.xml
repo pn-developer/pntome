@@ -5,5 +5,5 @@
       come from the Compose MaterialTheme (see ui/theme/Theme.kt); this XML theme only
       needs to be a valid app/activity theme for the manifest.
     -->
-    <style name="Theme.GsoundA" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.PNTome" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>

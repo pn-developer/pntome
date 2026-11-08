@@ -1,14 +1,14 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.Bookmark
-import dev.gsound.a.net.garmin.messages.ControlMessage
-import dev.gsound.a.net.garmin.messages.Stats
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.Bookmark
+import dev.pntome.app.net.garmin.messages.ControlMessage
+import dev.pntome.app.net.garmin.messages.Stats
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.channels.Channel
@@ -48,19 +48,19 @@ class BookmarkPusher internal constructor(
         bookmarkDao: BookmarkDao,
     ) : this(controlChannel, pairingStore, folders, bookmarkDao, STATS_TIMEOUT_MS, QUIET_PERIOD_MS, MAX_WINDOW_MS)
 
-    private val tag = "Gsound.Bookmark"
+    private val tag = "PNTome.Bookmark"
     private val mutex = Mutex()
 
     /** Send all pending phone bookmarks to the watch. Returns the number delivered. */
     suspend fun pushPending(): Int {
         if (!mutex.tryLock()) {
-            GsoundLog.d(tag, "push skipped: already running")
+            PNTomeLog.d(tag, "push skipped: already running")
             return 0
         }
         try {
             val pairingId = pairingStore.get()?.pairingId ?: return 0
             if (controlChannel.connectionState.value !is ConnectionState.Connected) {
-                GsoundLog.d(tag, "push skipped: watch not reachable")
+                PNTomeLog.d(tag, "push skipped: watch not reachable")
                 return 0
             }
             var sentCount = 0
@@ -78,7 +78,7 @@ class BookmarkPusher internal constructor(
                 )
                 val result = controlChannel.send(msg)
                 if (result.isFailure) {
-                    GsoundLog.w(tag, "BOOKMARK push failed; remaining left for next time")
+                    PNTomeLog.w(tag, "BOOKMARK push failed; remaining left for next time")
                     break
                 }
                 BookmarkSyncState.markSent(bookmarkDao, entity)
@@ -88,7 +88,7 @@ class BookmarkPusher internal constructor(
         } catch (c: CancellationException) {
             throw c
         } catch (e: Exception) {
-            GsoundLog.w(tag, "BOOKMARK push aborted", e)
+            PNTomeLog.w(tag, "BOOKMARK push aborted", e)
             return 0
         } finally {
             mutex.unlock()
@@ -114,7 +114,7 @@ class BookmarkPusher internal constructor(
                 true
             } ?: false
             if (!gotStats) {
-                GsoundLog.d(tag, "no STATS after refresh; skipping bookmark push")
+                PNTomeLog.d(tag, "no STATS after refresh; skipping bookmark push")
                 return@coroutineScope 0
             }
             withTimeoutOrNull(maxWindowMs) {

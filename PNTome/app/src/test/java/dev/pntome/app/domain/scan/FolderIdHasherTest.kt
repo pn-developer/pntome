@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals

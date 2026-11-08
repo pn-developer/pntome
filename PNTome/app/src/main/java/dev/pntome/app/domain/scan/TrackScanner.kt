@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import android.net.Uri
-import dev.gsound.a.domain.model.AppSettings
+import dev.pntome.app.domain.model.AppSettings
 
 /**
  * One-shot scan seam over [FolderScanner.scanToResult] (task 5.3).
@@ -9,7 +9,7 @@ import dev.gsound.a.domain.model.AppSettings
  * [FolderScanner] owns the Android-coupled SAF enumeration + metadata extraction and so can
  * only run on a device/emulator (its instrumented coverage is task 5.4). Depending on this thin
  * interface instead of the concrete scanner lets the orchestration/caching layer
- * ([dev.gsound.a.domain.folders.ScanAndCacheUseCase]) be exercised on the JVM with a fake scan
+ * ([dev.pntome.app.domain.folders.ScanAndCacheUseCase]) be exercised on the JVM with a fake scan
  * result, so the reconcile/aggregate behaviour is testable without an emulator.
  *
  * The progress-emitting [FolderScanner.scan] is intentionally not part of this seam — only the

@@ -12,3 +12,7 @@ build/
 local.properties
 # Kotlin compiler daemon session/error state — machine-local build artifacts, not source.
 .kotlin/
+# Release signing material: never commit.
+keystore.properties
+*.jks
+*.keystore

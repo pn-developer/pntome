@@ -1,6 +1,6 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.net.garmin.messages.Manifest
+import dev.pntome.app.net.garmin.messages.Manifest
 import java.io.InputStream
 
 /**
@@ -24,7 +24,7 @@ import java.io.InputStream
  * ## No active session
  * When no sync session is active (before a sync starts or after it stops), [manifest] returns
  * `null` and [openTrack] returns `null` for every id. The routes translate those into an empty
- * manifest / `404` respectively (see [dev.gsound.a.net.server.GsoundRouting]).
+ * manifest / `404` respectively (see [dev.pntome.app.net.server.PNTomeRouting]).
  */
 interface MediaSource {
 
@@ -49,7 +49,7 @@ interface MediaSource {
      *   callers should still treat it as untrusted — the implementation looks it up in the
      *   manifest rather than mapping it to a filesystem path, so path traversal is impossible).
      *   The route additionally rejects syntactically invalid ids via
-     *   [dev.gsound.a.net.server.TrackId.isValidTrackId] before calling this (design §8), so a
+     *   [dev.pntome.app.net.server.TrackId.isValidTrackId] before calling this (design §8), so a
      *   traversal-looking id never reaches here.
      */
     fun openTrack(trackId: String): OpenMedia?

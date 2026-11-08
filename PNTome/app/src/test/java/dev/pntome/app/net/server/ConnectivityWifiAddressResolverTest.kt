@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import android.content.Context
 import org.junit.Assert.assertEquals

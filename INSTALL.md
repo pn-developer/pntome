@@ -1,50 +1,62 @@
-# INSTALL — Gsound
+# INSTALL — PNTome
 
-Gsound has two apps that are built with different toolchains. Pick the guide for the app
+PNTome has two apps that are built with different toolchains. Pick the guide for the app
 you want to build; both cover **Ubuntu** (apt / Debian family) and **Manjaro**
 (pacman / Arch family).
 
 | App | Platform | Build with | Guide |
 |-----|----------|-----------|-------|
-| **GsoundA** | Android (Kotlin + Jetpack Compose) | Gradle wrapper (`./gradlew`), JDK 17, Android SDK 35 | [`GsoundA/INSTALL.md`](GsoundA/INSTALL.md) |
-| **GsoundG** | Garmin Connect IQ (Monkey C) | `monkeyc` from the Connect IQ SDK 9.2.0, JDK 17 | [`GsoundG/INSTALL.md`](GsoundG/INSTALL.md) |
+| **PNTome** | Android (Kotlin + Jetpack Compose) | Gradle wrapper (`./gradlew`), JDK 17, Android SDK 35 | [`PNTome/INSTALL.md`](PNTome/INSTALL.md) |
+| **PNTomeGo** | Garmin Connect IQ (Monkey C) | `monkeyc` from the Connect IQ SDK 9.2.0, JDK 17 | [`PNTomeGo/INSTALL.md`](PNTomeGo/INSTALL.md) |
 
 ## Shared prerequisites
 
 Both toolchains need **JDK 17** and **Git**. Install commands differ per distro and are
-listed in each guide. This repo does not auto-install system packages — the guides give you
+listed in each guide. This repo does not auto-install system packages. The guides give you
 the exact `sudo apt` / `sudo pacman` commands to run yourself.
 
 ## Quick start
 
-GsoundA (Android APK):
+PNTome (Android APK):
 
 ```bash
-cd GsoundA
+cd PNTome
 ./gradlew assembleDebug
 # APK at app/build/outputs/apk/debug/app-debug.apk
 ```
 
-GsoundG (watch `.prg`, after installing the Connect IQ SDK):
+PNTomeGo (watch `.prg`, after installing the Connect IQ SDK):
 
 ```bash
-cd GsoundG
-./build.sh                 # fenix6spro -> build/GsoundG-fenix6spro.prg
+cd PNTomeGo
+./build.sh                 # fenix6spro -> build/PNTomeGo-fenix6spro.prg
 ```
+
+## Release builds
+
+Signed APK/AAB, the self-hosted F-Droid repo and the Connect IQ Store export are covered in:
+
+- [`PNTome/INSTALL.md`](PNTome/INSTALL.md): release signing, APK and AAB, self-hosted F-Droid repo
+- [`PNTomeGo/INSTALL.md`](PNTomeGo/INSTALL.md): export for the Connect IQ Store
+- [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md): the full release checklist
+- [`fdroid/README.md`](fdroid/README.md), [`store/play/`](store/play/), [`store/garmin/`](store/garmin/)
+
+See also [CHANGELOG.md](CHANGELOG.md), [PRIVACY.md](PRIVACY.md) and
+[THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Pairing & sync (needs both apps)
 
 Building and unit-testing either app needs nothing from the other. A real end-to-end
-pair/sync needs both installed, the shared app UUID matched between them
-(GsoundG `manifest.xml` `id` ↔ GsoundA `GsoundAppId.kt`), Garmin Connect Mobile on the
+pair/sync needs both installed (they share one Connect IQ app id: PNTomeGo `manifest.xml`
+`id` and PNTome `PNTomeAppId.kt`, already matching), Garmin Connect Mobile on the
 phone, and both devices on the same Wi-Fi/LAN. The full manual runbook is in
-[`GsoundA/docs/manual-e2e-checklist.md`](GsoundA/docs/manual-e2e-checklist.md).
+[`PNTome/docs/manual-e2e-checklist.md`](PNTome/docs/manual-e2e-checklist.md).
 
 ## Audiobooks
 
-A synced folder can be marked as **one audiobook** (spec `.kiro/specs/gsound-audiobooks/`):
+A synced folder can be marked as **one audiobook**:
 
-1. In GsoundA → Folders, tap the **Audiobook** chip on the folder's row, then sync. A
+1. In PNTome → Folders, tap the **Audiobook** chip on the folder's row, then sync. A
    change of the flag alone needs no download; the watch updates on the next sync.
 2. Chapters play in **natural file-name order**, so name files with a numeric prefix:
    `01 …`, `02 …`, `10 …` or `1-01 …`, `1-02 …`, `2-01 …`. ID3 tags are not used for the
@@ -68,8 +80,8 @@ Limitations:
 
 ## Sync over the phone's hotspot
 
-No Wi-Fi network nearby? GsoundA can sync while the watch is connected to **the phone's own
-hotspot** (spec `.kiro/specs/gsound-hotspot/`). Nothing changes in the watch app or the
+No Wi-Fi network nearby? PNTome can sync while the watch is connected to **the phone's own
+hotspot**. Nothing changes in the watch app or the
 protocol.
 
 Watch-side setup:
@@ -82,11 +94,11 @@ Watch-side setup:
 4. Use **WPA2-Personal** security, not WPA3-only (*to be confirmed on fēnix 6*).
 5. Keep **mobile data on**. The hotspot normally needs it, because the watch may check for
    internet access before it stays connected.
-6. Make sure the watch has joined the hotspot, then tap Sync in GsoundA. The Sync screen
+6. Make sure the watch has joined the hotspot, then tap Sync in PNTome. The Sync screen
    shows `Hotspot · <address>:<port>` while the sync runs.
 
 Wi-Fi is preferred:
-- When the phone is connected to a Wi-Fi network, GsoundA always serves on that Wi-Fi
+- When the phone is connected to a Wi-Fi network, PNTome always serves on that Wi-Fi
   address. The hotspot is used only when the phone has no usable Wi-Fi address.
 - The phone can't know which network the watch joined, and there is no setting to prefer
   the hotspot.

@@ -1,7 +1,7 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

@@ -1,6 +1,6 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
-import dev.gsound.a.net.garmin.messages.MessageCodec.DecodeResult
+import dev.pntome.app.net.garmin.messages.MessageCodec.DecodeResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -137,7 +137,7 @@ class MessageCodecTest {
         )
 
         val map = MessageCodec.encodeToMap(original)
-        // The map must carry the exact contract keys GsoundG reads, with v as a number.
+        // The map must carry the exact contract keys PNTomeGo reads, with v as a number.
         assertEquals("PAIR_REQUEST", map["type"])
         assertEquals(1, (map["v"] as Number).toInt())
         assertEquals(pairingId, map["pairingId"])

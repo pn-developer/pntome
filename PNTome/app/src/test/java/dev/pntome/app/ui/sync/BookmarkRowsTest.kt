@@ -1,7 +1,7 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.domain.model.Folder
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.domain.model.Folder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

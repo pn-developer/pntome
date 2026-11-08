@@ -1,4 +1,4 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

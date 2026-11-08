@@ -1,15 +1,15 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.media3.session.LibraryResult
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -37,9 +37,9 @@ class BrowseTreeTest {
         positionSec = 0, finished = false, updatedAt = at, source = "phone"
     )
 
-    private fun withTree(block: suspend (BrowseTree, FolderRepository, GsoundDatabase) -> Unit) {
+    private fun withTree(block: suspend (BrowseTree, FolderRepository, PNTomeDatabase) -> Unit) {
         val db = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext<Context>(), GsoundDatabase::class.java
+            ApplicationProvider.getApplicationContext<Context>(), PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         try {
             val repo = FolderRepository(db.folderDao(), db.trackDao())

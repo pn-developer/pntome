@@ -1,9 +1,9 @@
-package dev.gsound.a.domain.sync
+package dev.pntome.app.domain.sync
 
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.domain.scan.ScanPaths
-import dev.gsound.a.net.garmin.messages.Manifest
-import dev.gsound.a.net.garmin.messages.ManifestTrack
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.domain.scan.ScanPaths
+import dev.pntome.app.net.garmin.messages.Manifest
+import dev.pntome.app.net.garmin.messages.ManifestTrack
 
 /**
  * Pure, framework-free mapping from the cached domain [Track] list to the wire [Manifest] the
@@ -44,7 +44,7 @@ object ManifestBuilder {
      *
      * @param tracks snapshot of cached tracks (e.g. from `FolderRepository.getAllTracks()`); an
      *   empty list yields a manifest with an empty track list.
-     * @param audiobookFolderIds ids of the folders marked as audiobooks ([dev.gsound.a.domain.model.Folder.isAudiobook]).
+     * @param audiobookFolderIds ids of the folders marked as audiobooks ([dev.pntome.app.domain.model.Folder.isAudiobook]).
      * @return the wire [Manifest], grouped by folder and naturally ordered within each folder.
      */
     fun build(tracks: List<Track>, audiobookFolderIds: Set<String> = emptySet()): Manifest {

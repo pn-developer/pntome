@@ -187,7 +187,7 @@ function testResolveRewindsAndFallsBack(logger as Test.Logger) as Boolean {
 }
 
 //! Player-initiated start (args null) after a book "resume" selection resumes from the
-//! bookmark (AB-6.2): exercises GsoundGApp.getContentDelegate → GsoundContentDelegate →
+//! bookmark (AB-6.2): exercises PNTomeGoApp.getContentDelegate → PNTomeContentDelegate →
 //! FolderIterator end to end. The seeded media ids are fake, so the iterator serves its
 //! fallback Content; what matters is that it starts at the bookmarked chapter.
 (:test)
@@ -199,7 +199,7 @@ function testPlayerStartResumesBook(logger as Test.Logger) as Boolean {
         Repo.saveBookmark("zzt-book", "zzt-c3", 90, 2, false);
         PlaybackStarterTestHook.saveResume("zzt-book");
 
-        var delegate = (Application.getApp() as GsoundGApp).getContentDelegate(null);
+        var delegate = (Application.getApp() as PNTomeGoApp).getContentDelegate(null);
         var it = delegate.getContentIterator() as FolderIterator;
         ok = T.check(logger, it.ids().size() == 3, "iterator has the 3 chapters") && ok;
         var content = it.get();

@@ -3,20 +3,20 @@ import Toybox.Media;
 
 //! StubDelegates — shared safe-empty ContentIterator used by the playback path.
 //!
-//! The content-delegate stub (GsoundContentDelegateStub) was removed in task 9.4
-//! when the real playback/GsoundContentDelegate.mc replaced it. What remains here
+//! The content-delegate stub (PNTomeContentDelegateStub) was removed in task 9.4
+//! when the real playback/PNTomeContentDelegate.mc replaced it. What remains here
 //! is EmptyContentIterator: a functional-but-empty ContentIterator that
-//! GsoundContentDelegate returns as its SAFE FALLBACK whenever nothing is selected
+//! PNTomeContentDelegate returns as its SAFE FALLBACK whenever nothing is selected
 //! / nothing is synced, or the real FolderIterator can't be built (Req 6.6, 8.5).
 //! Returning this (never null) keeps the native player from null-dereffing.
 //!
-//! The sync-delegate stub (GsoundSyncDelegateStub) was removed in task 7.1 when the
-//! real sync/GsoundSyncDelegate.mc replaced it.
+//! The sync-delegate stub (PNTomeSyncDelegateStub) was removed in task 7.1 when the
+//! real sync/PNTomeSyncDelegate.mc replaced it.
 
 //! Minimal empty ContentIterator: no current track, no next/previous. Mirrors the
 //! official ACP template's ContentIterator shape but yields nothing, so the native
 //! player shows an empty library instead of crashing (Req 8.5). Used by
-//! GsoundContentDelegate as the safe-empty fallback (the real tracks come from
+//! PNTomeContentDelegate as the safe-empty fallback (the real tracks come from
 //! FolderIterator, task 9.3).
 class EmptyContentIterator extends Media.ContentIterator {
     function initialize() {

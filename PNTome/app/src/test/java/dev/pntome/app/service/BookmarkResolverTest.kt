@@ -1,6 +1,6 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
-import dev.gsound.a.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

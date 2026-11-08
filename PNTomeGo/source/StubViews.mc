@@ -33,7 +33,7 @@ module StubViews {
 }
 
 //! SafeFallbackView — the last-resort configuration-mode surface used ONLY when a
-//! real config view/delegate constructor throws (GsoundGApp's
+//! real config view/delegate constructor throws (PNTomeGoApp's
 //! getSyncConfigurationView / getPlaybackConfigurationView fallback, Req 8.5).
 //!
 //! It holds no state and draws nothing but two literal lines via the exception-free
@@ -48,6 +48,6 @@ class SafeFallbackView extends WatchUi.View {
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
-        StubViews.drawCentered(dc, "Gsound", "Unavailable");
+        StubViews.drawCentered(dc, "PNTomeGo", "Unavailable");
     }
 }

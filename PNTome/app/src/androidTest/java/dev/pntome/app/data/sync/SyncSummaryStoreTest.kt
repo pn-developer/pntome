@@ -1,10 +1,10 @@
-package dev.gsound.a.data.sync
+package dev.pntome.app.data.sync
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.DataStoreTestContext
-import dev.gsound.a.domain.model.SyncSummary
+import dev.pntome.app.data.DataStoreTestContext
+import dev.pntome.app.domain.model.SyncSummary
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After

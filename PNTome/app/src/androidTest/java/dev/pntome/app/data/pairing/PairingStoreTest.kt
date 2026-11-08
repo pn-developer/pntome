@@ -1,9 +1,9 @@
-package dev.gsound.a.data.pairing
+package dev.pntome.app.data.pairing
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.DataStoreTestContext
-import dev.gsound.a.domain.model.PairingRecord
+import dev.pntome.app.data.DataStoreTestContext
+import dev.pntome.app.domain.model.PairingRecord
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After

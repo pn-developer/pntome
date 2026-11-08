@@ -1,16 +1,16 @@
-package dev.gsound.a.ui.folders
+package dev.pntome.app.ui.folders
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.folders.AddFolderUseCase
-import dev.gsound.a.domain.folders.RemoveFolderUseCase
-import dev.gsound.a.domain.folders.ScanAndCacheUseCase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.scan.ScanResult
-import dev.gsound.a.domain.scan.TrackScanner
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.folders.AddFolderUseCase
+import dev.pntome.app.domain.folders.RemoveFolderUseCase
+import dev.pntome.app.domain.folders.ScanAndCacheUseCase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.scan.ScanResult
+import dev.pntome.app.domain.scan.TrackScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -36,7 +36,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class FolderListViewModelTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var viewModel: FolderListViewModel
     private val folderId = "folder-1"
@@ -46,7 +46,7 @@ class FolderListViewModelTest {
             treeUri: android.net.Uri,
             folderId: String,
             rootName: String,
-            settings: dev.gsound.a.domain.model.AppSettings?
+            settings: dev.pntome.app.domain.model.AppSettings?
         ): ScanResult = ScanResult(emptyList(), 0)
     }
 
@@ -54,7 +54,7 @@ class FolderListViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(context, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(context, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .setQueryExecutor { it.run() }
             .setTransactionExecutor { it.run() }

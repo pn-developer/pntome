@@ -1,10 +1,10 @@
 <!--
-    GsoundG — Garmin Connect IQ Audio Content Provider app.
+    PNTomeGo — Garmin Connect IQ Audio Content Provider app.
 
     FINALIZED (task 1.2):
-      - id:          shared app UUID that GsoundA uses to resolve this app. This is a SHARED
+      - id:          shared app UUID that PNTome uses to resolve this app. This is a SHARED
                      PROTOCOL CONSTANT and MUST stay byte-for-byte identical to
-                     GsoundA/.../net/garmin/GsoundAppId.kt (VALUE). Do not change one without
+                     PNTome/.../net/garmin/PNTomeAppId.kt (VALUE). Do not change one without
                      the other.
       - version:     semantic app version (MAJOR.MINOR.PATCH). MUST stay in sync with
                      AppVersion.SEMVER in source/Version.mc (the value shown in the watch UI
@@ -21,7 +21,7 @@
         id="0236dc0a39fd45f09a109f48fc8c7be2"
         type="audio-content-provider-app"
         name="@Strings.AppName"
-        entry="GsoundGApp"
+        entry="PNTomeGoApp"
         launcherIcon="@Drawables.LauncherIcon"
         version="0.1.0"
         minApiLevel="3.0.0">

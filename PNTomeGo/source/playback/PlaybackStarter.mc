@@ -6,7 +6,7 @@ import Toybox.Media;
 //! gsound-audiobooks AB-4.5, AB-6, design §4.4).
 //!
 //! Media.startPlayback(args) relaunches the app in playback mode and hands `args` to
-//! GsoundGApp.getContentDelegate(args). Args shapes:
+//! PNTomeGoApp.getContentDelegate(args). Args shapes:
 //!   - { "folder", "startIndex" }             — music track / book from start / chosen chapter
 //!   - { "folder", "mode" => MODE_RESUME }    — book: continue from the bookmark
 //! The same dict is saved as the last selection (`pb:last`) so a player-initiated start

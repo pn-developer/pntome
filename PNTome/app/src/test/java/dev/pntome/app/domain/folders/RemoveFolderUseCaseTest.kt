@@ -1,13 +1,13 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -21,7 +21,7 @@ import org.robolectric.RobolectricTestRunner
 /**
  * Unit tests for [RemoveFolderUseCase] (Req 2.2) running on the JVM via Robolectric.
  *
- * Verifies the removal lifecycle against a real in-memory [GsoundDatabase]: removing a folder
+ * Verifies the removal lifecycle against a real in-memory [PNTomeDatabase]: removing a folder
  * releases its persisted read permission for the stored tree URI and deletes the row; a
  * [SecurityException] while releasing (grant already dropped) still removes the folder; and
  * removing an unknown id reports [RemoveFolderResult.NotFound] without touching permissions.
@@ -29,7 +29,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class RemoveFolderUseCaseTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var resolver: RecordingContentResolver
     private lateinit var useCase: RemoveFolderUseCase
@@ -41,7 +41,7 @@ class RemoveFolderUseCaseTest {
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         repository = FolderRepository(db.folderDao(), db.trackDao())

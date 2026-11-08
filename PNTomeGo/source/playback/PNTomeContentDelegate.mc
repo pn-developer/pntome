@@ -1,11 +1,11 @@
 import Toybox.Lang;
 import Toybox.Media;
 
-//! GsoundContentDelegate — the real Media.ContentDelegate feeding the native audio
+//! PNTomeContentDelegate — the real Media.ContentDelegate feeding the native audio
 //! player in PLAYBACK mode (design §9.4; Req 6.6, 8.5, 7.3).
 //!
 //! The ACP playback flow is: playback-config → PlaybackStarter → Media.startPlayback(args)
-//! → the system relaunches the app in playback mode → GsoundGApp.getContentDelegate(args)
+//! → the system relaunches the app in playback mode → PNTomeGoApp.getContentDelegate(args)
 //! resolves folder / start index / resume position and builds THIS delegate → the native
 //! player calls getContentIterator() to get the walkable track list.
 //!
@@ -16,7 +16,7 @@ import Toybox.Media;
 //!
 //! Audiobooks (spec gsound-audiobooks AB-5): for a book folder, onSong events drive a
 //! BookSession that keeps the book's bookmark current.
-class GsoundContentDelegate extends Media.ContentDelegate {
+class PNTomeContentDelegate extends Media.ContentDelegate {
 
     //! The folder whose tracks to play, or null when nothing was selected / nothing
     //! is synced (→ safe empty iterator).
@@ -34,7 +34,7 @@ class GsoundContentDelegate extends Media.ContentDelegate {
     //! Bookmark bookkeeping for a book (null for music / until the iterator exists).
     private var _session as BookSession?;
 
-    //! Build a GsoundContentDelegate for `folder` starting at `startIndex` / `startPos`. A null
+    //! Build a PNTomeContentDelegate for `folder` starting at `startIndex` / `startPos`. A null
     //! folder means "nothing selected / nothing synced" and yields the safe empty iterator.
     function initialize(folder as String?, startIndex as Number, startPos as Number, isBook as Boolean) {
         ContentDelegate.initialize();

@@ -1,9 +1,9 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.domain.model.Folder
+import dev.pntome.app.domain.model.Folder
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertNotNull
@@ -17,13 +17,13 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class FolderBookmarkCleanupTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
 
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         repository = FolderRepository(db.folderDao(), db.trackDao())

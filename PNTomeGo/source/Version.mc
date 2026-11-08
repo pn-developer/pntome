@@ -1,6 +1,6 @@
 import Toybox.Lang;
 
-//! AppVersion — the GsoundG app version, surfaced in the watch UI.
+//! AppVersion — the PNTomeGo app version, surfaced in the watch UI.
 //!
 //! [SEMVER] is the hand-maintained semantic version (bump it on releases).
 //! [COMMIT] is the short git commit the build was produced from; `build.sh`

@@ -1,4 +1,4 @@
-package dev.gsound.a.data
+package dev.pntome.app.data
 
 import android.content.Context
 import android.content.ContextWrapper
@@ -7,8 +7,8 @@ import java.io.File
 /**
  * A [Context] whose [getFilesDir] points at a caller-supplied directory.
  *
- * The Proto DataStore stores ([dev.gsound.a.data.pairing.PairingStore],
- * [dev.gsound.a.data.settings.SettingsStore], [dev.gsound.a.data.sync.SyncSummaryStore]) resolve
+ * The Proto DataStore stores ([dev.pntome.app.data.pairing.PairingStore],
+ * [dev.pntome.app.data.settings.SettingsStore], [dev.pntome.app.data.sync.SyncSummaryStore]) resolve
  * their backing file via `context.dataStoreFile(name)`, i.e. under `filesDir/datastore/<name>`.
  * Giving each test a unique files directory yields a unique DataStore file, which both isolates
  * tests from one another and avoids the "multiple DataStores active for the same file" error that

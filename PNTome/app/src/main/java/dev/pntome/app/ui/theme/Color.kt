@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.theme
+package dev.pntome.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

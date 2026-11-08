@@ -1,4 +1,5 @@
 import com.google.protobuf.gradle.id
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,12 +11,45 @@ plugins {
     alias(libs.plugins.protobuf)
 }
 
+// Release signing comes from environment variables or an ignored PNTome/keystore.properties
+// (keys: storeFile, storePassword, keyAlias, keyPassword). Env wins per value. With no input at
+// all, the release build stays unsigned (F-Droid / offline CI); with only some inputs, fail.
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("keystore.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(envName: String, propName: String): String? =
+    (System.getenv(envName) ?: keystoreProps.getProperty(propName))?.takeIf { it.isNotBlank() }
+
+val signingInputs = linkedMapOf(
+    "PNTOME_KEYSTORE_FILE" to signingValue("PNTOME_KEYSTORE_FILE", "storeFile"),
+    "PNTOME_KEYSTORE_PASSWORD" to signingValue("PNTOME_KEYSTORE_PASSWORD", "storePassword"),
+    "PNTOME_KEY_ALIAS" to signingValue("PNTOME_KEY_ALIAS", "keyAlias"),
+    "PNTOME_KEY_PASSWORD" to signingValue("PNTOME_KEY_PASSWORD", "keyPassword"),
+)
+val missingSigningInputs = signingInputs.filterValues { it == null }.keys
+val hasReleaseSigning = missingSigningInputs.isEmpty()
+if (!hasReleaseSigning && missingSigningInputs.size < signingInputs.size) {
+    throw GradleException(
+        "Incomplete release signing configuration. Missing: " +
+            missingSigningInputs.joinToString(", ") +
+            ". Provide all four (environment variables or PNTome/keystore.properties) or none."
+    )
+}
+if (!hasReleaseSigning) {
+    logger.warn(
+        "WARNING: no release signing inputs found; the release build will be UNSIGNED. " +
+            "Set PNTOME_KEYSTORE_FILE, PNTOME_KEYSTORE_PASSWORD, PNTOME_KEY_ALIAS, " +
+            "PNTOME_KEY_PASSWORD or create PNTome/keystore.properties to sign."
+    )
+}
+
 android {
-    namespace = "dev.gsound.a"
+    namespace = "dev.pntome.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dev.gsound.a"
+        applicationId = "dev.pntome.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -24,14 +58,32 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(signingInputs.getValue("PNTOME_KEYSTORE_FILE")!!)
+                storePassword = signingInputs.getValue("PNTOME_KEYSTORE_PASSWORD")
+                keyAlias = signingInputs.getValue("PNTOME_KEY_ALIAS")
+                keyPassword = signingInputs.getValue("PNTOME_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+    }
+
+    // F-Droid / reproducible builds: do not embed the encrypted dependency blob.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 
     compileOptions {
@@ -58,6 +110,8 @@ android {
         getByName("androidTest").assets.srcDir("$projectDir/schemas")
     }
 }
+
+base.archivesName = "PNTome"
 
 // Room: export the DB schema to a versioned JSON file for migration tooling and tests.
 ksp {

@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
@@ -15,14 +15,14 @@ import org.junit.runner.RunWith
  * AB-1.4). Schemas come from app/schemas via the androidTest assets source set.
  */
 @RunWith(AndroidJUnit4::class)
-class GsoundDatabaseMigrationInstrumentedTest {
+class PNTomeDatabaseMigrationInstrumentedTest {
 
     private val dbName = "migration-test.db"
 
     @get:Rule
     val helper = MigrationTestHelper(
         InstrumentationRegistry.getInstrumentation(),
-        GsoundDatabase::class.java,
+        PNTomeDatabase::class.java,
         emptyList(),
         FrameworkSQLiteOpenHelperFactory()
     )
@@ -41,7 +41,7 @@ class GsoundDatabaseMigrationInstrumentedTest {
             )
         }
 
-        helper.runMigrationsAndValidate(dbName, 2, true, GsoundDatabase.MIGRATION_1_2).use { db ->
+        helper.runMigrationsAndValidate(dbName, 2, true, PNTomeDatabase.MIGRATION_1_2).use { db ->
             db.query("SELECT isAudiobook FROM folders WHERE id = 'f1'").use { c ->
                 assertTrue(c.moveToFirst())
                 assertEquals(0, c.getInt(0))
@@ -69,7 +69,7 @@ class GsoundDatabaseMigrationInstrumentedTest {
             )
         }
 
-        helper.runMigrationsAndValidate(dbName, 3, true, GsoundDatabase.MIGRATION_2_3).use { db ->
+        helper.runMigrationsAndValidate(dbName, 3, true, PNTomeDatabase.MIGRATION_2_3).use { db ->
             db.query("SELECT isAudiobook FROM folders WHERE id = 'f1'").use { c ->
                 assertTrue(c.moveToFirst())
                 assertEquals(1, c.getInt(0))

@@ -1,26 +1,26 @@
-package dev.gsound.a.di
+package dev.pntome.app.di
 
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.gsound.a.data.pairing.DataStorePairingStore
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.ui.pairing.DefaultPeerNameProvider
-import dev.gsound.a.ui.pairing.PairingClock
-import dev.gsound.a.ui.pairing.PairingCredentialGenerator
-import dev.gsound.a.ui.pairing.PairingViewModel
-import dev.gsound.a.ui.pairing.PeerNameProvider
-import dev.gsound.a.ui.pairing.SecureRandomPairingCredentialGenerator
-import dev.gsound.a.ui.pairing.SystemPairingClock
+import dev.pntome.app.data.pairing.DataStorePairingStore
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.ui.pairing.DefaultPeerNameProvider
+import dev.pntome.app.ui.pairing.PairingClock
+import dev.pntome.app.ui.pairing.PairingCredentialGenerator
+import dev.pntome.app.ui.pairing.PairingViewModel
+import dev.pntome.app.ui.pairing.PeerNameProvider
+import dev.pntome.app.ui.pairing.SecureRandomPairingCredentialGenerator
+import dev.pntome.app.ui.pairing.SystemPairingClock
 import javax.inject.Named
 import javax.inject.Singleton
 
 /**
  * Hilt bindings for the pairing testability seams (task 7.1).
  *
- * Binds the interfaces [PairingViewModel][dev.gsound.a.ui.pairing.PairingViewModel] depends on
+ * Binds the interfaces [PairingViewModel][dev.pntome.app.ui.pairing.PairingViewModel] depends on
  * to their production implementations, so unit tests (task 7.3) can substitute deterministic
  * fakes (fixed credentials, fixed clock) while production uses secure randomness and the system
  * clock. Mirrors the existing [ScanModule]/[ControlChannelModule] pattern.

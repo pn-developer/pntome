@@ -1,9 +1,9 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import java.security.MessageDigest
 
 /**
- * Derives the stable [dev.gsound.a.domain.model.Track.id] used for dedupe and cross-scan
+ * Derives the stable [dev.pntome.app.domain.model.Track.id] used for dedupe and cross-scan
  * reconciliation (Req 3.5).
  *
  * The id is `sha1(relativePath + "|" + sizeBytes + "|" + lastModified)` rendered as a

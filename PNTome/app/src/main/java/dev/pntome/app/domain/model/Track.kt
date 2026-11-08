@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * A single syncable audio track discovered during a folder scan.

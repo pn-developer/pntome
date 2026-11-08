@@ -1,16 +1,16 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.content.Context
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.AppSettings
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.domain.scan.ScanResult
-import dev.gsound.a.domain.scan.TrackScanner
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.AppSettings
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.domain.scan.ScanResult
+import dev.pntome.app.domain.scan.TrackScanner
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -25,7 +25,7 @@ import org.robolectric.RobolectricTestRunner
  * Unit tests for [ScanAndCacheUseCase] (task 5.3) on the JVM via Robolectric.
  *
  * The Android-coupled scanner is replaced by a [FakeTrackScanner] so the orchestration +
- * persistence is exercised against a real in-memory [GsoundDatabase] without an emulator (the
+ * persistence is exercised against a real in-memory [PNTomeDatabase] without an emulator (the
  * instrumented scan is task 5.4). These verify: the fresh scan is cached and the folder's
  * aggregates refreshed (Req 2.1); the skipped count propagates (Req 3.3); an incremental rescan
  * reconciles added/changed/deleted tracks by stable id (Req 3.5); and a missing folder is
@@ -34,7 +34,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ScanAndCacheUseCaseTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var scanner: FakeTrackScanner
     private lateinit var useCase: ScanAndCacheUseCase
@@ -71,7 +71,7 @@ class ScanAndCacheUseCaseTest {
     @Before
     fun setUp() {
         val app = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(app, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(app, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .build()
         repository = FolderRepository(db.folderDao(), db.trackDao())

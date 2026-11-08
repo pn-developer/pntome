@@ -1,9 +1,9 @@
-package dev.gsound.a.net.garmin.messages
+package dev.pntome.app.net.garmin.messages
 
 import kotlinx.serialization.json.Json
 
 /**
- * The single, reusable [Json] configuration for Gsound wire types (control-channel messages
+ * The single, reusable [Json] configuration for PNTome wire types (control-channel messages
  * and manifests).
  *
  * Configuration (per the shared protocol contract):
@@ -16,7 +16,7 @@ import kotlinx.serialization.json.Json
  * Round-trip (de)serialization helpers and incoming-message validation live in task 6.3; this
  * object only provides the shared, correctly-configured codec.
  */
-val GsoundJson: Json = Json {
+val PNTomeJson: Json = Json {
     classDiscriminator = "type"
     ignoreUnknownKeys = true
     encodeDefaults = true

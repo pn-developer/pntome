@@ -1,12 +1,12 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
 /**
- * The Connect IQ application UUID that identifies the **GsoundG** watch app on a Garmin device.
+ * The Connect IQ application UUID that identifies the **PNTomeGo** watch app on a Garmin device.
  *
  * This value is a **shared protocol constant**: it MUST be byte-for-byte identical to the
- * `id` attribute of the `<iq:application>` element in GsoundG's `manifest.xml`. The Connect IQ
+ * `id` attribute of the `<iq:application>` element in PNTomeGo's `manifest.xml`. The Connect IQ
  * Mobile SDK uses this id to:
- * - look up whether the GsoundG app is installed on a resolved device
+ * - look up whether the PNTomeGo app is installed on a resolved device
  *   (`ConnectIQ.getApplicationInfo(appId, device, ...)`, Req 4.1), and
  * - address control messages to that specific app (`IQApp(appId)`).
  *
@@ -14,13 +14,13 @@ package dev.gsound.a.net.garmin
  * installed** even when it is, surfacing as [ConnectionState.Error.Reason.APP_NOT_INSTALLED].
  *
  * This id is **finalized**. It MUST stay in lockstep with the `id` attribute of the
- * `<iq:application>` element in GsoundG's `manifest.xml`. Do not change one without the other.
+ * `<iq:application>` element in PNTomeGo's `manifest.xml`. Do not change one without the other.
  */
-object GsoundAppId {
+object PNTomeAppId {
 
     /**
-     * GsoundG Connect IQ app UUID (hex, no dashes — the format Connect IQ uses in
-     * `manifest.xml`). Must match the watch app's manifest id byte-for-byte. See [GsoundAppId].
+     * PNTomeGo Connect IQ app UUID (hex, no dashes — the format Connect IQ uses in
+     * `manifest.xml`). Must match the watch app's manifest id byte-for-byte. See [PNTomeAppId].
      */
     const val VALUE: String = "0236dc0a39fd45f09a109f48fc8c7be2"
 }

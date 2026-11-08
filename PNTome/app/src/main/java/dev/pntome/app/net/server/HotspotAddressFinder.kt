@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 /** A platform-free view of one network interface. */
 data class IfaceInfo(

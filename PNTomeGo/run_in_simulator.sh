@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run_in_simulator.sh — build (or take) a GsoundG .prg, start the Connect IQ
+# run_in_simulator.sh — build (or take) a PNTomeGo .prg, start the Connect IQ
 # simulator in the Ubuntu 22.04 container, and attach the app via monkeydo.
 #
 # The simulator needs libwebkit2gtk-4.0, which modern hosts (Ubuntu 25/26,
@@ -60,7 +60,7 @@ done
 
 # --- build if needed -------------------------------------------------------
 if [ -z "$PRG" ]; then
-  PRG="build/GsoundG-${DEVICE}.prg"
+  PRG="build/PNTomeGo-${DEVICE}.prg"
   if [ "$NO_BUILD" = 1 ]; then
     [ -f "$PRG" ] || die "--no-build set but $PRG does not exist"
   else

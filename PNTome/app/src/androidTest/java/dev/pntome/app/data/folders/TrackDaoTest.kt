@@ -1,4 +1,4 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 /**
  * Instrumented tests for [TrackDao] (Req 8.1 persist cached tracks, Req 8.2 restore on launch).
  *
- * Runs against an in-memory [GsoundDatabase]. Verifies: insert + reactive observe via
+ * Runs against an in-memory [PNTomeDatabase]. Verifies: insert + reactive observe via
  * [kotlinx.coroutines.flow.Flow], per-folder scoping, dedupe/upsert keyed on the stable track id
  * (Req 3.5), and the delete helpers used by rescan/reconciliation.
  *
@@ -25,7 +25,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class TrackDaoTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var folderDao: FolderDao
     private lateinit var trackDao: TrackDao
 
@@ -33,7 +33,7 @@ class TrackDaoTest {
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            GsoundDatabase::class.java
+            PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         folderDao = db.folderDao()
         trackDao = db.trackDao()

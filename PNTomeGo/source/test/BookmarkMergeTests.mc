@@ -3,7 +3,7 @@ import Toybox.Test;
 //! Tests for BookmarkMerge (spec gsound-player 9.3, PL-6.1-6.5, design §8).
 //!
 //! The numbered cases C01..C13 and their constants are IDENTICAL to
-//! GsoundA/app/src/test/java/dev/gsound/a/domain/bookmarks/BookmarkMergeTest.kt
+//! PNTome/app/src/test/java/dev/pntome/app/domain/bookmarks/BookmarkMergeTest.kt
 //! (c01_noLocal .. c13_noLocalWithFutureAt); keep both files in sync.
 //!
 //!   NOW = 10000, LIMIT = NOW + 300 = 10300, L = 5000 unless stated.

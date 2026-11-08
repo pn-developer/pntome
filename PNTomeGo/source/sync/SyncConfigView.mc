@@ -8,11 +8,11 @@ import Toybox.Communications;
 //!
 //! Task 7.9 (this file): replace the SyncConfigStub view/delegate with the real
 //! pair. The sync-config mode is what the user lands in from the device's Music
-//! Providers list when they choose to sync Gsound. The view shows how many tracks
+//! Providers list when they choose to sync PNTomeGo. The view shows how many tracks
 //! are queued to sync (the PENDING count), and the delegate's Confirm action
 //! TRIGGERS THE SYSTEM SYNC via Communications.startSync() — the SDK call that
 //! exits this foreground mode and relaunches the app in sync mode, where the
-//! system drives Wi-Fi and calls GsoundSyncDelegate.onStartSync() (design §8.1:
+//! system drives Wi-Fi and calls PNTomeSyncDelegate.onStartSync() (design §8.1:
 //! "the user confirms and the system drives Wi-Fi + calls onStartSync()").
 //!
 //! Pending count (design §8.1): read LIVE from the SyncController each onUpdate so
@@ -163,7 +163,7 @@ class SyncConfigView extends WatchUi.View {
 //! Confirm (onSelect — the ENTER/START key or a center tap) TRIGGERS THE SYSTEM
 //! SYNC by calling Communications.startSync(), the SDK function that exits this
 //! foreground config mode and relaunches the app in sync mode so the system can
-//! drive Wi-Fi and call GsoundSyncDelegate.onStartSync() (design §8.1). The native
+//! drive Wi-Fi and call PNTomeSyncDelegate.onStartSync() (design §8.1). The native
 //! sync UI takes over from there, so after triggering we also pop this view so it
 //! doesn't linger underneath. back/menu cancel out of config without syncing.
 //!

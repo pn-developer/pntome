@@ -1,11 +1,11 @@
-package dev.gsound.a.ui.navigation
+package dev.pntome.app.ui.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.ControlChannel
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.ControlChannel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine

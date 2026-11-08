@@ -1,4 +1,4 @@
-package dev.gsound.a.data.settings
+package dev.pntome.app.data.settings
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer

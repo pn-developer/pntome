@@ -1,14 +1,14 @@
-package dev.gsound.a.net.garmin
+package dev.pntome.app.net.garmin
 
-import dev.gsound.a.net.garmin.messages.ControlMessage
+import dev.pntome.app.net.garmin.messages.ControlMessage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Thin, hardware-independent abstraction over the Garmin control channel (design §5.3, §10).
  *
- * The control channel carries small JSON control messages ([ControlMessage]) between GsoundA
- * (phone) and GsoundG (watch) over the Connect IQ Mobile SDK Bluetooth message channel. All
+ * The control channel carries small JSON control messages ([ControlMessage]) between PNTome
+ * (phone) and PNTomeGo (watch) over the Connect IQ Mobile SDK Bluetooth message channel. All
  * bulk audio data goes over the separate HTTP data channel — never here.
  *
  * This interface is deliberately **free of any Connect IQ SDK types** so that:
@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
  *
  * Per design §10, keep this abstraction thin and swappable; the implementation is responsible
  * for the behavior the interface only makes *expressible*:
- * - (de)serialization of [ControlMessage] JSON via `GsoundJson` (task 6.3),
+ * - (de)serialization of [ControlMessage] JSON via `PNTomeJson` (task 6.3),
  * - validation of `v`/`type`/`pairingId` and dropping messages from unpaired peers so they
  *   never reach [incoming] (Req 10.3),
  * - retrying outgoing messages with exponential backoff while the channel is temporarily
@@ -45,7 +45,7 @@ interface ControlChannel {
 
     /**
      * Establish the channel: initialize the SDK, resolve the Garmin device, and locate the
-     * GsoundG app (Req 4.1). Progress and outcome are reported through [connectionState]
+     * PNTomeGo app (Req 4.1). Progress and outcome are reported through [connectionState]
      * ([ConnectionState.Connecting] → [ConnectionState.Connected], or
      * [ConnectionState.Error]). Suspends until the attempt resolves; safe to call again to
      * reconnect after an error or [close].

@@ -8,12 +8,12 @@ import Toybox.System;
 //! Downloader — sequential per-track media download for a sync
 //! (design.md §8.3–§8.4; Req 4.2–4.9, 8.1–8.3).
 //!
-//! SEAM (task 7.1): this is the handoff target GsoundSyncDelegate.onStartSync hands
+//! SEAM (task 7.1): this is the handoff target PNTomeSyncDelegate.onStartSync hands
 //! the resolved manifest + pairing to. Its full behaviour is tasks 7.3–7.8:
 //!   - 7.3 (THIS task) dedupe by `id` against Repo.loadIndex(); build the ordered
 //!         WORK SET of remaining tracks; download each one SEQUENTIALLY via
 //!         Communications.makeWebRequest to GET {serverUrl}{track.path} with
-//!         { "X-Gsound-Secret" => secret }, GET method, audio response type, and
+//!         { "X-PNTome-Secret" => secret }, GET method, audio response type, and
 //!         the mapped :mediaEncoding (task 7.2 MimeEncoding). onDownloaded is the
 //!         makeWebRequest callback and advances the sequential cursor.
 //!   - 7.4 onDownloaded(code, data, context) per-code handling: 200 → Repo.putTrack
@@ -55,7 +55,7 @@ class Downloader {
     private var _manifest as Dictionary;
 
     //! The pairing record { pairingId, peerName, secret, createdAt }. The secret
-    //! becomes the X-Gsound-Secret download header; the pairingId addresses
+    //! becomes the X-PNTome-Secret download header; the pairingId addresses
     //! SYNC_STATUS/STATS to the phone (tasks 7.5/7.7). Never logged.
     private var _pairing as Dictionary;
 
@@ -316,7 +316,7 @@ class Downloader {
     }
 
     //! Issue the single Communications.makeWebRequest for one track (design §8.3).
-    //! GET {serverUrl}{track.path} with the pairing secret in the X-Gsound-Secret
+    //! GET {serverUrl}{track.path} with the pairing secret in the X-PNTome-Secret
     //! HEADER (never in the URL, never logged — Req 7.3), an audio response type,
     //! and the :mediaEncoding mapped from the track's MIME. The track id is passed
     //! as :context so onDownloaded knows which track resolved. The caller
@@ -330,7 +330,7 @@ class Downloader {
 
         var options = {
             :method => Communications.HTTP_REQUEST_METHOD_GET,
-            :headers => { "X-Gsound-Secret" => secret },
+            :headers => { "X-PNTome-Secret" => secret },
             :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_AUDIO,
             :mediaEncoding => encoding,
             :context => trackId,
@@ -812,7 +812,7 @@ class Downloader {
     //! NO reconcile (reconcile would delete index ids "missing" from the manifest,
     //! but a partial sync's index is incomplete, so that could wipe valid music),
     //! NO STATS. The final SYNC_STATUS carries the non-null "cancelled" label as
-    //! its error so the phone can TERMINALIZE: GsoundA's SyncOrchestrator resolves
+    //! its error so the phone can TERMINALIZE: PNTome's SyncOrchestrator resolves
     //! a terminal state only from error != null or done >= total, and a cancel has
     //! done < total, so a no-error status would leave the phone hanging in
     //! SyncState.Running. We deliberately do NOT fake done==total (that would
@@ -823,7 +823,7 @@ class Downloader {
     //! (Req 8.5): reconcile / status / stats failures are swallowed and the system
     //! sync is still released via notifySyncComplete. The secret is never logged
     //! (Req 7.3) — nothing here prints.
-    //! Complete the sync now as a cancel (called from GsoundSyncDelegate.onStopSync after
+    //! Complete the sync now as a cancel (called from PNTomeSyncDelegate.onStopSync after
     //! cancel() + cancelAllRequests). Keeps stored tracks and sends the "cancelled" status.
     function finishCancelled() as Void {
         _cancelled = true;
@@ -848,7 +848,7 @@ class Downloader {
                 // track stored before the cancel (Req 4.8 — no reconcile, no
                 // deletion, no STATS). The final SYNC_STATUS carries a NON-NULL
                 // error label ("cancelled") so the phone can reach a terminal
-                // state. GsoundA's SyncOrchestrator.collectStatuses terminalizes
+                // state. PNTome's SyncOrchestrator.collectStatuses terminalizes
                 // ONLY on error != null (→ SyncState.Error) or done >= total (→
                 // SyncState.Completed); a cancel has done < total, so a status
                 // with no error would land in the "else" branch and leave the

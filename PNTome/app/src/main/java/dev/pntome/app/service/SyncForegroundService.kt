@@ -1,4 +1,4 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -15,10 +15,10 @@ import androidx.core.app.ServiceCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import dev.gsound.a.MainActivity
-import dev.gsound.a.R
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.sync.SyncOrchestrator
+import dev.pntome.app.MainActivity
+import dev.pntome.app.R
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.sync.SyncOrchestrator
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,7 +26,7 @@ import javax.inject.Inject
  * Foreground service that keeps a sync alive while the UI is backgrounded (design §5.6; Req 8.3).
  *
  * ## Why a foreground service
- * A sync drives the local [dev.gsound.a.net.server.GsoundHttpServer] (served from
+ * A sync drives the local [dev.pntome.app.net.server.PNTomeHttpServer] (served from
  * [SyncOrchestrator]) that the watch pulls audio from. If the user leaves the app, Android would
  * otherwise be free to stop background work and tear down the process, killing the server
  * mid-transfer. Running the orchestration from a foreground service (with a visible notification)
@@ -151,6 +151,33 @@ class SyncForegroundService : LifecycleService() {
         }
     }
 
+    /**
+     * Android 15+ (API 35) calls this when the `dataSync` foreground service has used up its
+     * time budget (~6h per 24h). The service MUST call stopSelf() promptly or the platform throws
+     * a `RemoteServiceException`. We cancel the sync (stops the local server and clears the
+     * session), leave the foreground state, tell the user, and stop (Req 6.5).
+     *
+     * Intentionally does not call `super.onTimeout`: that method only exists on API 35+ and the
+     * base implementation does nothing we need.
+     */
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        lifecycleScope.launch { orchestrator.cancelSync() }
+        stopForegroundCompat()
+        postTimeoutNotification()
+        stopSelf()
+    }
+
+    private fun postTimeoutNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle(getString(R.string.sync_timeout_title))
+            .setContentText(getString(R.string.sync_timeout_message))
+            .setAutoCancel(true)
+            .setContentIntent(contentPendingIntent())
+            .build()
+        getSystemService(NotificationManager::class.java)?.notify(TIMEOUT_NOTIFICATION_ID, notification)
+    }
+
     override fun onDestroy() {
         releaseWifiLock()
         super.onDestroy()
@@ -273,15 +300,16 @@ class SyncForegroundService : LifecycleService() {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
     companion object {
-        private const val CHANNEL_ID = "gsound_sync"
+        private const val CHANNEL_ID = "pntome_sync"
         private const val NOTIFICATION_ID = 1001
-        private const val WIFI_LOCK_TAG = "gsound:sync"
+        internal const val TIMEOUT_NOTIFICATION_ID = 1002
+        private const val WIFI_LOCK_TAG = "pntome:sync"
 
         /** Begin a sync in the foreground service. Idempotent at the service (double-start guarded). */
-        const val ACTION_START = "dev.gsound.a.action.SYNC_START"
+        const val ACTION_START = "dev.pntome.app.action.SYNC_START"
 
         /** Cancel the active sync and stop the service. Also fired by the notification action. */
-        const val ACTION_CANCEL = "dev.gsound.a.action.SYNC_CANCEL"
+        const val ACTION_CANCEL = "dev.pntome.app.action.SYNC_CANCEL"
 
         /** Build the [Intent] that starts a sync. */
         fun startIntent(context: Context): Intent =

@@ -1,17 +1,17 @@
-package dev.gsound.a.ui.pairing
+package dev.pntome.app.ui.pairing
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.log.Logger
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.PairConfirm
-import dev.gsound.a.net.garmin.messages.PairRequest
-import dev.gsound.a.net.garmin.messages.Unpair
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.log.Logger
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.PairConfirm
+import dev.pntome.app.net.garmin.messages.PairRequest
+import dev.pntome.app.net.garmin.messages.Unpair
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +57,7 @@ sealed interface PairingUiState {
     ) : PairingUiState
 
     /**
-     * A pairing attempt has started: connecting the control channel and resolving the GsoundG
+     * A pairing attempt has started: connecting the control channel and resolving the PNTomeGo
      * app before credentials are generated (Req 4.1).
      */
     data object Discovering : PairingUiState
@@ -128,14 +128,14 @@ class PairingViewModel @Inject constructor(
     private val peerNameProvider: PeerNameProvider,
     private val clock: PairingClock,
     @Named(PAIRING_TIMEOUT_MILLIS) private val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS,
-    private val logger: Logger = GsoundLog,
+    private val logger: Logger = PNTomeLog,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<PairingUiState>(PairingUiState.Idle())
     val uiState: StateFlow<PairingUiState> = _uiState.asStateFlow()
 
-    /** Logcat tag for pairing diagnostics (filter: `adb logcat -s Gsound.Pair`). */
-    private val tag = "Gsound.Pair"
+    /** Logcat tag for pairing diagnostics (filter: `adb logcat -s PNTome.Pair`). */
+    private val tag = "PNTome.Pair"
 
     /** The in-flight attempt's temporary credentials, or null when not awaiting confirmation. */
     private var pending: PairingCredentials? = null
@@ -453,7 +453,7 @@ class PairingViewModel @Inject constructor(
         ConnectionState.Error.Reason.NO_DEVICE ->
             "No Garmin watch found. Open Garmin Connect and make sure your watch is connected."
         ConnectionState.Error.Reason.APP_NOT_INSTALLED ->
-            "GsoundG isn't installed on your watch. Install it from the Connect IQ store."
+            "PNTomeGo isn't installed on your watch. Install it from the Connect IQ store."
         ConnectionState.Error.Reason.BLUETOOTH_OFF ->
             "Bluetooth is off. Turn it on to pair with your watch."
         ConnectionState.Error.Reason.DEVICE_DISCONNECTED ->

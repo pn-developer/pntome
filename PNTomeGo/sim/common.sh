@@ -96,7 +96,7 @@ container_exists()  { podman container exists "$CIQ_CONTAINER" 2>/dev/null; }
 container_running() { [ "$(podman inspect -f '{{.State.Running}}' "$CIQ_CONTAINER" 2>/dev/null)" = "true" ]; }
 
 require_container() {
-  container_exists  || die "container '$CIQ_CONTAINER' does not exist. Run: GsoundG/sim/setup_container.sh"
+  container_exists  || die "container '$CIQ_CONTAINER' does not exist. Run: PNTomeGo/sim/setup_container.sh"
   container_running || start_container
   container_running || die "container '$CIQ_CONTAINER' exists but could not be started. Try: podman start $CIQ_CONTAINER"
 }

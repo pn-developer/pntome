@@ -1,12 +1,12 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
-import dev.gsound.a.domain.model.AppSettings
+import dev.pntome.app.domain.model.AppSettings
 
 /**
  * Decides whether a scanned file is a Garmin-supported, currently-enabled audio format
  * (Req 3.2, Req 3.3).
  *
- * The watch (GsoundG) always supports mp3; AAC/M4A, WAV, and FLAC are optional and depend
+ * The watch (PNTomeGo) always supports mp3; AAC/M4A, WAV, and FLAC are optional and depend
  * on per-model codec support, so they are gated behind [AppSettings] flags that default to
  * off (mp3-only) for safe watch compatibility (design §5.2). A file the filter rejects is
  * counted as skipped by the scanner (Req 3.3).

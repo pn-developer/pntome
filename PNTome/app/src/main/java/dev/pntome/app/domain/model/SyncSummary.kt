@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * Summary of the most recent sync, shown on the Sync screen and persisted (Req 6.3, 8.1).

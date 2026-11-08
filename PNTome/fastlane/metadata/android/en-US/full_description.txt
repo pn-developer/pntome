@@ -1,0 +1,19 @@
+PNTome is a music and audiobook player that also sends your own audio files to a Garmin watch. Pick your folders, listen on the phone, and copy what you want to the watch over your local Wi-Fi or phone hotspot.
+
+Features
+- Choose music and audiobook folders with the system folder picker. PNTome only sees the folders you select.
+- Built-in player with an audiobook mode: resume where you left off and keep bookmarks.
+- Pair with your watch using a 6-digit code.
+- Sync over local Wi-Fi or your phone's hotspot. Progress is shown in a notification and you can cancel at any time.
+- Works as a media app in Android Auto.
+- No account, no ads, no analytics, no tracking. Nothing is sent to the internet.
+
+Requirements
+- A compatible Garmin watch with the free PNTomeGo app installed from the Connect IQ Store.
+- The Garmin Connect Mobile app on your phone, which handles the connection to the watch.
+- Audio files stored on your phone.
+
+Privacy
+PNTome does not collect or share any data. Your files, pairing information and settings stay on your phone. Audio is sent to your watch directly over your local network.
+
+PNTome is free software released under the GPL-3.0-or-later license. It uses the proprietary Garmin Connect IQ Mobile SDK to talk to Garmin Connect Mobile. PNTome is an independent project and is not affiliated with or endorsed by Garmin.

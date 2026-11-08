@@ -1,13 +1,13 @@
-# INSTALL — Building GsoundA (Android)
+# INSTALL — Building PNTome (Android)
 
-This guide sets up a build environment and produces the GsoundA debug APK on **Ubuntu**
+This guide sets up a build environment and produces the PNTome debug APK on **Ubuntu**
 (apt / Debian family) and **Manjaro** (pacman / Arch family). The Gradle build itself is
 identical on both; only the toolchain install differs.
 
-> For an overview of the whole repo and links to the GsoundG (watch) build guide, see the
+> For an overview of the whole repo and links to the PNTomeGo (watch) build guide, see the
 > top-level [`../INSTALL.md`](../INSTALL.md).
 
-> All Gradle commands are run from the `GsoundA/` directory via the bundled wrapper
+> All Gradle commands are run from the `PNTome/` directory via the bundled wrapper
 > (`./gradlew`). Do not install Gradle system-wide — the wrapper pins Gradle 8.9.
 
 ## 1. Requirements
@@ -156,7 +156,7 @@ Clone (if you haven't) and build the debug APK:
 
 ```bash
 git clone <your-repo-url> pn_gsound
-cd pn_gsound/GsoundA
+cd pn_gsound/PNTome
 
 # Sanity check the toolchain the wrapper will use:
 ./gradlew --version    # Gradle 8.9, JVM 17.x
@@ -168,7 +168,7 @@ cd pn_gsound/GsoundA
 The APK is produced at:
 
 ```
-GsoundA/app/build/outputs/apk/debug/app-debug.apk
+PNTome/app/build/outputs/apk/debug/app-debug.apk
 ```
 
 Other useful builds:
@@ -181,12 +181,116 @@ Other useful builds:
 ```
 
 If the SDK location isn't picked up from `ANDROID_HOME`, create
-`GsoundA/local.properties`:
+`PNTome/local.properties`:
 
 ```properties
 sdk.dir=/home/you/Android/Sdk        # Ubuntu / cmdline-tools path
 # sdk.dir=/opt/android-sdk           # Manjaro repo-package path
 ```
+
+---
+
+## 4a. Release builds
+
+> **Replace old builds together.** PNTome (`dev.pntome.app`) and PNTomeGo replace the earlier
+> GsoundA and GsoundG builds. The phone and the watch app must be replaced as a pair: the
+> shared secret header changed to `X-PNTome-Secret`, so an old phone build does not talk to a
+> new watch build, or the other way round. Uninstall the old apps, install the new ones and
+> pair again. Existing pairings, folders and bookmarks are not carried over (the database is
+> now `pntome.db`).
+
+Release tasks run from `PNTome/`. Use `--offline` if dependencies are already cached.
+
+### Release APK
+
+```bash
+./gradlew assembleRelease
+```
+
+Output: `app/build/outputs/apk/release/PNTome-release.apk` when signed, or
+`PNTome-release-unsigned.apk` when no signing input is set (see below).
+
+### Release AAB (Google Play)
+
+```bash
+./gradlew bundleRelease
+```
+
+Output: `app/build/outputs/bundle/release/PNTome-release.aab`. Upload it in the Play Console
+(a User_Action; see [`../store/play/README.md`](../store/play/README.md)).
+
+### Signing
+
+The release build reads four values. Each comes from an environment variable or, if the
+variable is unset, from `PNTome/keystore.properties`:
+
+| Environment variable       | `keystore.properties` key | Meaning |
+|----------------------------|---------------------------|---------|
+| `PNTOME_KEYSTORE_FILE`     | `storeFile`               | path to the keystore (relative paths resolve from `PNTome/`) |
+| `PNTOME_KEYSTORE_PASSWORD` | `storePassword`           | keystore password |
+| `PNTOME_KEY_ALIAS`         | `keyAlias`                | key alias |
+| `PNTOME_KEY_PASSWORD`      | `keyPassword`             | key password |
+
+Create a keystore once (User_Action). The path and names below are placeholders; keep the
+real keystore and passwords out of git and back them up:
+
+```bash
+keytool -genkeypair -v \
+  -keystore /path/to/pntome-upload.jks \
+  -alias pntome-upload \
+  -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Then either export the variables (type the values yourself):
+
+```bash
+export PNTOME_KEYSTORE_FILE=/path/to/pntome-upload.jks
+export PNTOME_KEYSTORE_PASSWORD='<keystore password>'
+export PNTOME_KEY_ALIAS=pntome-upload
+export PNTOME_KEY_PASSWORD='<key password>'
+./gradlew assembleRelease bundleRelease
+```
+
+or create `PNTome/keystore.properties` (ignored by git; never commit it):
+
+```properties
+storeFile=/path/to/pntome-upload.jks
+storePassword=<keystore password>
+keyAlias=pntome-upload
+keyPassword=<key password>
+```
+
+`keystore.properties`, `*.jks` and `*.keystore` are in `.gitignore`.
+
+### Unsigned fallback
+
+If none of the four values is set, the build still succeeds. It prints a warning and
+produces an **unsigned** release APK (`PNTome-release-unsigned.apk`). This is what F-Droid
+and offline CI use. An unsigned APK cannot be installed on a device until it is signed.
+
+If only some of the four values are set, the build **fails** during configuration and names
+the missing ones. Set all four or none.
+
+Optional check of a signed APK (needs `apksigner` from the Android build-tools):
+
+```bash
+$ANDROID_HOME/build-tools/35.0.0/apksigner verify --print-certs app/build/outputs/apk/release/PNTome-release.apk
+```
+
+### Self-hosted F-Droid repository
+
+The repository metadata and steps are in [`../fdroid/README.md`](../fdroid/README.md)
+(init, build, update, deploy; each signing or deploy step is a User_Action). It needs
+`fdroidserver`, which this project does not install for you. If it is missing, install it
+yourself (check the exact package name first):
+
+```bash
+apt-cache search fdroidserver
+sudo apt install fdroidserver
+```
+
+The same applies to any other missing system package (for example `apksigner`): install it
+yourself with `sudo apt install <package>`.
 
 ---
 
@@ -201,8 +305,8 @@ the RSA prompt.
 
 ```bash
 sdkmanager "emulator" "system-images;android-35;google_apis;x86_64"
-avdmanager create avd -n gsound35 -k "system-images;android-35;google_apis;x86_64"
-emulator -avd gsound35 &
+avdmanager create avd -n pntome35 -k "system-images;android-35;google_apis;x86_64"
+emulator -avd pntome35 &
 ```
 
 > On Linux, hardware acceleration needs KVM. Ensure your user is in the `kvm` group and
@@ -211,14 +315,14 @@ emulator -avd gsound35 &
 ### 5.2 Install the APK
 
 ```bash
-cd GsoundA
+cd PNTome
 adb devices                 # confirm the device/emulator is listed
 ./gradlew installDebug      # build + install
 # or:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Launch GsoundA from the launcher. The bottom navigation shows **Folders**, **Pairing**,
+Launch PNTome from the launcher. The bottom navigation shows **Folders**, **Pairing**,
 and **Sync**.
 
 ---
@@ -230,7 +334,7 @@ and **Sync**.
   `sudo archlinux-java set java-17-openjdk`; on Ubuntu use
   `sudo update-alternatives --config java`.
 - **`SDK location not found`:** set `ANDROID_HOME`/`ANDROID_SDK_ROOT` or add `sdk.dir` to
-  `GsoundA/local.properties`.
+  `PNTome/local.properties`.
 - **`Failed to install the following SDK components` / licenses not accepted:** run
   `yes | sdkmanager --licenses`.
 - **Missing platform / build-tools:** install exactly `platforms;android-35` and a
@@ -246,14 +350,14 @@ and **Sync**.
 
 ## 7. Pairing & sync prerequisites (beyond building)
 
-Building and unit-testing GsoundA needs none of the following, but a real pair/sync does:
+Building and unit-testing PNTome needs none of the following, but a real pair/sync does:
 
 - Garmin Connect Mobile installed and signed in on the phone.
 - A paired Garmin watch, or the Connect IQ simulator with a device profile.
-- The **GsoundG** watch app installed — build it with
-  [`../GsoundG/INSTALL.md`](../GsoundG/INSTALL.md). Its app UUID must match
-  `GsoundA/app/src/main/java/dev/gsound/a/net/garmin/GsoundAppId.kt` (currently a
-  placeholder — replace it with the real GsoundG `manifest.xml` id).
+- The **PNTomeGo** watch app installed — build it with
+  [`../PNTomeGo/INSTALL.md`](../PNTomeGo/INSTALL.md). Its app UUID must match
+  `PNTome/app/src/main/java/dev/pntome/app/net/garmin/PNTomeAppId.kt`
+  (`0236dc0a39fd45f09a109f48fc8c7be2`, the same id as in the PNTomeGo `manifest.xml`).
 - Phone and watch on the same Wi-Fi/LAN.
 
 The complete manual checklist is in
@@ -262,7 +366,7 @@ The complete manual checklist is in
 ---
 ## 8. Android Auto (Desktop Head Unit)
 
-GsoundA exposes its library to Android Auto as a media app (Audiobooks, Music, Recently
+PNTome exposes its library to Android Auto as a media app (Audiobooks, Music, Recently
 played). The steps below set up a test bench on the development computer. They describe the
 intended procedure; they have not been verified on a device or in a car as part of this
 guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
@@ -274,7 +378,7 @@ guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
 2. Open Android Auto settings and tap **Version** (or *Version and permission info*)
    **10 times**; confirm the prompt to enable developer mode.
 3. Open the three-dot menu → **Developer settings**.
-4. Turn on **Unknown sources**. GsoundA is installed from a debug APK, not from Google Play,
+4. Turn on **Unknown sources**. PNTome is installed from a debug APK, not from Google Play,
    so Android Auto lists it only with this switch on.
 
 ### 8.2 Install the Desktop Head Unit (computer)
@@ -291,7 +395,7 @@ guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
 
 ### 8.3 Run it
 
-1. Connect the phone by USB (USB debugging on) and install GsoundA (section 5.2). Add at
+1. Connect the phone by USB (USB debugging on) and install PNTome (section 5.2). Add at
    least one folder and, for books, mark it as an audiobook.
 2. Forward the head-unit port:
    ```bash
@@ -306,7 +410,7 @@ guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
 
 ### 8.4 Browse, play, skip, resume
 
-- Open the media launcher in the head unit and pick **Gsound**.
+- Open the media launcher in the head unit and pick **PNTome**.
 - **Audiobooks** / **Music** list the marked folders; **Recently played** lists the last
   books with a saved position (newest first).
 - Tap a book: the whole book is queued and playback starts at the saved position, minus a
@@ -314,9 +418,9 @@ guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
   Tapping a chapter inside a book starts that chapter at 0. Music folders start at track 1.
 - Next/previous skip chapters or tracks. Book queues also show **-30 s** and **+30 s**
   buttons.
-- Resume: pause or disconnect, reopen **Gsound** (or **Recently played**) and tap the book;
+- Resume: pause or disconnect, reopen **PNTome** (or **Recently played**) and tap the book;
   playback continues from where it stopped. The same position is shown on the phone.
-- Voice ("play <title> in Gsound") matches a folder or chapter title; an unknown or empty
+- Voice ("play <title> in PNTome") matches a folder or chapter title; an unknown or empty
   request continues the last book.
 
 ### 8.5 Known limitations

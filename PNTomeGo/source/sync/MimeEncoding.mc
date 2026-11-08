@@ -17,14 +17,14 @@ import Toybox.Media;
 //!   ENCODING_INVALID (0), ENCODING_ADTS (1), ENCODING_MP3 (2),
 //!   ENCODING_M4A (3), ENCODING_WAV (4).
 //! There is NO FLAC (and no distinct raw-AAC-vs-ADTS) constant, so any MIME the SDK
-//! cannot represent — notably FLAC, which GsoundA can serve when its flag is on —
+//! cannot represent — notably FLAC, which PNTome can serve when its flag is on —
 //! maps to `null` (skip + count), never a bogus constant. `ENCODING_INVALID` is the
 //! SDK's own sentinel and is intentionally NOT returned; callers test for `null`.
 //!
-//! The MIME keys cover every spelling GsoundA's scanner recognises
-//! (GsoundA FormatFilter.SUPPORTED_MIME_TYPES): mp3 is always served; m4a/aac/wav
+//! The MIME keys cover every spelling PNTome's scanner recognises
+//! (PNTome FormatFilter.SUPPORTED_MIME_TYPES): mp3 is always served; m4a/aac/wav
 //! are served only when their optional flag is enabled; flac likewise but has no
-//! watch encoding. GsoundA copies the raw SAF-reported `mime` into the manifest
+//! watch encoding. PNTome copies the raw SAF-reported `mime` into the manifest
 //! verbatim (ManifestBuilder), so the watch can receive any synonymous spelling and
 //! possibly a parameterised value ("audio/mpeg; charset=binary"); `encodingFor`
 //! normalises defensively — strip any `;` parameters, trim, lowercase — mirroring
@@ -58,7 +58,7 @@ module MimeEncoding {
             return null;
         }
 
-        // Normalise: drop any ";" parameters, trim, lowercase — mirrors GsoundA's
+        // Normalise: drop any ";" parameters, trim, lowercase — mirrors PNTome's
         // FormatFilter.formatFromMime so both ends canonicalise identically.
         var base = mime;
         var semi = mime.find(";");

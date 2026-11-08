@@ -4,7 +4,7 @@ import Toybox.Lang;
 //! builders (design.md §6; overview §5.1).
 //!
 //! Task 4.1 (this module): the message vocabulary and the constructors for every
-//! message GsoundG sends. A control message is a Monkey C dictionary (serialized
+//! message PNTomeGo sends. A control message is a Monkey C dictionary (serialized
 //! to JSON by Communications.transmit) of the shape
 //!   { "v": 1, "type": <string>, "pairingId": <uuid>, ... }
 //! (overview §5.1). This module owns:
@@ -16,7 +16,7 @@ import Toybox.Lang;
 //!   - build* helpers — construct each OUTGOING message dict with `v` + `type` +
 //!     `pairingId` + its payload fields, in the exact shapes of overview §5.1.
 //!
-//! GsoundG sends PAIR_CONFIRM, SYNC_STATUS, STATS, and PONG; it may also initiate
+//! PNTomeGo sends PAIR_CONFIRM, SYNC_STATUS, STATS, and PONG; it may also initiate
 //! pairing/unpairing, so PAIR_REQUEST and UNPAIR builders are provided too. The
 //! inbound-only messages (SYNC_MANIFEST, PING) have no builder here — they are
 //! parsed via Protocol's extractors — but their TYPE constants exist so
@@ -86,7 +86,7 @@ module Messages {
     // --- BOOKMARK field keys (gsound-player design §5) -------------------------
     //! Display label (the manifest's `folder` string). NOT a reliable join key.
     const FIELD_BM_FOLDER = FIELD_FOLDER;
-    //! Folder id (GsoundA `Folder.id`, manifest `fid`): the JOIN KEY between watch and phone
+    //! Folder id (PNTome `Folder.id`, manifest `fid`): the JOIN KEY between watch and phone
     //! (design R2 resolution). Optional; absent for folders synced before `fid` existed.
     const FIELD_BM_FID = "fid";
     //! Track id of the current chapter.
@@ -103,8 +103,8 @@ module Messages {
     // --- per-track manifest field keys (ManifestTrack, design §8.0) ------------
     //
     // Keys of each entry in a SYNC_MANIFEST `tracks[]` element. Shared by manifest
-    // intake (task 6) and the downloader (task 7) so spelling matches GsoundA's
-    // ManifestTrack wire shape (@SerialName keys, GsoundA ManifestTrack.kt).
+    // intake (task 6) and the downloader (task 7) so spelling matches PNTome's
+    // ManifestTrack wire shape (@SerialName keys, PNTome ManifestTrack.kt).
 
     const FIELD_ID = "id";
     const FIELD_FOLDER = "folder";
@@ -160,7 +160,7 @@ module Messages {
     // --- outgoing-message builders (overview §5.1) -----------------------------
 
     //! Build a PAIR_REQUEST { v, type, pairingId, code, secret, peerName } used
-    //! when GsoundG initiates pairing (optional in v1; design.md §7). All payload
+    //! when PNTomeGo initiates pairing (optional in v1; design.md §7). All payload
     //! fields are supplied by the caller (PairingManager generates code/secret).
     function buildPairRequest(
             pairingId as String,

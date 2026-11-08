@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.model
+package dev.pntome.app.domain.model
 
 /**
  * Persistent record of a completed pairing with a watch peer (Req 4.5).

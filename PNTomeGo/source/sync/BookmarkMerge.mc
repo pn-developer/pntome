@@ -4,7 +4,7 @@ import Toybox.Lang;
 //! The newer `at` wins; equal or older keeps the local bookmark. `fin` is not special: it only
 //! wins by being newer. Incoming `at` is clamped to now + 300 s against bad future values.
 //!
-//! Shared decision table (identical in GsoundA .../bookmarks/BookmarkMerge.kt); all times are
+//! Shared decision table (identical in PNTome .../bookmarks/BookmarkMerge.kt); all times are
 //! epoch seconds (Time.now().value() here, same as Repo.saveBookmark's "at"),
 //! inAt = min(incomingAt, now + 300):
 //!

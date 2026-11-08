@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.permissions
+package dev.pntome.app.ui.permissions
 
 import android.Manifest
 import android.app.Activity
@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
-import dev.gsound.a.R
+import dev.pntome.app.R
 
 /**
  * Runtime [Manifest.permission.POST_NOTIFICATIONS] request flow for the sync progress notification

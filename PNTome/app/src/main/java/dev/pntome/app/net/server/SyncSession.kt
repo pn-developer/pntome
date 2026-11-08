@@ -1,6 +1,6 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
-import dev.gsound.a.net.garmin.messages.Manifest
+import dev.pntome.app.net.garmin.messages.Manifest
 
 /**
  * Immutable snapshot of the data a single sync "session" serves over HTTP: the [manifest] the
@@ -17,9 +17,9 @@ import dev.gsound.a.net.garmin.messages.Manifest
  * @property tracks lookup from `trackId` → [TrackRef] for `/media/{trackId}`. Only ids present
  *   here are servable; anything else is a `404` (Req 5.5). Built from the same track list as
  *   [manifest] so the two never disagree.
- * @property secret the `sharedSecret` the watch must present in the `X-Gsound-Secret` header to
+ * @property secret the `sharedSecret` the watch must present in the `X-PNTome-Secret` header to
  *   be served this session's `/manifest` and `/media` (Req 5.3). It is the paired
- *   [dev.gsound.a.domain.model.PairingRecord.sharedSecret], carried on the session because the
+ *   [dev.pntome.app.domain.model.PairingRecord.sharedSecret], carried on the session because the
  *   same value is sent to the watch in `SYNC_MANIFEST { secret }` (design §5.6). `null` only in
  *   legacy/test constructions that predate auth; the [SecretProvider] then falls back to the
  *   persisted pairing. Never logged (Req 8.4).
@@ -39,7 +39,7 @@ data class SyncSession(
          *   authenticate requests against the active session. Defaults to `null` for callers
          *   (e.g. older tests) that do not exercise auth.
          * @param documentUriFor returns the SAF `content://` document URI (as a string) for a
-         *   given [dev.gsound.a.net.garmin.messages.ManifestTrack.id]; the orchestrator supplies
+         *   given [dev.pntome.app.net.garmin.messages.ManifestTrack.id]; the orchestrator supplies
          *   this from the Room track cache (where `Track.documentUri` is stored, design §4).
          */
         fun from(

@@ -1,0 +1,6 @@
+First public release.
+- Music and audiobook player with resume and bookmarks
+- Folder selection with the system picker
+- Pair and sync audio to Garmin watches over local Wi-Fi or hotspot
+- Android Auto media app support
+- No accounts, ads or analytics

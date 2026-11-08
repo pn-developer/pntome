@@ -1,10 +1,10 @@
-package dev.gsound.a.data.settings
+package dev.pntome.app.data.settings
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.DataStoreTestContext
-import dev.gsound.a.domain.model.AppSettings
+import dev.pntome.app.data.DataStoreTestContext
+import dev.pntome.app.domain.model.AppSettings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After

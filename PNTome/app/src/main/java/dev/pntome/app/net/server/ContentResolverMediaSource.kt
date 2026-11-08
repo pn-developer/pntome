@@ -1,10 +1,10 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.net.garmin.messages.Manifest
+import dev.pntome.app.net.garmin.messages.Manifest
 import java.io.IOException
 import java.io.InputStream
 import javax.inject.Inject

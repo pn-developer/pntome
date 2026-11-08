@@ -1,11 +1,11 @@
-package dev.gsound.a.di
+package dev.pntome.app.di
 
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import dev.gsound.a.net.garmin.ConnectIqManager
-import dev.gsound.a.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.ConnectIqManager
+import dev.pntome.app.net.garmin.ControlChannel
 import javax.inject.Singleton
 
 /**

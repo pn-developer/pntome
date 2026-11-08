@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.pairing
+package dev.pntome.app.ui.pairing
 
 import android.util.Base64
 import java.security.SecureRandom
@@ -11,7 +11,7 @@ import javax.inject.Singleton
  *
  * These are *temporary* until pairing completes: if the attempt times out or is cancelled they
  * are discarded and never persisted (Req 4.6). Only on success do [pairingId] and [sharedSecret]
- * (plus the peer name) become a [dev.gsound.a.domain.model.PairingRecord].
+ * (plus the peer name) become a [dev.pntome.app.domain.model.PairingRecord].
  *
  * @property code the 6-digit confirmation code the user compares against the watch (Req 4.4).
  * @property pairingId the UUID that binds every subsequent control message to this pairing

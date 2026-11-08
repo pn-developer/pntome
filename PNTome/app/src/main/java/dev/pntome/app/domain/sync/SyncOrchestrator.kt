@@ -1,27 +1,27 @@
-package dev.gsound.a.domain.sync
+package dev.pntome.app.domain.sync
 
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.data.sync.SyncSummaryStore
-import dev.gsound.a.domain.folders.LibraryRefresher
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.net.server.LanKind
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.SyncSummary
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.log.Logger
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.SyncManifest
-import dev.gsound.a.net.garmin.messages.SyncStatus
-import dev.gsound.a.net.server.GsoundHttpServer
-import dev.gsound.a.net.server.ServerTransferMonitor
-import dev.gsound.a.net.server.SyncSession
-import dev.gsound.a.net.server.SyncSessionHolder
-import dev.gsound.a.net.server.WifiGuard
-import dev.gsound.a.net.server.WifiStatus
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.data.sync.SyncSummaryStore
+import dev.pntome.app.domain.folders.LibraryRefresher
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.net.server.LanKind
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.SyncSummary
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.log.Logger
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.SyncManifest
+import dev.pntome.app.net.garmin.messages.SyncStatus
+import dev.pntome.app.net.server.PNTomeHttpServer
+import dev.pntome.app.net.server.ServerTransferMonitor
+import dev.pntome.app.net.server.SyncSession
+import dev.pntome.app.net.server.SyncSessionHolder
+import dev.pntome.app.net.server.WifiGuard
+import dev.pntome.app.net.server.WifiStatus
 import kotlinx.coroutines.CancellationException
-import dev.gsound.a.net.server.TransferProgress
+import dev.pntome.app.net.server.TransferProgress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,9 +41,9 @@ private const val SERVER_PROGRESS_INTERVAL_MS = 1000L
  * Orchestration core of a sync (design §5.6; Req 5.6, 5.7, 6.1–6.6, 8.3).
  *
  * Wires together the pieces built in earlier tasks into a single, drivable sync flow:
- * 1. build the wire [dev.gsound.a.net.garmin.messages.Manifest] from the Room track cache
+ * 1. build the wire [dev.pntome.app.net.garmin.messages.Manifest] from the Room track cache
  *    (pure [ManifestBuilder]),
- * 2. start the local [GsoundHttpServer] bound to the Wi-Fi LAN,
+ * 2. start the local [PNTomeHttpServer] bound to the Wi-Fi LAN,
  * 3. install a [SyncSession] (manifest + per-track SAF `documentUri` + `secret`) in the
  *    [SyncSessionHolder] so `/manifest` and `/media/{trackId}` serve this sync,
  * 4. send `SYNC_MANIFEST { serverUrl, tracks }` to the watch over the [ControlChannel],
@@ -65,7 +65,7 @@ private const val SERVER_PROGRESS_INTERVAL_MS = 1000L
  * The [SyncManifest] wire type carries `pairingId`, `serverUrl`, and `tracks` only — it has **no
  * `secret` field** (see `ControlMessage.kt`). The shared secret is established at pairing and
  * authenticates HTTP requests; it travels on the [SyncSession] (`SyncSession.secret`, consumed by
- * `DefaultSecretProvider` for the `X-Gsound-Secret` gate), **not** on the control message. This
+ * `DefaultSecretProvider` for the `X-PNTome-Secret` gate), **not** on the control message. This
  * matches the actual message type where it diverges from design §5.6's `SYNC_MANIFEST { …, secret }`
  * sketch.
  *
@@ -73,7 +73,7 @@ private const val SERVER_PROGRESS_INTERVAL_MS = 1000L
  * There is no `CANCEL` message in the control protocol. [cancelSync] therefore stops the local
  * server and clears the session (the watch observes the data channel going away and stops
  * fetching) and sets [SyncState.Cancelled]. No new wire type is invented (that would require a
- * coordinated change to the shared [dev.gsound.a.net.garmin.messages.ControlMessage] contract).
+ * coordinated change to the shared [dev.pntome.app.net.garmin.messages.ControlMessage] contract).
  *
  * ## Scope / testability
  * Collaborators are injected; [ControlChannel] is already an interface (fakeable). The server
@@ -89,19 +89,19 @@ class SyncOrchestrator @Inject constructor(
     private val pairingStore: PairingStore,
     private val summaryStore: SyncSummaryStore,
     private val controlChannel: ControlChannel,
-    private val httpServer: GsoundHttpServer,
+    private val httpServer: PNTomeHttpServer,
     private val sessionHolder: SyncSessionHolder,
     private val transferMonitor: ServerTransferMonitor,
     private val wifiGuard: WifiGuard,
     private val libraryRefresher: LibraryRefresher,
-    private val logger: Logger = GsoundLog,
-    private val bookmarkPusher: dev.gsound.a.domain.bookmarks.BookmarkPusher? = null,
+    private val logger: Logger = PNTomeLog,
+    private val bookmarkPusher: dev.pntome.app.domain.bookmarks.BookmarkPusher? = null,
 ) {
 
     private val _state = MutableStateFlow<SyncState>(SyncState.Idle)
 
-    /** Logcat tag for sync-orchestration diagnostics (filter: `adb logcat -s Gsound.Sync`). */
-    private val tag = "Gsound.Sync"
+    /** Logcat tag for sync-orchestration diagnostics (filter: `adb logcat -s PNTome.Sync`). */
+    private val tag = "PNTome.Sync"
 
     /** Live sync state for the UI (task 10) to collect. Starts [SyncState.Idle]. */
     val state: StateFlow<SyncState> = _state.asStateFlow()
@@ -131,7 +131,7 @@ class SyncOrchestrator @Inject constructor(
      *
      * [state] is a hot singleton [StateFlow], so it keeps the last terminal value
      * (Completed/Error/Cancelled) between runs. A fresh collector — notably
-     * [dev.gsound.a.service.SyncForegroundService]'s state observer — replays that retained value
+     * [dev.pntome.app.service.SyncForegroundService]'s state observer — replays that retained value
      * the instant it subscribes. If that replayed value is terminal, the service calls
      * `stopSelf()` immediately, which cancels the just-launched [startSync] coroutine and surfaces
      * as a spurious `JobCancellationException`. Calling this first makes the replayed value
@@ -208,17 +208,17 @@ class SyncOrchestrator @Inject constructor(
             // the same canonical guidance.
             var networkKind: LanKind? = null
             val serverUrl = when (val result = httpServer.start()) {
-                is GsoundHttpServer.StartResult.Started -> {
+                is PNTomeHttpServer.StartResult.Started -> {
                     logger.i(tag, "HTTP server started at ${result.url} (${result.kind.name})")
                     logger.i(tag, "startSync: serving on ${result.kind.name} ${result.host}")
                     networkKind = result.kind
                     result.url
                 }
-                is GsoundHttpServer.StartResult.WifiUnavailable -> {
+                is PNTomeHttpServer.StartResult.WifiUnavailable -> {
                     logger.w(tag, "HTTP server start: Wi-Fi unavailable (race backstop)")
                     return transition(SyncState.Error(WifiGuard.GUIDANCE_MESSAGE))
                 }
-                is GsoundHttpServer.StartResult.Error -> {
+                is PNTomeHttpServer.StartResult.Error -> {
                     logger.e(tag, "HTTP server start error: ${result.detail}")
                     return transition(SyncState.Error(result.detail))
                 }

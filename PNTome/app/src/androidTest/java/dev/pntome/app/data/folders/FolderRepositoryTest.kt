@@ -1,10 +1,10 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumented tests for [FolderRepository] over an in-memory [GsoundDatabase].
+ * Instrumented tests for [FolderRepository] over an in-memory [PNTomeDatabase].
  *
  * Exercises the domain-facing API callers actually use: dedupe on add (Req 1.4), reactive
  * restore of persisted folders/tracks (Req 8.1, 8.2), rescan replacement, and cascade removal
@@ -26,14 +26,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class FolderRepositoryTest {
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
 
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
-            GsoundDatabase::class.java
+            PNTomeDatabase::class.java
         ).allowMainThreadQueries().build()
         repository = FolderRepository(db.folderDao(), db.trackDao())
     }

@@ -1,11 +1,11 @@
-package dev.gsound.a.data.sync
+package dev.pntome.app.data.sync
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.dataStoreFile
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.domain.model.SyncSummary
+import dev.pntome.app.domain.model.SyncSummary
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map

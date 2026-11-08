@@ -1,7 +1,7 @@
-package dev.gsound.a.domain.bookmarks
+package dev.pntome.app.domain.bookmarks
 
-import dev.gsound.a.data.folders.BookmarkEntity
-import dev.gsound.a.net.garmin.messages.Bookmark
+import dev.pntome.app.data.folders.BookmarkEntity
+import dev.pntome.app.net.garmin.messages.Bookmark
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -11,7 +11,7 @@ import org.junit.Test
  * Tests for [BookmarkMerge] (spec gsound-player 9.3, PL-6.1–6.5, design §8).
  *
  * The numbered cases C01..C13 and their constants (NOW, L) are IDENTICAL to
- * GsoundG/source/test/BookmarkMergeTests.mc (testBmMergeC01.. etc.); keep both files in sync.
+ * PNTomeGo/source/test/BookmarkMergeTests.mc (testBmMergeC01.. etc.); keep both files in sync.
  *
  *   NOW = 10000, LIMIT = NOW + 300 = 10300, L = 5000 unless stated.
  *   C01 no local                       in=4000          -> take 4000

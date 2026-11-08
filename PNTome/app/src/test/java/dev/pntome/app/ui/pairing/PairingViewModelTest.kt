@@ -1,13 +1,13 @@
-package dev.gsound.a.ui.pairing
+package dev.pntome.app.ui.pairing
 
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.log.NoopLogger
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.FakeControlChannel
-import dev.gsound.a.net.garmin.messages.PairConfirm
-import dev.gsound.a.net.garmin.messages.PairRequest
-import dev.gsound.a.net.garmin.messages.Unpair
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.log.NoopLogger
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.FakeControlChannel
+import dev.pntome.app.net.garmin.messages.PairConfirm
+import dev.pntome.app.net.garmin.messages.PairRequest
+import dev.pntome.app.net.garmin.messages.Unpair
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

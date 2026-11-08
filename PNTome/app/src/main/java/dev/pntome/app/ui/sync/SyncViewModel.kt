@@ -1,23 +1,23 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.data.sync.SyncSummaryStore
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.SyncSummary
-import dev.gsound.a.domain.sync.SyncOrchestrator
-import dev.gsound.a.log.GsoundLog
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.ControlChannel
-import dev.gsound.a.net.garmin.messages.Ping
-import dev.gsound.a.net.garmin.messages.Stats
-import dev.gsound.a.service.SyncForegroundService
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.data.sync.SyncSummaryStore
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.SyncSummary
+import dev.pntome.app.domain.sync.SyncOrchestrator
+import dev.pntome.app.log.PNTomeLog
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.ControlChannel
+import dev.pntome.app.net.garmin.messages.Ping
+import dev.pntome.app.net.garmin.messages.Stats
+import dev.pntome.app.service.SyncForegroundService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -178,7 +178,7 @@ class SyncViewModel @Inject constructor(
     summaryStore: SyncSummaryStore,
     private val controlChannel: ControlChannel,
     bookmarkDao: BookmarkDao,
-    private val bookmarkPusher: dev.gsound.a.domain.bookmarks.BookmarkPusher,
+    private val bookmarkPusher: dev.pntome.app.domain.bookmarks.BookmarkPusher,
 ) : ViewModel() {
 
     /**
@@ -187,8 +187,8 @@ class SyncViewModel @Inject constructor(
      */
     private val watchStats = MutableStateFlow<WatchStats?>(null)
 
-    /** Logcat tag for sync diagnostics (filter: `adb logcat -s Gsound.Sync`). */
-    private val syncTag = "Gsound.Sync"
+    /** Logcat tag for sync diagnostics (filter: `adb logcat -s PNTome.Sync`). */
+    private val syncTag = "PNTome.Sync"
 
     init {
         // Req 7.1: observe STATS from the watch and keep the latest for the current pairing.
@@ -201,10 +201,10 @@ class SyncViewModel @Inject constructor(
                 .collect { stats ->
                     val currentPairingId = pairingStore.get()?.pairingId
                     if (currentPairingId != null && stats.pairingId == currentPairingId) {
-                        GsoundLog.i(syncTag, "STATS received: files=${stats.fileCount} folders=${stats.folderCount} lastSyncAt=${stats.lastSyncAt}")
+                        PNTomeLog.i(syncTag, "STATS received: files=${stats.fileCount} folders=${stats.folderCount} lastSyncAt=${stats.lastSyncAt}")
                         watchStats.value = WatchStats.from(stats)
                     } else {
-                        GsoundLog.w(syncTag, "STATS ignored: pairingId mismatch (got=${stats.pairingId}, current=$currentPairingId)")
+                        PNTomeLog.w(syncTag, "STATS ignored: pairingId mismatch (got=${stats.pairingId}, current=$currentPairingId)")
                         watchStats.value = null
                     }
                 }
@@ -243,19 +243,19 @@ class SyncViewModel @Inject constructor(
      * only enables this when [SyncUiState.canStartSync] is true.
      */
     fun onSyncClicked() {
-        GsoundLog.i(syncTag, "onSyncClicked: starting sync foreground service")
+        PNTomeLog.i(syncTag, "onSyncClicked: starting sync foreground service")
         SyncForegroundService.start(context)
     }
 
     /** Cancel the active sync via the foreground service (Req 6.5). */
     fun onCancelClicked() {
-        GsoundLog.i(syncTag, "onCancelClicked: cancelling sync")
+        PNTomeLog.i(syncTag, "onCancelClicked: cancelling sync")
         SyncForegroundService.cancel(context)
     }
 
     /** Retry after a failed sync by starting again (Req 6.4). Same path as [onSyncClicked]. */
     fun onRetryClicked() {
-        GsoundLog.i(syncTag, "onRetryClicked: restarting sync")
+        PNTomeLog.i(syncTag, "onRetryClicked: restarting sync")
         SyncForegroundService.start(context)
     }
 
@@ -275,15 +275,15 @@ class SyncViewModel @Inject constructor(
     fun onRefreshStatsClicked() {
         viewModelScope.launch {
             val pairing = pairingStore.get() ?: run {
-                GsoundLog.d(syncTag, "refreshStats: no pairing -> skip")
+                PNTomeLog.d(syncTag, "refreshStats: no pairing -> skip")
                 return@launch
             }
             val state = controlChannel.connectionState.value
             if (state !is ConnectionState.Connected) {
-                GsoundLog.d(syncTag, "refreshStats: channel not connected (state=${state::class.simpleName}) -> skip")
+                PNTomeLog.d(syncTag, "refreshStats: channel not connected (state=${state::class.simpleName}) -> skip")
                 return@launch
             }
-            GsoundLog.i(syncTag, "refreshStats: sending PING to request STATS (pairingId=${pairing.pairingId})")
+            PNTomeLog.i(syncTag, "refreshStats: sending PING to request STATS (pairingId=${pairing.pairingId})")
             // PL-5.1: after STATS and the watch's BOOKMARKs have landed, push newer phone bookmarks.
             bookmarkPusher.pushAfterStats { controlChannel.send(Ping(pairingId = pairing.pairingId)) }
         }

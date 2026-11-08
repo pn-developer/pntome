@@ -1,0 +1,18 @@
+# Example fdroidserver config. Copy to fdroid/config.yml (git-ignored) and edit.
+# Contains NO secrets. Keystore passwords are supplied by the user at run time,
+# for example through the environment or by fdroidserver prompts. Never commit them.
+
+repo_url: https://example.invalid/fdroid/repo
+repo_name: PNTome F-Droid repository
+repo_description: >-
+  Self-hosted repository for the PNTome Android app.
+
+archive_older: 0
+
+# Keystore for the repository signing key. This key is NOT the Play upload key.
+# Path and alias only; passwords are not stored here.
+repo_keyalias: pntome-repo
+keystore: keystore.p12
+
+# Deploy target (placeholder). Used by `fdroid deploy`.
+# serverwebroot: user@example.invalid:/var/www/fdroid

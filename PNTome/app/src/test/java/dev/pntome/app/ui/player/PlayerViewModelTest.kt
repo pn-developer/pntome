@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.player
+package dev.pntome.app.ui.player
 
 import android.content.Context
 import android.net.Uri
@@ -7,11 +7,11 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.data.folders.GsoundDatabase
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.model.Track
-import dev.gsound.a.service.QueueBuilder
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.data.folders.PNTomeDatabase
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.model.Track
+import dev.pntome.app.service.QueueBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -88,7 +88,7 @@ class PlayerViewModelTest {
         override fun release(player: Player) { state.calls += "release" }
     }
 
-    private lateinit var db: GsoundDatabase
+    private lateinit var db: PNTomeDatabase
     private lateinit var repository: FolderRepository
     private lateinit var state: FakePlayerState
     private lateinit var connector: FakeConnector
@@ -98,7 +98,7 @@ class PlayerViewModelTest {
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(context, GsoundDatabase::class.java)
+        db = Room.inMemoryDatabaseBuilder(context, PNTomeDatabase::class.java)
             .allowMainThreadQueries()
             .setQueryExecutor { it.run() }
             .setTransactionExecutor { it.run() }

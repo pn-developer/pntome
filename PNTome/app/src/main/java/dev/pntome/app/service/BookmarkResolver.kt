@@ -1,6 +1,6 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
-import dev.gsound.a.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkEntity
 
 /** Where playback should start: chapter index in the queue and position within it (ms). */
 data class ResumePoint(val index: Int, val positionMs: Long)

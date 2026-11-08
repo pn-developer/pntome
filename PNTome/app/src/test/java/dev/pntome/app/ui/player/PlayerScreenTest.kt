@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.player
+package dev.pntome.app.ui.player
 
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -6,7 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import dev.gsound.a.ui.theme.GsoundATheme
+import dev.pntome.app.ui.theme.PNTomeTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -34,7 +34,7 @@ class PlayerScreenTest {
         calls: MutableList<String> = mutableListOf(),
     ) {
         composeRule.setContent {
-            GsoundATheme(dynamicColor = false) {
+            PNTomeTheme(dynamicColor = false) {
                 PlayerScreen(
                     state = state,
                     onBack = { calls += "back" },
@@ -107,7 +107,7 @@ class PlayerScreenTest {
 
     private fun mini(state: PlayerUiState, calls: MutableList<String> = mutableListOf()) {
         composeRule.setContent {
-            GsoundATheme(dynamicColor = false) {
+            PNTomeTheme(dynamicColor = false) {
                 MiniPlayer(
                     state = state,
                     onOpen = { calls += "open" },

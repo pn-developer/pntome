@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 /**
  * Pure path/name helpers used by [FolderScanner] (task 5.2), extracted so the string logic is
@@ -28,7 +28,7 @@ object ScanPaths {
 
     /**
      * Derive the playlist/folder name a track is grouped under on the watch
-     * ([dev.gsound.a.domain.model.Track.relativeFolder]).
+     * ([dev.pntome.app.domain.model.Track.relativeFolder]).
      *
      * This is the slash-joined subfolder path relative to the tree root. A file directly under
      * the root has no subfolder, in which case [rootName] (the scanned folder's display name)

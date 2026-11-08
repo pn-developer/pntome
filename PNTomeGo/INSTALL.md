@@ -1,14 +1,14 @@
-# INSTALL — Building GsoundG (Garmin Connect IQ)
+# INSTALL — Building PNTomeGo (Garmin Connect IQ)
 
-This guide sets up the Connect IQ toolchain and builds the GsoundG watch app (`.prg`) on
-**Ubuntu** (apt / Debian family) and **Manjaro** (pacman / Arch family). GsoundG is a
+This guide sets up the Connect IQ toolchain and builds the PNTomeGo watch app (`.prg`) on
+**Ubuntu** (apt / Debian family) and **Manjaro** (pacman / Arch family). PNTomeGo is a
 Monkey C **Audio Content Provider** app; it is built with `monkeyc` and run in the Connect
 IQ simulator or sideloaded to a music-capable fēnix.
 
-> For an overview of the whole repo and the GsoundA (Android) build guide, see the
+> For an overview of the whole repo and the PNTome (Android) build guide, see the
 > top-level [`../INSTALL.md`](../INSTALL.md).
 
-> GsoundG is **not** a Gradle project. It has no wrapper — you build it with the `monkeyc`
+> PNTomeGo is **not** a Gradle project. It has no wrapper — you build it with the `monkeyc`
 > compiler shipped in the Connect IQ SDK.
 
 ## 1. Requirements
@@ -197,25 +197,25 @@ installed SDK and the developer key, so no flags are needed for the common case:
 
 ```bash
 git clone <your-repo-url> pn_gsound
-cd pn_gsound/GsoundG
+cd pn_gsound/PNTomeGo
 
-./build.sh                 # release, fenix6spro -> build/GsoundG-fenix6spro.prg
+./build.sh                 # release, fenix6spro -> build/PNTomeGo-fenix6spro.prg
 ./build.sh --debug         # debug build (diagnostic log, see below)
-./build.sh fenix847mm      # fenix 8    -> build/GsoundG-fenix847mm.prg
-./build.sh fenix6pro /tmp/GsoundG.prg   # explicit output path
+./build.sh fenix847mm      # fenix 8    -> build/PNTomeGo-fenix847mm.prg
+./build.sh fenix6pro /tmp/PNTomeGo.prg   # explicit output path
 ```
 
 `build.sh [--debug] [device] [output.prg]` (defaults: release, `fenix6spro`,
-`build/GsoundG-<device>.prg`).
+`build/PNTomeGo-<device>.prg`).
 
 **Release vs debug.** The default is a release build (`monkeyc -r`), which strips all
 `(:debug)`-annotated code. Only plain `println` output remains, and that only reaches
-`GARMIN/APPS/LOGS/GSOUNDG-<DEVICE>.TXT` if you create that file by hand. `--debug` keeps the
+`GARMIN/APPS/LOGS/PNTOMEGO-<DEVICE>.TXT` if you create that file by hand. `--debug` keeps the
 diagnostics:
 
 - every log line is also kept in a 40-line ring buffer in app storage, and
-- the lines are forwarded to the phone when you press **Refresh stats** in GsoundA. They show
-  up in logcat under the tag `Gsound.Watch`.
+- the lines are forwarded to the phone when you press **Refresh stats** in PNTome. They show
+  up in logcat under the tag `PNTome.Watch`.
 - media-cache snapshots (size and cached ids) are logged after each sync.
 
 A debug build shows `dbg` after the version in the watch footer, e.g. `v0.1.0 (632f42c) dbg`.
@@ -231,7 +231,7 @@ from `manifest.xml`: `fenix6spro`, `fenix6pro`, `fenix6xpro`, `fenix843mm`, `fen
 Under the hood this just calls `monkeyc`; the equivalent raw command is:
 
 ```bash
-monkeyc -f monkey.jungle -d fenix6pro -y ~/.Garmin/developer_key.der -o build/GsoundG-fenix6pro.prg -r   # drop -r for debug
+monkeyc -f monkey.jungle -d fenix6pro -y ~/.Garmin/developer_key.der -o build/PNTomeGo-fenix6pro.prg -r   # drop -r for debug
 ```
 
 > To build **and** run in the simulator in one step, see `./run_in_simulator.sh` in
@@ -258,10 +258,10 @@ the *simulator GUI + monkeydo* inside an **Ubuntu 22.04 container** that still h
 4.0, while the container shares your `$HOME` (so the SDK and dev key are seen unchanged)
 and the host X display (so the GUI renders on your desktop).
 
-The repo ships a self-contained utility for this under `GsoundG/sim/`:
+The repo ships a self-contained utility for this under `PNTomeGo/sim/`:
 
 ```
-GsoundG/
+PNTomeGo/
 ├── run_in_simulator.sh     # build/attach a .prg to the simulator (main entry point)
 └── sim/
     ├── common.sh           # shared helpers (podman/distrobox, X auth, SDK/key detect)
@@ -276,7 +276,7 @@ It needs **podman** (and **distrobox**, recommended) on the host:
 ### 5.2 One-time container setup
 
 ```bash
-cd GsoundG
+cd PNTomeGo
 ./sim/setup_container.sh            # create the container + install webkit 4.0 inside it
 ./sim/setup_container.sh --verify   # check it's ready (no changes)
 ./sim/setup_container.sh --recreate # rebuild from scratch if it got into a bad state
@@ -288,7 +288,7 @@ packages. Override the container name or base image with `CIQ_CONTAINER` / `CIQ_
 ### 5.3 Build + run an app
 
 ```bash
-cd GsoundG
+cd PNTomeGo
 ./run_in_simulator.sh                      # build fenix6spro, start the sim, attach it
 ./run_in_simulator.sh fenix847mm           # same, for fēnix 8
 ./run_in_simulator.sh fenix6pro /tmp/g.prg # attach an existing .prg instead of building
@@ -308,7 +308,7 @@ println` output streams to your terminal. A Monkey C runtime error with a stack 
 real app bug worth investigating; GTK/dbind/canberra warnings in the log are harmless noise.
 
 > On a host that *does* have webkit 4.0 (e.g. Ubuntu 22.04), you can skip the container and
-> run the SDK tools directly: `connectiq &` then `monkeydo build/GsoundG-fenix6pro.prg fenix6pro`.
+> run the SDK tools directly: `connectiq &` then `monkeydo build/PNTomeGo-fenix6pro.prg fenix6pro`.
 
 ---
 
@@ -318,12 +318,45 @@ Music-capable fēnix only (6 Pro / 6X Pro / 6S Pro / 6 Pro Solar, fēnix 8 AMOLE
 
 1. Build the `.prg` for the exact device (Section 4).
 2. Connect the watch via USB; it mounts as mass storage.
-3. Copy `GsoundG.prg` into `GARMIN/APPS/` on the watch.
+3. Copy `build/PNTomeGo-<device>.prg` into `GARMIN/APPS/` on the watch.
 4. Copy any `.set` settings file into `GARMIN/APPS/SETTINGS/` (none required for v1).
 5. Safely eject and disconnect.
-6. On the watch, GsoundG appears under **Music > Music Providers**.
+6. On the watch, PNTomeGo appears under **Music > Music Providers**.
 
 Remove a sideloaded app via Garmin Express or the Connect IQ mobile app.
+
+---
+
+## Export for the Connect IQ Store
+
+Store uploads are a single `.iq` package containing every product in `manifest.xml`:
+
+```bash
+cd PNTomeGo
+./build.sh --export        # -> dist/PNTomeGo-<version>.iq
+```
+
+`<version>` is `AppVersion.SEMVER` from `source/Version.mc`, which must match the version in
+`manifest.xml` (the build fails if they differ). `--export` always builds the release flavor
+(`monkeyc -e -r`) for all products. It refuses to run:
+
+- with `--debug`, or with a device or output argument;
+- outside a git checkout;
+- when `git status --porcelain` reports uncommitted changes. Commit or stash first, so the
+  package is built from a clean tree and carries no `-dirty` stamp.
+
+**Keep the developer key.** The store ties updates of an app to the key that signed it. Back up
+`~/.Garmin/developer_key.der` (or the file `CIQ_DEVKEY` points to) somewhere safe and reuse the
+same key for every export. A package signed with a different key cannot update the existing
+listing. Never commit the key.
+
+The Connect IQ app id in `manifest.xml` stays unchanged. It must keep matching
+`PNTome/app/src/main/java/dev/pntome/app/net/garmin/PNTomeAppId.kt`.
+
+**Old and new pairing.** This release renames the apps (PNTome / PNTomeGo) and the pairing
+secret header (`X-PNTome-Secret`). Old phone and watch builds do not pair with the new ones, so
+replace both together: install the new PNTome on the phone and the new PNTomeGo on the watch,
+then pair again.
 
 ---
 
@@ -351,12 +384,14 @@ Remove a sideloaded app via Garmin Express or the Connect IQ mobile app.
 
 A real pair/sync with the phone additionally needs:
 
-- The **GsoundA** Android app installed and built — see [`../GsoundA/INSTALL.md`](../GsoundA/INSTALL.md).
-- GsoundG's `manifest.xml` `id` wired into GsoundA's
-  `app/src/main/java/dev/gsound/a/net/garmin/GsoundAppId.kt` (they must be byte-for-byte
+- The **PNTome** Android app installed and built — see [`../PNTome/INSTALL.md`](../PNTome/INSTALL.md).
+- PNTomeGo's `manifest.xml` `id` wired into PNTome's
+  `app/src/main/java/dev/pntome/app/net/garmin/PNTomeAppId.kt` (they must be byte-for-byte
   identical, or the SDK reports the app as not installed).
 - Garmin Connect Mobile installed and signed in on the phone, routing the control channel.
+- The pairing secret: the watch presents it in the `X-PNTome-Secret` HTTP header on every
+  request to the phone's server.
 - Phone and watch on the same Wi-Fi/LAN.
 
 The complete manual checklist is in
-[`../GsoundA/docs/manual-e2e-checklist.md`](../GsoundA/docs/manual-e2e-checklist.md).
+[`../PNTome/docs/manual-e2e-checklist.md`](../PNTome/docs/manual-e2e-checklist.md).

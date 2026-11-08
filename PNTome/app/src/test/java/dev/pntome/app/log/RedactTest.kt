@@ -1,4 +1,4 @@
-package dev.gsound.a.log
+package dev.pntome.app.log
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

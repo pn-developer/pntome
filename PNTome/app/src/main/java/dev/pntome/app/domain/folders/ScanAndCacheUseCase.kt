@@ -1,11 +1,11 @@
-package dev.gsound.a.domain.folders
+package dev.pntome.app.domain.folders
 
 import android.net.Uri
-import dev.gsound.a.data.folders.FolderRepository
-import dev.gsound.a.domain.model.AppSettings
-import dev.gsound.a.domain.model.Folder
-import dev.gsound.a.domain.scan.TrackReconciler
-import dev.gsound.a.domain.scan.TrackScanner
+import dev.pntome.app.data.folders.FolderRepository
+import dev.pntome.app.domain.model.AppSettings
+import dev.pntome.app.domain.model.Folder
+import dev.pntome.app.domain.scan.TrackReconciler
+import dev.pntome.app.domain.scan.TrackScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -61,7 +61,7 @@ sealed interface ScanAndCacheResult {
  *    [ScanAndCacheResult.FolderNotFound] when it has been removed).
  * 2. Run [TrackScanner.scanToResult] to get the eligible tracks and the skipped count.
  * 3. Diff the fresh tracks against the currently-cached tracks by stable id
- *    ([TrackReconciler.reconcile]). Because [dev.gsound.a.domain.model.Track.id] encodes
+ *    ([TrackReconciler.reconcile]). Because [dev.pntome.app.domain.model.Track.id] encodes
  *    path/size/lastModified (Req 3.5), unchanged files keep their id (no churn), changed files
  *    get a new id (upsert new, remove stale), and deleted files are removed.
  * 4. Apply the diff: upsert the fresh tracks and delete the stale ids.
@@ -84,7 +84,7 @@ class ScanAndCacheUseCase @Inject constructor(
     /**
      * Scan [folderId] and reconcile its cache.
      *
-     * @param folderId the stable folder id (see [dev.gsound.a.domain.scan.FolderIdHasher]).
+     * @param folderId the stable folder id (see [dev.pntome.app.domain.scan.FolderIdHasher]).
      * @param settings format flags gating optional formats; when null the scanner reads the
      *   current persisted [AppSettings].
      * @return [ScanAndCacheResult.Success] with the refreshed counts, [FolderNotFound] when the

@@ -1,11 +1,11 @@
-package dev.gsound.a.data.folders
+package dev.pntome.app.data.folders
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import dev.gsound.a.domain.model.Track
+import dev.pntome.app.domain.model.Track
 
 /**
  * Room persistence representation of a [Track].

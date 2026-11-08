@@ -1,12 +1,12 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.os.Bundle
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.gsound.a.data.folders.BookmarkDao
-import dev.gsound.a.data.folders.BookmarkEntity
+import dev.pntome.app.data.folders.BookmarkDao
+import dev.pntome.app.data.folders.BookmarkEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

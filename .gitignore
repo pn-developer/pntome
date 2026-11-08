@@ -1,0 +1,19 @@
+# Signing material and secrets: never commit
+*.jks
+*.keystore
+keystore.properties
+*.der
+
+# Build artifacts
+*.apk
+*.aab
+*.iq
+
+# Local machine configuration
+local.properties
+
+# Self-hosted F-Droid repository: generated output and secrets
+fdroid/repo/
+fdroid/archive/
+fdroid/config.yml
+fdroid/keystore*

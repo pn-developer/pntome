@@ -1,4 +1,4 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.os.Bundle
 import androidx.media3.common.MediaItem
@@ -7,7 +7,7 @@ import androidx.media3.session.CommandButton
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
-import dev.gsound.a.R
+import dev.pntome.app.R
 
 /**
  * ±30 s custom actions for audiobook queues (gsound-player design §3, task 6.4, PL-2.4).
@@ -16,8 +16,8 @@ import dev.gsound.a.R
  * decides when they are shown and executes them.
  */
 internal object BookCustomLayout {
-    const val ACTION_SKIP_BACK_30 = "gsound.skip_back_30"
-    const val ACTION_SKIP_FWD_30 = "gsound.skip_fwd_30"
+    const val ACTION_SKIP_BACK_30 = "dev.pntome.app.action.skip_back_30"
+    const val ACTION_SKIP_FWD_30 = "dev.pntome.app.action.skip_fwd_30"
 
     val skipBack = SessionCommand(ACTION_SKIP_BACK_30, Bundle.EMPTY)
     val skipForward = SessionCommand(ACTION_SKIP_FWD_30, Bundle.EMPTY)

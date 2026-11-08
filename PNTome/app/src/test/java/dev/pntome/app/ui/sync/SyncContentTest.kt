@@ -1,14 +1,14 @@
-package dev.gsound.a.ui.sync
+package dev.pntome.app.ui.sync
 
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import dev.gsound.a.domain.model.SyncState
-import dev.gsound.a.domain.model.SyncSummary
-import dev.gsound.a.net.server.LanKind
-import dev.gsound.a.ui.theme.GsoundATheme
+import dev.pntome.app.domain.model.SyncState
+import dev.pntome.app.domain.model.SyncSummary
+import dev.pntome.app.net.server.LanKind
+import dev.pntome.app.ui.theme.PNTomeTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -46,7 +46,7 @@ class SyncContentTest {
         onRefreshStatsClicked: () -> Unit = {},
     ) {
         composeRule.setContent {
-            GsoundATheme(dynamicColor = false) {
+            PNTomeTheme(dynamicColor = false) {
                 SyncContent(
                     state = state,
                     onSyncClicked = onSyncClicked,

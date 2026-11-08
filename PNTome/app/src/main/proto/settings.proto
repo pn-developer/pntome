@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option java_package = "dev.gsound.a.data.settings";
+option java_package = "dev.pntome.app.data.settings";
 option java_multiple_files = true;
 
 // Persisted application settings (Req 8.1). Audio format flags gate optional

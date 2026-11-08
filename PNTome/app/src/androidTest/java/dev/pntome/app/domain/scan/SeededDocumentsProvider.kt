@@ -1,4 +1,4 @@
-package dev.gsound.a.domain.scan
+package dev.pntome.app.domain.scan
 
 import android.content.Context
 import android.database.Cursor
@@ -137,7 +137,7 @@ class SeededDocumentsProvider : DocumentsProvider() {
 
     companion object {
         /** Authority declared in the androidTest manifest. */
-        const val AUTHORITY = "dev.gsound.a.test.seededdocs"
+        const val AUTHORITY = "dev.pntome.app.test.seededdocs"
 
         private const val ROOT_ID = "root"
 

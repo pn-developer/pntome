@@ -6,7 +6,7 @@ import Toybox.Lang;
 //! Track ids encode path/size/mtime, so marking a folder as an audiobook on the phone, or a
 //! change of chapter order, does not change any id — SyncNeed sees "nothing new" and no sync
 //! runs. This updater is therefore called when a manifest ARRIVES (SyncController /
-//! GsoundSyncDelegate fetch path): for every manifest track whose `trk:<id>` exists, it rewrites
+//! PNTomeSyncDelegate fetch path): for every manifest track whose `trk:<id>` exists, it rewrites
 //! `seq`, `book` and `title` when they differ, then rebuilds the folder + audiobook lists
 //! (which also drops bookmarks of folders that are no longer books).
 //!

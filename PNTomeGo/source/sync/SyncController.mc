@@ -40,7 +40,7 @@ import Toybox.Timer;
 //! §10; Req 7.1, 7.2). Repo chunks the track list under flat "pm:*" keys to stay
 //! under the ~8 KB per-value limit; the persistence call is best-effort (wrapped)
 //! so a storage hiccup never crashes dispatch, and the manifest is still held in
-//! memory. The handler is registered at app start (GsoundGApp.onStart) via
+//! memory. The handler is registered at app start (PNTomeGoApp.onStart) via
 //! registerHandlers(), mirroring PairingManager.
 //!
 //! Scope boundary: the "fetch at sync start" HTTP fallback when `tracks` is
@@ -70,7 +70,7 @@ class SyncController {
 
     //! The phone-reported expected track count when the fetch-at-sync-start flag is
     //! set and a count was available, else null. The v1 SYNC_MANIFEST wire shape
-    //! carries no count field (GsoundA ControlMessage.SyncManifest), so this stays
+    //! carries no count field (PNTome ControlMessage.SyncManifest), so this stays
     //! null in practice; it is kept for forward-compatibility and to let task 7
     //! surface an expectation if the phone ever adds one.
     private var _expectedTrackCount as Number?;
@@ -146,7 +146,7 @@ class SyncController {
             // simulator console / `monkeydo` output. Non-sensitive: track count only, never the
             // serverUrl host or any payload content (Req 7.3). This is the watch-side counterpart
             // to the phone's "SYNC_MANIFEST sent" log — together they prove delivery end to end.
-            System.println("Gsound: SYNC_MANIFEST received, tracks=" + cleanTracks.size());
+            System.println("PNTome: SYNC_MANIFEST received, tracks=" + cleanTracks.size());
 
             // Persist the new pending manifest so a system-launched sync (a
             // separate ACP process, Req 7.2) can download without the phone
@@ -169,8 +169,8 @@ class SyncController {
             // list from GET {serverUrl}/manifest instead. A non-empty list is the
             // normal inline path and clears any stale flag.
             //
-            // GsoundA's SYNC_MANIFEST carries no expected-count/total field (only
-            // pairingId/serverUrl/tracks/v — GsoundA ControlMessage.SyncManifest),
+            // PNTome's SYNC_MANIFEST carries no expected-count/total field (only
+            // pairingId/serverUrl/tracks/v — PNTome ControlMessage.SyncManifest),
             // so the only detectable trigger in v1 is an EMPTY list; truncation
             // below an expected total can't be distinguished without a count the
             // phone does not send. We still read an optional count defensively so
@@ -180,7 +180,7 @@ class SyncController {
             // AUTO-TRIGGER the system sync as soon as a usable manifest lands (design §8.1).
             //
             // Why: on an Audio Content Provider the DOWNLOAD only runs when the system launches
-            // the app in sync mode and calls GsoundSyncDelegate.onStartSync() — and the ONLY way
+            // the app in sync mode and calls PNTomeSyncDelegate.onStartSync() — and the ONLY way
             // to enter that mode is Communications.startSync(). Without this, the phone's "Sync"
             // button delivers the manifest but the watch never downloads (observed: server up,
             // complete=0/23 bytes=0, zero HTTP requests) until the user manually navigates the
@@ -218,7 +218,7 @@ class SyncController {
     //!     ready if the wire grows a count.)
     //!   - Otherwise (non-empty, and complete when a count is known) → fallback OFF.
     //!
-    //! Expected-count source: GsoundA's SYNC_MANIFEST does not send one (its wire
+    //! Expected-count source: PNTome's SYNC_MANIFEST does not send one (its wire
     //! shape is pairingId/serverUrl/tracks/v — ControlMessage.SyncManifest). We
     //! probe FIELD_TOTAL defensively rather than inventing a new wire key the phone
     //! never sends; in practice it is absent, so `expected` is null. Best-effort and
@@ -257,7 +257,7 @@ class SyncController {
     //!
     //! Triggers only when there is something to sync — either inline tracks arrived OR the
     //! fetch-at-sync-start fallback is set (serverUrl-only manifest). Communications.startSync()
-    //! relaunches the app in sync mode; GsoundSyncDelegate.isSyncNeeded() then re-gates against
+    //! relaunches the app in sync mode; PNTomeSyncDelegate.isSyncNeeded() then re-gates against
     //! the persisted index, so an already-synced library won't re-download. Wrapped end to end:
     //! startSync() can throw in an unsupported launch context, and that must never crash the
     //! SYNC_MANIFEST dispatch — the manual sync-config path remains as a fallback (Req 8.5).

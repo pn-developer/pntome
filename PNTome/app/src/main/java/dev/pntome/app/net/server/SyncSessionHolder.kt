@@ -1,4 +1,4 @@
-package dev.gsound.a.net.server
+package dev.pntome.app.net.server
 
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject

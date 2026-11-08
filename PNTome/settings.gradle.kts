@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GsoundA"
+rootProject.name = "PNTome"
 include(":app")

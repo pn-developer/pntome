@@ -1,12 +1,12 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import dev.gsound.a.data.pairing.PairingStore
-import dev.gsound.a.domain.model.PairingRecord
-import dev.gsound.a.net.garmin.ConnectionState
-import dev.gsound.a.net.garmin.FakeControlChannel
-import dev.gsound.a.net.garmin.messages.SyncRequest
+import dev.pntome.app.data.pairing.PairingStore
+import dev.pntome.app.domain.model.PairingRecord
+import dev.pntome.app.net.garmin.ConnectionState
+import dev.pntome.app.net.garmin.FakeControlChannel
+import dev.pntome.app.net.garmin.messages.SyncRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

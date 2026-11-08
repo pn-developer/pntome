@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.folders
+package dev.pntome.app.ui.folders
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,8 +45,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.gsound.a.ui.player.MiniPlayer
-import dev.gsound.a.ui.player.PlayerUiState
+import dev.pntome.app.ui.player.MiniPlayer
+import dev.pntome.app.ui.player.PlayerUiState
 
 /**
  * Folders destination (Req 1, 2).

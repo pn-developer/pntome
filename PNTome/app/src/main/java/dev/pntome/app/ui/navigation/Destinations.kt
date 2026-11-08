@@ -1,4 +1,4 @@
-package dev.gsound.a.ui.navigation
+package dev.pntome.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List

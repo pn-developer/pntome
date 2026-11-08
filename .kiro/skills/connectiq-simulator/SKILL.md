@@ -55,9 +55,9 @@ All commands go through the helper script:
 Example (fēnix 6 Pro):
 
 ```
-scripts/ciq-sim.sh build GsoundG/monkey.jungle fenix6pro /tmp/gsoundg.prg
+scripts/ciq-sim.sh build PNTomeGo/monkey.jungle fenix6pro /tmp/pntomego.prg
 scripts/ciq-sim.sh start
-scripts/ciq-sim.sh run /tmp/gsoundg.prg fenix6pro
+scripts/ciq-sim.sh run /tmp/pntomego.prg fenix6pro
 ```
 
 ## Interpreting results

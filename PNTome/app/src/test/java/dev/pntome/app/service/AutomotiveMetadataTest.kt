@@ -1,4 +1,4 @@
-package dev.gsound.a.service
+package dev.pntome.app.service
 
 import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
