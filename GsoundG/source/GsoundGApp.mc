@@ -306,36 +306,21 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         DebugLog.log("PB", "getContentDelegate args=" + DebugLog.shape(args) + " " + DebugLog.mem());
         // No MediaDiag.snapshot here: the playback process is memory-constrained and the cache
         // walk allocates; the sync process already logs the same snapshot after each sync.
-        var folder = null;
-        var startIndex = 0;
-        if (args instanceof Dictionary) {
-            var f = (args as Dictionary).get("folder");
-            if (f instanceof String && !(f as String).equals("")) {
-                folder = f as String;
-            }
-            var s = (args as Dictionary).get("startIndex");
-            if (s instanceof Number) {
-                startIndex = s as Number;
-            }
-        }
         // args is null when the native player starts/resumes playback by itself (its own Play
         // button, after the headphone prompt, ...). Returning an empty iterator there means
         // "nothing to play" — observed on the device log: getContentDelegate args=null →
-        // "returning EMPTY iterator". Fall back to the last selection from our track list, then
-        // to the first synced folder.
-        if (folder == null) {
+        // "returning EMPTY iterator". Fall back to the last selection (which for a book may be
+        // "resume", AB-6.2), then to the first synced folder.
+        var selection = (args instanceof Dictionary) ? (args as Dictionary) : null;
+        if (selection == null || !(selection.get("folder") instanceof String)) {
             try {
-                var last = Repo.loadPlaybackSelection();
-                if (last != null) {
-                    folder = last.get("folder") as String;
-                    var ls = last.get("startIndex");
-                    startIndex = (ls instanceof Number) ? (ls as Number) : 0;
+                selection = Repo.loadPlaybackSelection();
+                if (selection != null) {
                     DebugLog.log("PB", "args null -> last selection");
                 } else {
                     var folders = Repo.loadFolders();
                     if (folders.size() > 0 && folders[0] instanceof String) {
-                        folder = folders[0] as String;
-                        startIndex = 0;
+                        selection = { "folder" => folders[0], "startIndex" => 0 };
                         DebugLog.log("PB", "args null -> first synced folder");
                     }
                 }
@@ -343,8 +328,37 @@ class GsoundGApp extends Application.AudioContentProviderApp {
                 DebugLog.log("PB", "args-null fallback FAILED " + DebugLog.describe(ex));
             }
         }
-        DebugLog.log("PB", "delegate folder=" + (folder == null ? "null" : folder) + " start=" + startIndex.toString());
-        return new GsoundContentDelegate(folder, startIndex);
+
+        var folder = null;
+        var startIndex = 0;
+        var startPos = 0;
+        var isBook = false;
+        if (selection != null) {
+            var f = selection.get("folder");
+            if (f instanceof String && !(f as String).equals("")) {
+                folder = f as String;
+                isBook = Repo.isBookFolder(folder);
+            }
+            var s = selection.get("startIndex");
+            if (s instanceof Number) {
+                startIndex = s as Number;
+            }
+            // Book resume (AB-6.1): chapter + position from the bookmark (with the rewind).
+            // No usable bookmark → the book from the start.
+            if (folder != null && isBook && PlaybackStarter.MODE_RESUME.equals(selection.get("mode"))) {
+                var r = Bookmarks.resolve(folder, FolderTracks.orderedIds(folder));
+                if (r != null) {
+                    startIndex = r.get("index") as Number;
+                    startPos = r.get("pos") as Number;
+                } else {
+                    startIndex = 0;
+                }
+                DebugLog.log("PB", "resume -> idx=" + startIndex.toString() + " pos=" + startPos.toString());
+            }
+        }
+        DebugLog.log("PB", "delegate folder=" + (folder == null ? "null" : folder) + " start=" + startIndex.toString()
+            + " pos=" + startPos.toString() + " book=" + isBook.toString());
+        return new GsoundContentDelegate(folder, startIndex, startPos, isBook);
     }
 
     //! System sync: return the sync delegate driving downloads (task 7.1's

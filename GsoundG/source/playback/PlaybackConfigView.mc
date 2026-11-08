@@ -67,12 +67,22 @@ class PlaybackConfigView extends WatchUi.View {
     //! Build a PlaybackConfigView for `folder`. Starts with an empty cached list +
     //! selection 0; the real track rows are pulled live from Repo in onUpdate so the
     //! screen always reflects the current library.
+    //! Whether _tracks reflects storage for the current showing (reset in onShow).
+    private var _loaded as Boolean;
+
     function initialize(folder as String) {
         View.initialize();
         _folder = folder;
         _tracks = [] as Array<Dictionary>;
         _selected = 0;
         _pairingPresented = false;
+        _loaded = false;
+    }
+
+    //! Re-read the track list each time the view comes to the foreground (e.g. back from the
+    //! player or after a sync), keeping the current highlight where possible.
+    function onShow() as Void {
+        _loaded = false;
     }
 
     //! Refresh the cached track rows for this folder from Repo. Iterates the flat
@@ -84,25 +94,22 @@ class PlaybackConfigView extends WatchUi.View {
     private function refreshTracks() as Void {
         var rows = [] as Array<Dictionary>;
         try {
-            var ids = Repo.loadIndex();
+            // Play order = FolderTracks (natural file-name order via `seq`), the SAME order the
+            // player walks, so the selected row index is the player's start index (AB-2).
+            var isBook = Repo.isBookFolder(_folder);
+            var ids = FolderTracks.orderedIds(_folder);
             for (var i = 0; i < ids.size(); i++) {
                 var id = ids[i];
-                if (!(id instanceof String) || (id as String).equals("")) {
-                    continue;
-                }
-                var entry = Repo.getTrack(id as String);
-                if (entry == null) {
-                    continue;
-                }
-                var folder = entry.get("folder");
-                if (!(folder instanceof String) || !(folder as String).equals(_folder)) {
-                    continue;
-                }
-                var title = entry.get("title");
+                var entry = Repo.getTrack(id);
+                var title = (entry != null) ? entry.get("title") : null;
                 var label = (title instanceof String && !(title as String).equals(""))
                     ? (title as String)
-                    : (id as String);
-                rows.add({ "id" => id as String, "title" => label });
+                    : id;
+                if (isBook) {
+                    // Chapter list (AB-4.3): numbered in chapter order.
+                    label = (i + 1).toString() + ". " + label;
+                }
+                rows.add({ "id" => id, "title" => label });
             }
         } catch (ex) {
             // Any storage/parse hiccup → treat the folder as empty (Req 8.5).
@@ -128,7 +135,12 @@ class PlaybackConfigView extends WatchUi.View {
         // this track-list view is up, present the PairingView (Req 2.2-2.4).
         _pairingPresented = PairingView.presentIfAwaiting(_pairingPresented);
 
-        refreshTracks();
+        // Built on show (and lazily on the first frame), not every frame: a long book would
+        // otherwise re-read N storage entries on every redraw (design §4.3).
+        if (!_loaded) {
+            refreshTracks();
+            _loaded = true;
+        }
 
         // Empty state: shouldn't happen when reached from a non-empty folder, but
         // defend against a race / corrupt entry (Req 8.5) rather than a blank list.
@@ -312,22 +324,9 @@ class PlaybackConfigDelegate extends WatchUi.BehaviorDelegate {
     //! so playback begins at the chosen track. Wrapped so a startup failure can't
     //! crash input (Req 8.5); nothing is logged (Req 7.3).
     private function openTrack(folder as String, startIndex as Number) as Void {
-        try {
-            var args = { "folder" => folder, "startIndex" => startIndex };
-            // Remember the choice: when the native player later starts/resumes on its own it calls
-            // getContentDelegate(null), and GsoundGApp falls back to this selection.
-            try {
-                Repo.savePlaybackSelection(folder, startIndex);
-            } catch (sex) {
-                DebugLog.log("PB", "savePlaybackSelection FAILED " + DebugLog.describe(sex));
-            }
-            DebugLog.log("PB", "startPlayback folder=" + folder + " idx=" + startIndex.toString());
-            Media.startPlayback(args);
-            DebugLog.log("PB", "startPlayback returned");
-        } catch (ex) {
-            // Never crash input handling (Req 8.5) — but record WHY playback couldn't start.
-            DebugLog.log("PB", "startPlayback FAILED " + DebugLog.describe(ex));
-        }
+        // Shared start path (saves the selection for player-initiated starts; never throws).
+        // For a book this is "play from the chosen chapter at 0:00" (AB-4.3).
+        PlaybackStarter.startAt(folder, startIndex);
     }
 
     //! Apply a highlight delta on the view and request a redraw so the new selection

@@ -11,11 +11,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,6 +77,7 @@ fun FolderListScreen(
         onRemoveFolder = viewModel::onRemoveConfirmed,
         onMessageShown = viewModel::onMessageShown,
         onRefresh = viewModel::refresh,
+        onToggleAudiobook = viewModel::onAudiobookToggled,
     )
 }
 
@@ -90,6 +94,7 @@ fun FolderListContent(
     onRemoveFolder: (String) -> Unit,
     onMessageShown: () -> Unit,
     onRefresh: () -> Unit,
+    onToggleAudiobook: (id: String, isAudiobook: Boolean) -> Unit = { _, _ -> },
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -145,6 +150,7 @@ fun FolderListContent(
                 folders = uiState.folders,
                 contentPadding = innerPadding,
                 onRequestRemove = { pendingRemoval = it },
+                onToggleAudiobook = onToggleAudiobook,
             )
         }
     }
@@ -166,6 +172,7 @@ private fun FolderList(
     folders: List<FolderListItem>,
     contentPadding: PaddingValues,
     onRequestRemove: (FolderListItem) -> Unit,
+    onToggleAudiobook: (id: String, isAudiobook: Boolean) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -191,6 +198,25 @@ private fun FolderList(
                         Text(
                             text = "${folder.trackCount} tracks · ${folder.sizeLabel}",
                             style = MaterialTheme.typography.bodySmall,
+                        )
+                        // AB-1.1: mark the folder as one audiobook (chapters by file name).
+                        // A labelled chip: no extra icon dependency, and its text + selected
+                        // state are announced by TalkBack.
+                        FilterChip(
+                            selected = folder.isAudiobook,
+                            onClick = { onToggleAudiobook(folder.id, !folder.isAudiobook) },
+                            label = { Text("Audiobook") },
+                            leadingIcon = if (folder.isAudiobook) {
+                                {
+                                    Icon(
+                                        Icons.Filled.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            } else {
+                                null
+                            },
                         )
                     }
                 },

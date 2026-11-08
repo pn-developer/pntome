@@ -40,6 +40,7 @@ data class FolderListItem(
     val path: String,
     val trackCount: Int,
     val sizeLabel: String,
+    val isAudiobook: Boolean = false,
 )
 
 /**
@@ -177,6 +178,22 @@ class FolderListViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Mark or unmark the folder with [id] as an audiobook (spec gsound-audiobooks AB-1.1, 1.2).
+     * Persisted immediately; the row repaints via the repository flow, and the watch picks the
+     * change up at the next sync (AB-1.5).
+     */
+    fun onAudiobookToggled(id: String, isAudiobook: Boolean) {
+        viewModelScope.launch {
+            try {
+                folderRepository.setAudiobook(id, isAudiobook)
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                message.value = "Couldn't update the folder: ${e.message ?: "error"}"
+            }
+        }
+    }
+
     /** Clear the transient message after it has been shown in the Snackbar (Req 1.4). */
     fun onMessageShown() {
         message.update { null }
@@ -188,6 +205,7 @@ class FolderListViewModel @Inject constructor(
         path = derivePath(folder.treeUri),
         trackCount = folder.trackCount,
         sizeLabel = ByteSizeFormatter.format(folder.totalBytes),
+        isAudiobook = folder.isAudiobook,
     )
 
     companion object {

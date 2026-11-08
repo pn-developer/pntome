@@ -178,8 +178,17 @@ class SyncOrchestrator @Inject constructor(
                 logger.w(tag, "startSync abort: no cached tracks (add a folder/scan first)")
                 return transition(SyncState.Error("Add a folder with music before syncing."))
             }
-            val manifest = ManifestBuilder.build(tracks)
-            logger.i(tag, "manifest built: ${manifest.tracks.size} track(s) from ${tracks.size} cached")
+            // Audiobook folders (AB-1, AB-3.1): their tracks are flagged `book` and get file-name
+            // chapter titles; every folder is naturally ordered with `seq` (AB-2).
+            val audiobookFolderIds = folderRepository.getFolders()
+                .filter { it.isAudiobook }
+                .mapTo(HashSet()) { it.id }
+            val manifest = ManifestBuilder.build(tracks, audiobookFolderIds)
+            logger.i(
+                tag,
+                "manifest built: ${manifest.tracks.size} track(s) from ${tracks.size} cached, " +
+                    "${audiobookFolderIds.size} audiobook folder(s)"
+            )
 
             // Req 5.7: Wi-Fi precondition — check BEFORE touching the server and refuse to start
             // it when Wi-Fi is down, carrying the centralized "same Wi-Fi network" guidance

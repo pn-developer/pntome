@@ -158,19 +158,28 @@ class FolderListView extends WatchUi.View {
         // models.
         var rowSpacing = 30;
         var window = 2; // rows above/below the highlight to show
+        // Audiobook folders are marked with a text prefix (AB-4.1) — plain text, since device
+        // fonts have no book glyph. One small storage read per frame.
+        var books = [] as Array<Object?>;
+        try {
+            books = Repo.loadBookFolders();
+        } catch (ex) {
+        }
+        var bookPrefix = WatchUi.loadResource(Rez.Strings.FolderListBookPrefix) as String;
         for (var offset = -window; offset <= window; offset++) {
             var idx = _selected + offset;
             if (idx < 0 || idx >= _folders.size()) {
                 continue;
             }
             var y = cy + offset * rowSpacing;
+            var label = Repo.containsValue(books, _folders[idx]) ? bookPrefix + _folders[idx] : _folders[idx];
             if (offset == 0) {
                 dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
-                dc.drawText(cx, y, Graphics.FONT_SMALL, _folders[idx],
+                dc.drawText(cx, y, Graphics.FONT_SMALL, label,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             } else {
                 dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_BLACK);
-                dc.drawText(cx, y, Graphics.FONT_XTINY, _folders[idx],
+                dc.drawText(cx, y, Graphics.FONT_XTINY, label,
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             }
         }
@@ -365,6 +374,11 @@ class FolderListDelegate extends WatchUi.BehaviorDelegate {
     //! resolved + validated by the caller. Wrapped so a push failure can't crash
     //! input (Req 8.5).
     private function openFolder(folder as String) as Void {
+        // Audiobook folders get the book options first (AB-4.3); music opens the track list.
+        if (Repo.isBookFolder(folder)) {
+            BookOptionsMenu.push(folder);
+            return;
+        }
         try {
             var view = new PlaybackConfigView(folder);
             WatchUi.pushView(view,

@@ -51,6 +51,12 @@ android {
         // Robolectric JVM unit tests need access to merged Android resources/manifest.
         unitTests.isIncludeAndroidResources = true
     }
+
+    // Room MigrationTestHelper (instrumented migration test) reads the exported schemas
+    // (app/schemas) as androidTest assets. The JVM migration test reads them from disk instead.
+    sourceSets {
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
 }
 
 // Room: export the DB schema to a versioned JSON file for migration tooling and tests.

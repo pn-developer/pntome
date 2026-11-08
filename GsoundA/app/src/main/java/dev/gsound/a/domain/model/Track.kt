@@ -17,6 +17,9 @@ package dev.gsound.a.domain.model
  * @property durationMs track duration in milliseconds.
  * @property sizeBytes file size in bytes.
  * @property mime MIME type (e.g. `audio/mpeg`).
+ * @property fileName the file's display name (e.g. `01 - Intro.mp3`), used for natural
+ *   chapter/track ordering and audiobook chapter titles (spec gsound-audiobooks AB-2). Empty
+ *   for rows cached before it was recorded, until the next scan.
  */
 data class Track(
     val id: String,
@@ -28,5 +31,6 @@ data class Track(
     val album: String?,
     val durationMs: Long,
     val sizeBytes: Long,
-    val mime: String
+    val mime: String,
+    val fileName: String = ""
 )

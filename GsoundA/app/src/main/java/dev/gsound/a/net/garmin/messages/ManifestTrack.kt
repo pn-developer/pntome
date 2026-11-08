@@ -19,7 +19,9 @@ import kotlinx.serialization.Serializable
  *   "durationMs": 215000,
  *   "sizeBytes": 5123456,
  *   "mime": "audio/mpeg",
- *   "path": "/media/<trackId>"
+ *   "path": "/media/<trackId>",
+ *   "seq": 0,
+ *   "book": false
  * }
  * ```
  *
@@ -35,6 +37,10 @@ import kotlinx.serialization.Serializable
  * @property sizeBytes file size in bytes.
  * @property mime MIME type (e.g. `audio/mpeg`).
  * @property path HTTP path on the server to fetch the audio bytes (e.g. `/media/<trackId>`).
+ * @property seq 0-based play order of the track within its [folder] (natural file-name order,
+ *   spec gsound-audiobooks AB-2.3, AB-3.1). Optional/additive: a watch that doesn't know it
+ *   ignores it; null from an older phone means "index order".
+ * @property book true when the track's folder is marked as an audiobook (AB-3.1). Optional.
  */
 @Serializable
 data class ManifestTrack(
@@ -46,5 +52,7 @@ data class ManifestTrack(
     @SerialName("durationMs") val durationMs: Long,
     @SerialName("sizeBytes") val sizeBytes: Long,
     @SerialName("mime") val mime: String,
-    @SerialName("path") val path: String
+    @SerialName("path") val path: String,
+    @SerialName("seq") val seq: Int? = null,
+    @SerialName("book") val book: Boolean? = null
 )

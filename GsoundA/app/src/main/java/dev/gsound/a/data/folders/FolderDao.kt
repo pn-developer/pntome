@@ -46,4 +46,16 @@ interface FolderDao {
     /** Remove a folder; cascades to its cached tracks via the entity foreign key. */
     @Query("DELETE FROM folders WHERE id = :id")
     suspend fun deleteById(id: String)
+
+    /**
+     * Update only the scan aggregates. Used by the rescan instead of a full-row upsert so a flag
+     * changed while the (slow) scan ran — e.g. the audiobook toggle — is never overwritten with
+     * the value read before the scan.
+     */
+    @Query("UPDATE folders SET trackCount = :trackCount, totalBytes = :totalBytes WHERE id = :id")
+    suspend fun updateAggregates(id: String, trackCount: Int, totalBytes: Long)
+
+    /** Set only the audiobook flag, leaving counts/metadata untouched (AB-1.2). */
+    @Query("UPDATE folders SET isAudiobook = :isAudiobook WHERE id = :id")
+    suspend fun setAudiobook(id: String, isAudiobook: Boolean)
 }

@@ -220,6 +220,8 @@ class GsoundSyncDelegate extends Communications.SyncDelegate {
 
             var rawTracks = Protocol.getArray(data as Dictionary, Messages.FIELD_TRACKS);
             var cleanTracks = ManifestParser.cleanTracks(rawTracks);
+            // Same metadata refresh as the inline-manifest path (AB-3.4, AB-3.5).
+            MetaUpdater.apply(cleanTracks);
 
             var manifest = {
                 Messages.FIELD_SERVER_URL => serverUrl,

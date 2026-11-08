@@ -37,6 +37,62 @@ class MessageCodecTest {
         assertEquals(original, (result as DecodeResult.Valid).message)
     }
 
+    // --- manifest track seq/book (spec gsound-audiobooks AB-3.1, 3.2) --------------------------
+
+    private fun manifestTrack(seq: Int? = null, book: Boolean? = null) = ManifestTrack(
+        id = "t1",
+        folder = "Book",
+        title = "01 Intro",
+        durationMs = 1_800_000L,
+        sizeBytes = 42L,
+        mime = "audio/mpeg",
+        path = "/media/t1",
+        seq = seq,
+        book = book,
+    )
+
+    @Test
+    fun `SYNC_MANIFEST round-trips seq and book`() {
+        val original = SyncManifest(
+            pairingId = pairingId,
+            serverUrl = "http://192.168.1.2:8080",
+            tracks = listOf(manifestTrack(seq = 3, book = true)),
+        )
+
+        val result = MessageCodec.decodeAndValidate(MessageCodec.encode(original), pairingId)
+
+        assertEquals(original, (result as DecodeResult.Valid).message)
+    }
+
+    @Test
+    fun `SYNC_MANIFEST map sent to the watch carries seq as a number and book as a boolean`() {
+        val map = MessageCodec.encodeToMap(
+            SyncManifest(
+                pairingId = pairingId,
+                serverUrl = "http://h",
+                tracks = listOf(manifestTrack(seq = 0, book = true)),
+            )
+        )
+
+        @Suppress("UNCHECKED_CAST")
+        val track = (map["tracks"] as List<Map<String, Any?>>).single()
+        assertEquals(0L, track["seq"])     // same numeric representation as "v"
+        assertEquals(true, track["book"])
+    }
+
+    @Test
+    fun `a track without seq and book (older peer) still decodes`() {
+        val json = """{"type":"SYNC_MANIFEST","v":1,"pairingId":"$pairingId","serverUrl":"http://h",""" +
+            """"tracks":[{"id":"t1","folder":"F","title":"T","durationMs":1,"sizeBytes":2,""" +
+            """"mime":"audio/mpeg","path":"/media/t1"}]}"""
+
+        val result = MessageCodec.decodeAndValidate(json, pairingId)
+
+        val track = ((result as DecodeResult.Valid).message as SyncManifest).tracks.single()
+        assertEquals(null, track.seq)
+        assertEquals(null, track.book)
+    }
+
     // --- watch diagnostic LOG line (G→A) ----------------------------------------------------
 
     @Test

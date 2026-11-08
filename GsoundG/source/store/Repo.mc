@@ -1,6 +1,7 @@
 import Toybox.Application;
 import Toybox.Lang;
 import Toybox.Media;
+import Toybox.Time;
 
 //! Repo — Application.Storage persistence facade (design.md §8.3, §10).
 //!
@@ -199,6 +200,11 @@ module Repo {
         Application.Storage.setValue(KEY_LAST_PLAYBACK, selection as Application.Storage.ValueType);
     }
 
+    //! Persist the last playback args as given (folder + startIndex, or folder + mode).
+    function savePlaybackArgs(args as Dictionary) as Void {
+        Application.Storage.setValue(KEY_LAST_PLAYBACK, args as Application.Storage.ValueType);
+    }
+
     //! The last playback selection, or null when none was saved / it is malformed.
     function loadPlaybackSelection() as Dictionary? {
         var raw = Application.Storage.getValue(KEY_LAST_PLAYBACK);
@@ -278,7 +284,21 @@ module Repo {
                 folders.add(folder);
                 saveFolders(folders);
             }
+            // Audiobook folder list (incremental add; removals go through rebuildFolders).
+            if (isTrue(entry.get("book"))) {
+                var books = loadBookFolders();
+                if (!containsValue(books, folder)) {
+                    books.add(folder);
+                    saveBookFolders(books);
+                }
+            }
         }
+    }
+
+    //! Rewrite an EXISTING track entry's dict only (no index/folder bookkeeping). Used by
+    //! MetaUpdater, which rebuilds the folder lists once after all updates.
+    function putTrackEntryOnly(id as String, entry as Dictionary) as Void {
+        Application.Storage.setValue(trackKey(id), entry as Application.Storage.ValueType);
     }
 
     //! Load the track entry for `id`, or null if there is none.
@@ -440,6 +460,7 @@ module Repo {
     function rebuildFolders() as Void {
         var ids = loadIndex();
         var folders = [] as Array<Object?>;
+        var books = [] as Array<Object?>;
         for (var i = 0; i < ids.size(); i++) {
             var id = ids[i];
             if (!(id instanceof String)) {
@@ -453,8 +474,110 @@ module Repo {
             if (folder instanceof String && !folder.equals("") && !containsValue(folders, folder)) {
                 folders.add(folder);
             }
+            if (folder instanceof String && !folder.equals("") && isTrue(entry.get("book"))
+                    && !containsValue(books, folder)) {
+                books.add(folder);
+            }
         }
         saveFolders(folders);
+        replaceBookFolders(books);
+    }
+
+    // --- audiobook folders + bookmarks (spec gsound-audiobooks AB-3.3, AB-5) -----------------
+    //
+    //   - "bk:folders"   -> Array<String> of folder names whose tracks are flagged `book`
+    //                       (kept in sync by putTrack / rebuildFolders / MetaUpdater). Small.
+    //   - "bm:<folder>"  -> bookmark { "trk" => trackId, "pos" => seconds, "idx" => chapter
+    //                       index, "fin" => Boolean, "at" => epoch seconds }, one small value
+    //                       per book. `at` enables a longer rewind after a long break (later).
+
+    //! Storage key: names of the audiobook folders.
+    const KEY_BOOK_FOLDERS = "bk:folders";
+
+    //! Prefix for a book's bookmark key: "bm:" + folder name.
+    const KEY_BOOKMARK_PREFIX = "bm:";
+
+    //! The audiobook folder names, or an empty array.
+    function loadBookFolders() as Array<Object?> {
+        var raw = Application.Storage.getValue(KEY_BOOK_FOLDERS);
+        return (raw instanceof Array) ? (raw as Array<Object?>) : ([] as Array<Object?>);
+    }
+
+    //! Persist the audiobook folder names (cleared when empty).
+    function saveBookFolders(books as Array<Object?>) as Void {
+        if (books.size() == 0) {
+            Application.Storage.deleteValue(KEY_BOOK_FOLDERS);
+        } else {
+            Application.Storage.setValue(KEY_BOOK_FOLDERS, books as Application.Storage.ValueType);
+        }
+    }
+
+    //! Replace the audiobook folder list and drop the bookmark of every folder that stopped
+    //! being a book (unmarked on the phone, or all its chapters removed; AB-5.6).
+    function replaceBookFolders(books as Array<Object?>) as Void {
+        var old = loadBookFolders();
+        for (var i = 0; i < old.size(); i++) {
+            var name = old[i];
+            if (name instanceof String && !containsValue(books, name)) {
+                deleteBookmark(name as String);
+            }
+        }
+        saveBookFolders(books);
+    }
+
+    //! True only for a Boolean `true` (stored flags may be absent or of another type).
+    function isTrue(value as Object?) as Boolean {
+        return (value instanceof Boolean) && (value as Boolean);
+    }
+
+    //! True when `folder` is an audiobook folder. Cheap (one small value), safe per frame.
+    function isBookFolder(folder as String?) as Boolean {
+        if (folder == null) {
+            return false;
+        }
+        try {
+            return containsValue(loadBookFolders(), folder);
+        } catch (ex) {
+            return false;
+        }
+    }
+
+    //! The bookmark for `folder`, or null when none/malformed. Never throws.
+    function loadBookmark(folder as String) as Dictionary? {
+        try {
+            var raw = Application.Storage.getValue(KEY_BOOKMARK_PREFIX + folder);
+            if (raw instanceof Dictionary && (raw as Dictionary).get("trk") instanceof String) {
+                return raw as Dictionary;
+            }
+        } catch (ex) {
+        }
+        return null;
+    }
+
+    //! Persist the bookmark for `folder`. Never throws (AB-8.2): a failed write just keeps
+    //! the previous bookmark.
+    function saveBookmark(folder as String, trackId as String, pos as Number, index as Number,
+            finished as Boolean) as Void {
+        try {
+            var value = {
+                "trk" => trackId,
+                "pos" => (pos < 0) ? 0 : pos,
+                "idx" => index,
+                "fin" => finished,
+                "at" => Time.now().value()
+            };
+            Application.Storage.setValue(KEY_BOOKMARK_PREFIX + folder, value as Application.Storage.ValueType);
+        } catch (ex) {
+            DebugLog.log("REPO", "saveBookmark FAILED " + DebugLog.describe(ex));
+        }
+    }
+
+    //! Delete the bookmark for `folder`. Never throws.
+    function deleteBookmark(folder as String) as Void {
+        try {
+            Application.Storage.deleteValue(KEY_BOOKMARK_PREFIX + folder);
+        } catch (ex) {
+        }
     }
 
     // --- pending manifest (chunked) --------------------------------------------

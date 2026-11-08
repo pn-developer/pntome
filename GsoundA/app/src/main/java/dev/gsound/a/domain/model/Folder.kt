@@ -12,6 +12,8 @@ package dev.gsound.a.domain.model
  * @property trackCount number of eligible (supported) tracks found in this folder.
  * @property totalBytes total size in bytes of the eligible tracks.
  * @property addedAt epoch millis when the folder was added.
+ * @property isAudiobook true when the user marked this folder as an audiobook (one book,
+ *   chapters ordered by file name; spec gsound-audiobooks AB-1). Defaults to music.
  */
 data class Folder(
     val id: String,
@@ -19,5 +21,6 @@ data class Folder(
     val displayName: String,
     val trackCount: Int,
     val totalBytes: Long,
-    val addedAt: Long
+    val addedAt: Long,
+    val isAudiobook: Boolean = false
 )

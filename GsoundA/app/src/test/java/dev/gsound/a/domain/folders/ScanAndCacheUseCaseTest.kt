@@ -50,6 +50,9 @@ class ScanAndCacheUseCaseTest {
         var lastRootName: String? = null
         var callCount = 0
 
+        /** Runs while "scanning" — lets a test change the folder mid-scan. */
+        var duringScan: suspend () -> Unit = {}
+
         override suspend fun scanToResult(
             treeUri: Uri,
             folderId: String,
@@ -57,6 +60,7 @@ class ScanAndCacheUseCaseTest {
             settings: AppSettings?
         ): ScanResult {
             callCount++
+            duringScan()
             lastTreeUri = treeUri
             lastFolderId = folderId
             lastRootName = rootName
@@ -199,6 +203,45 @@ class ScanAndCacheUseCaseTest {
         val folder = repository.findFolder(folderId)!!
         assertEquals(0, folder.trackCount)
         assertEquals(0L, folder.totalBytes)
+    }
+
+    // --- spec gsound-audiobooks AB-1.2, AB-2.1 ------------------------------------------------
+
+    @Test
+    fun `audiobook flag survives a rescan`() = runBlocking {
+        seedFolder()
+        repository.setAudiobook(folderId, true)
+        scanner.result = ScanResult(listOf(track("a")), skippedCount = 0)
+
+        useCase.scanAndCache(folderId)
+
+        assertTrue(repository.findFolder(folderId)!!.isAudiobook)
+    }
+
+    @Test
+    fun `audiobook toggled while a scan runs is not overwritten by the scan`() = runBlocking {
+        seedFolder()
+        scanner.result = ScanResult(listOf(track("a", 100L)), skippedCount = 0)
+        // The user flips the toggle after the use case read the folder but before it writes
+        // the refreshed aggregates back.
+        scanner.duringScan = { repository.setAudiobook(folderId, true) }
+
+        useCase.scanAndCache(folderId)
+
+        val folder = repository.findFolder(folderId)!!
+        assertTrue(folder.isAudiobook)
+        assertEquals(1, folder.trackCount)
+        assertEquals(100L, folder.totalBytes)
+    }
+
+    @Test
+    fun `scanned file names are cached`() = runBlocking {
+        seedFolder()
+        scanner.result = ScanResult(listOf(track("a").copy(fileName = "01 Intro.mp3")), 0)
+
+        useCase.scanAndCache(folderId)
+
+        assertEquals("01 Intro.mp3", repository.getTracks(folderId).single().fileName)
     }
 
     @Test

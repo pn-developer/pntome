@@ -51,16 +51,25 @@ class FolderIterator extends Media.ContentIterator {
     //! "no more" (get() then returns null — end-of-folder stop, no wrap; Req 6.5).
     private var _cursor as Number;
 
-    //! Build a FolderIterator for `folder`, starting at `startIndex` (default 0,
-    //! clamped into range). Builds the ordered id list up front; the per-track
-    //! Media.Content objects are built lazily in contentAt() so a corrupt entry only
-    //! affects its own track.
-    function initialize(folder as String, startIndex as Number) {
+    //! Audiobook folder: book playback profile (30 s skips) (AB-7).
+    private var _isBook as Boolean;
+
+    //! Resume position (seconds) for the START track only, served while the cursor has not
+    //! moved off it; 0 = play from the beginning (AB-6.1, AB-6.3).
+    private var _startPos as Number;
+    private var _startIndex as Number;
+
+    //! Build a FolderIterator for `folder`, starting at `startIndex` (clamped into range) and,
+    //! for a resumed book chapter, at `startPos` seconds. Builds the ordered id list up front
+    //! (FolderTracks — the shared play order); the per-track Media.Content objects are built
+    //! lazily in contentAt() so a corrupt entry only affects its own track.
+    function initialize(folder as String, startIndex as Number, startPos as Number, isBook as Boolean) {
         ContentIterator.initialize();
         _folder = folder;
-        _ids = buildIds(folder);
+        _isBook = isBook;
+        _ids = FolderTracks.orderedIds(folder);
         DebugLog.log("PB", "FolderIterator folder=" + folder + " tracks=" + _ids.size().toString()
-            + " start=" + startIndex.toString());
+            + " start=" + startIndex.toString() + " pos=" + startPos.toString() + " book=" + isBook.toString());
         var start = startIndex;
         if (start < 0) {
             start = 0;
@@ -72,35 +81,13 @@ class FolderIterator extends Media.ContentIterator {
             start = 0;
         }
         _cursor = start;
+        _startIndex = start;
+        _startPos = (startPos > 0 && start == startIndex) ? startPos : 0;
     }
 
-    //! Build the ordered track-id list for `folder`. IDENTICAL filter to
-    //! PlaybackConfigView.refreshTracks: iterate Repo.loadIndex(), load each entry,
-    //! keep ids whose entry "folder" String-equals `folder`. Fully wrapped; any
-    //! storage/parse hiccup yields an empty list (Req 8.5).
-    private function buildIds(folder as String) as Array<String> {
-        var ids = [] as Array<String>;
-        try {
-            var all = Repo.loadIndex();
-            for (var i = 0; i < all.size(); i++) {
-                var id = all[i];
-                if (!(id instanceof String) || (id as String).equals("")) {
-                    continue;
-                }
-                var entry = Repo.getTrack(id as String);
-                if (entry == null) {
-                    continue;
-                }
-                var f = entry.get("folder");
-                if (!(f instanceof String) || !(f as String).equals(folder)) {
-                    continue;
-                }
-                ids.add(id as String);
-            }
-        } catch (ex) {
-            ids = [] as Array<String>;
-        }
-        return ids;
+    //! The ordered track ids this iterator walks (shared with the bookmark session).
+    function ids() as Array<String> {
+        return _ids;
     }
 
     //! Skipping is allowed (Req 6.4) — the player exposes skip-forward/back controls.
@@ -127,11 +114,23 @@ class FolderIterator extends Media.ContentIterator {
         // player. This is the ONLY physical-button influence an ACP has — the player UI and the
         // other buttons are system-owned and cannot be remapped. Play/pause and previous stay
         // available as on-screen controls. Track-level previous/next, not seconds-based skips.
-        profile.playbackControls = [
-            Media.PLAYBACK_CONTROL_NEXT,
-            Media.PLAYBACK_CONTROL_PLAYBACK,
-            Media.PLAYBACK_CONTROL_PREVIOUS
-        ];
+        if (_isBook) {
+            // Books (AB-7): same hotkey (next chapter), plus the player's 30 s skip back/forward
+            // for long chapters. The 30 s size is fixed on CIQ < 4.2.4 (fēnix 6).
+            profile.playbackControls = [
+                Media.PLAYBACK_CONTROL_NEXT,
+                Media.PLAYBACK_CONTROL_PLAYBACK,
+                Media.PLAYBACK_CONTROL_PREVIOUS,
+                Media.PLAYBACK_CONTROL_SKIP_BACKWARD,
+                Media.PLAYBACK_CONTROL_SKIP_FORWARD
+            ];
+        } else {
+            profile.playbackControls = [
+                Media.PLAYBACK_CONTROL_NEXT,
+                Media.PLAYBACK_CONTROL_PLAYBACK,
+                Media.PLAYBACK_CONTROL_PREVIOUS
+            ];
+        }
         // Ask the player to report song events right away (threshold 0 = as soon as a song
         // begins). With this false we never saw onSong, so we couldn't tell whether a track
         // actually started; now ContentDelegate.onSong logs START/PAUSE/COMPLETE.
@@ -163,6 +162,7 @@ class FolderIterator extends Media.ContentIterator {
         if (_cursor < _ids.size()) {
             _cursor += 1;
         }
+        _startPos = 0; // later chapters start at 0:00 (AB-6.3)
         DebugLog.log("PB", "iter.next -> cursor=" + _cursor.toString());
         return contentAt(_cursor);
     }
@@ -173,6 +173,7 @@ class FolderIterator extends Media.ContentIterator {
         if (_cursor >= 0) {
             _cursor -= 1;
         }
+        _startPos = 0;
         DebugLog.log("PB", "iter.previous -> cursor=" + _cursor.toString());
         return contentAt(_cursor);
     }
@@ -187,6 +188,22 @@ class FolderIterator extends Media.ContentIterator {
     function peekPrevious() as Media.Content or Null {
         DebugLog.log("PB", "iter.peekPrevious cursor=" + _cursor.toString());
         return contentAt(_cursor - 1);
+    }
+
+    //! The resumed chapter: an ActiveContent built from the SYSTEM's cached ref + metadata
+    //! (nothing of ours substituted — PF-1.1) with the start position (design §4.5, risk R1
+    //! fallback 1). If it can't be built, play the unmodified cached Content from 0:00.
+    private function resumeContent(cached as Media.Content, index as Number) as Media.Content {
+        try {
+            var active = new Media.ActiveContent(cached.getContentRef(), cached.getMetadata(), _startPos);
+            DebugLog.log("PB", "contentAt[" + index.toString() + "] RESUME ActiveContent pos="
+                + _startPos.toString() + " start=" + active.getPlaybackStartPosition().toString());
+            return active;
+        } catch (ex) {
+            DebugLog.log("PB", "contentAt[" + index.toString() + "] ActiveContent FAILED "
+                + DebugLog.describe(ex) + " -> from 0:00");
+            return cached;
+        }
     }
 
     //! Build the Media.Content for the track at `index`, or null on any problem.
@@ -239,10 +256,19 @@ class FolderIterator extends Media.ContentIterator {
                 // Returned UNMODIFIED (no setMetadata): the system already knows this item's
                 // metadata from the file, and replacing it on the system's own object is the one
                 // thing we do that Garmin's reference flow doesn't — ruled out as a cause here.
-                var cached = Media.getCachedContentObj(ref);
-                DebugLog.log("PB", "contentAt[" + index.toString() + "] cached OK id=" + DebugLog.shape(mediaId)
-                    + " start=" + cached.getPlaybackStartPosition().toString());
-                return cached;
+                // A missing item can come back as NULL instead of throwing (seen in the
+                // simulator). Calling a method on null is a VM error that try/catch can NOT
+                // catch, so check before touching it and use the fallback below.
+                var cached = Media.getCachedContentObj(ref) as Media.Content?;
+                if (cached != null) {
+                    DebugLog.log("PB", "contentAt[" + index.toString() + "] cached OK id=" + DebugLog.shape(mediaId));
+                    if (index == _startIndex && _startPos > 0) {
+                        return resumeContent(cached, index);
+                    }
+                    return cached;
+                }
+                DebugLog.log("PB", "contentAt[" + index.toString() + "] getCachedContentObj returned NULL id="
+                    + DebugLog.shape(mediaId));
             } catch (cex) {
                 DebugLog.log("PB", "contentAt[" + index.toString() + "] getCachedContentObj FAILED id="
                     + DebugLog.shape(mediaId) + " " + DebugLog.describe(cex));

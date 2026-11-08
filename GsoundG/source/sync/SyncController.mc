@@ -131,6 +131,11 @@ class SyncController {
             var rawTracks = Protocol.getArray(msg, Messages.FIELD_TRACKS);
             var cleanTracks = ManifestParser.cleanTracks(rawTracks);
 
+            // Audiobook flag / chapter order / titles for tracks already on the watch change
+            // without any id change, so apply them now — before SyncNeed decides there is
+            // "nothing to download" (spec gsound-audiobooks AB-3.4).
+            MetaUpdater.apply(cleanTracks);
+
             var manifest = {
                 Messages.FIELD_SERVER_URL => serverUrl,
                 Messages.FIELD_TRACKS => cleanTracks

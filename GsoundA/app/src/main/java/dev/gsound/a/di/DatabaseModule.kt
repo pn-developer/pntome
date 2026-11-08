@@ -27,6 +27,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): GsoundDatabase =
         Room.databaseBuilder(context, GsoundDatabase::class.java, GsoundDatabase.NAME)
+            .addMigrations(GsoundDatabase.MIGRATION_1_2)
             .build()
 
     @Provides

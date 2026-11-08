@@ -10,7 +10,7 @@
 #
 # Usage:
 #   ciq-sim.sh start                      # launch the simulator GUI (detached)
-#   ciq-sim.sh run <app.prg> <device>     # monkeydo a prg into the running sim
+#   ciq-sim.sh run <app.prg> <device> [monkeydo args]  # e.g. -t for (:test) unit tests
 #   ciq-sim.sh build <jungle> <device> <out.prg>   # build on host (no container)
 #   ciq-sim.sh test <jungle> <device>     # build + start + run, one shot
 #   ciq-sim.sh stop                       # kill the simulator
@@ -92,13 +92,16 @@ cmd_start() {
 }
 
 cmd_run() {
-  local prg="$1" device="$2"
+  local prg="$1" device="$2"; shift 2
+  # Any further args go to monkeydo verbatim, e.g. `-t` to run (:test) unit tests from a
+  # `monkeyc --unit-test` build.
+  local extra=""; for a in "$@"; do extra+=" '$a'"; done
   require_container
   [ -n "$(sim_pid)" ] || die "simulator not running; run 'ciq-sim.sh start' first"
   local sdk; sdk="$(detect_sdk)"
-  echo "ciq-sim: monkeydo $prg ($device)"
+  echo "ciq-sim: monkeydo $prg ($device)$extra"
   # monkeydo stays attached while the app runs; it prints app crashes/exit here.
-  cexec bash -c "'$sdk/bin/monkeydo' '$prg' '$device'"
+  cexec bash -c "'$sdk/bin/monkeydo' '$prg' '$device'$extra"
 }
 
 cmd_stop() {

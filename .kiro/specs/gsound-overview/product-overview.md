@@ -94,9 +94,19 @@ All messages: `{ "v": 1, "type": <string>, "pairingId": <uuid>, ... }`.
   "durationMs": 215000,
   "sizeBytes": 5123456,
   "mime": "audio/mpeg",
-  "path": "/media/<trackId>"
+  "path": "/media/<trackId>",
+  "seq": 0,
+  "book": false
 }
 ```
+
+Optional, additive fields (protocol stays `v: 1`; peers that don't know them ignore them):
+- `seq`: the 0-based play order within `folder`, a natural sort of file names. The manifest is
+  also emitted grouped by folder in `seq` order.
+- `book`: true when the folder is marked as an audiobook. For books, `title` is the file name
+  without its extension.
+
+Defined in `../gsound-audiobooks/`.
 
 ### 5.2 Data channel (HTTP)
 
@@ -157,4 +167,7 @@ pn_gsound/
 - DRM/protected content.
 - Multiple simultaneous paired watches.
 - iOS companion.
-- Playlists beyond "folder = playlist".
+- Playlists beyond "folder = playlist". The one extension is **audiobook folders**: a folder
+  marked as an audiobook on the phone is one book with file-name-ordered chapters and a
+  per-book resume bookmark on the watch (see `../gsound-audiobooks/`). Nested books, playback
+  speed and syncing bookmarks back to the phone remain out of scope.

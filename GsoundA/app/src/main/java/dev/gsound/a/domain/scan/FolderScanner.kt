@@ -263,7 +263,8 @@ class FolderScanner @Inject constructor(
             album = meta.album?.takeIf { it.isNotBlank() },
             durationMs = meta.durationMs,
             sizeBytes = child.sizeBytes,
-            mime = child.mimeType ?: "application/octet-stream"
+            mime = child.mimeType ?: "application/octet-stream",
+            fileName = child.displayName // AB-2.1: natural ordering + audiobook chapter titles
         )
     }
 

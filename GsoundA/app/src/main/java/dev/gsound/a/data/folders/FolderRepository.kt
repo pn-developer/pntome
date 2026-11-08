@@ -72,6 +72,14 @@ class FolderRepository @Inject constructor(
     suspend fun addFolderIfAbsent(folder: Folder): Boolean =
         folderDao.insertIgnore(folder.toEntity()) != -1L
 
+    /** Update a folder's scan aggregates only (other columns untouched). */
+    suspend fun updateFolderAggregates(id: String, trackCount: Int, totalBytes: Long) =
+        folderDao.updateAggregates(id, trackCount, totalBytes)
+
+    /** Mark/unmark a folder as an audiobook (spec gsound-audiobooks AB-1.2). */
+    suspend fun setAudiobook(id: String, isAudiobook: Boolean) =
+        folderDao.setAudiobook(id, isAudiobook)
+
     /** Remove a folder and its cached tracks (cascade via the entity foreign key, Req 2.2). */
     suspend fun removeFolder(id: String) =
         folderDao.deleteById(id)

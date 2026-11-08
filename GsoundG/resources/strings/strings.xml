@@ -70,4 +70,13 @@
          has no loadable tracks (defensive; should not happen from a non-empty
          folder). -->
     <string id="PlaybackTracksEmpty">No tracks</string>
+
+    <!-- Audiobooks (spec gsound-audiobooks AB-4): prefix marking a book folder in the folder
+         list, and the book options menu items. The Resume sub-label ("Ch 3 · 12:40") is a live
+         value. -->
+    <string id="FolderListBookPrefix">Book · </string>
+    <string id="BookResume">Resume</string>
+    <string id="BookFromStart">Play from start</string>
+    <string id="BookChapters">Chapters</string>
+    <string id="BookFinished">Finished</string>
 </strings>

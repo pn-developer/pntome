@@ -74,7 +74,7 @@ class ManifestBuilderTest {
     }
 
     @Test
-    fun `preserves input order and maps every track`() {
+    fun `maps every track in natural title order when file names are unknown`() {
         val manifest = ManifestBuilder.build(listOf(track("a"), track("b"), track("c")))
 
         assertEquals(listOf("a", "b", "c"), manifest.tracks.map { it.id })
@@ -92,5 +92,81 @@ class ManifestBuilderTest {
 
         assertEquals("Rock", manifest.tracks[0].folder)
         assertEquals("Jazz", manifest.tracks[1].folder)
+    }
+
+    // --- spec gsound-audiobooks: ordering, seq, book ------------------------------------------
+
+    private fun file(
+        id: String,
+        fileName: String,
+        relativeFolder: String = "Book",
+        folderId: String = "folder-1",
+        title: String = "ID3 $id"
+    ) = track(id, relativeFolder = relativeFolder, title = title)
+        .copy(fileName = fileName, folderId = folderId)
+
+    @Test
+    fun `orders each folder naturally by file name and numbers seq from 0`() {
+        val manifest = ManifestBuilder.build(
+            listOf(
+                file("c10", "10 Ten.mp3"),
+                file("c2", "2 Two.mp3"),
+                file("c1", "01 One.mp3")
+            )
+        )
+        assertEquals(listOf("c1", "c2", "c10"), manifest.tracks.map { it.id })
+        assertEquals(listOf(0, 1, 2), manifest.tracks.map { it.seq })
+    }
+
+    @Test
+    fun `multi-part prefixes order by disc then track`() {
+        val manifest = ManifestBuilder.build(
+            listOf(
+                file("d2t1", "2-01.mp3"),
+                file("d1t10", "1-10.mp3"),
+                file("d1t2", "1-02.mp3")
+            )
+        )
+        assertEquals(listOf("d1t2", "d1t10", "d2t1"), manifest.tracks.map { it.id })
+    }
+
+    @Test
+    fun `groups keep first-seen order and seq restarts per folder`() {
+        val manifest = ManifestBuilder.build(
+            listOf(
+                file("r2", "2.mp3", relativeFolder = "Rock"),
+                file("j1", "1.mp3", relativeFolder = "Jazz"),
+                file("r1", "1.mp3", relativeFolder = "Rock")
+            )
+        )
+        assertEquals(listOf("r1", "r2", "j1"), manifest.tracks.map { it.id })
+        assertEquals(listOf(0, 1, 0), manifest.tracks.map { it.seq })
+    }
+
+    @Test
+    fun `audiobook folders are flagged and use file-name chapter titles`() {
+        val manifest = ManifestBuilder.build(
+            listOf(
+                file("b1", "01 - The Beginning.mp3", folderId = "book"),
+                file("m1", "01 Song.mp3", relativeFolder = "Music", folderId = "music")
+            ),
+            audiobookFolderIds = setOf("book")
+        )
+        val book = manifest.tracks.first { it.id == "b1" }
+        val music = manifest.tracks.first { it.id == "m1" }
+        assertEquals(true, book.book)
+        assertEquals("01 - The Beginning", book.title)   // not the ID3 title
+        assertEquals(false, music.book)
+        assertEquals("ID3 m1", music.title)              // music keeps its tag title
+    }
+
+    @Test
+    fun `audiobook track without a recorded file name keeps its title`() {
+        val mt = ManifestBuilder.build(
+            listOf(file("b1", "", folderId = "book", title = "Fallback")),
+            audiobookFolderIds = setOf("book")
+        ).tracks.single()
+        assertEquals("Fallback", mt.title)
+        assertEquals(true, mt.book)
     }
 }

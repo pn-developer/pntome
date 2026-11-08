@@ -1,5 +1,6 @@
 package dev.gsound.a.data.folders
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -40,7 +41,9 @@ data class TrackEntity(
     val album: String?,
     val durationMs: Long,
     val sizeBytes: Long,
-    val mime: String
+    val mime: String,
+    /** File display name (DB v2); default matches the migration's `DEFAULT ''`. */
+    @ColumnInfo(defaultValue = "") val fileName: String = ""
 )
 
 /** Maps this persistence entity to its pure domain model. */
@@ -54,7 +57,8 @@ fun TrackEntity.toDomain(): Track = Track(
     album = album,
     durationMs = durationMs,
     sizeBytes = sizeBytes,
-    mime = mime
+    mime = mime,
+    fileName = fileName
 )
 
 /** Maps a domain [Track] to its persistence entity. */
@@ -68,5 +72,6 @@ fun Track.toEntity(): TrackEntity = TrackEntity(
     album = album,
     durationMs = durationMs,
     sizeBytes = sizeBytes,
-    mime = mime
+    mime = mime,
+    fileName = fileName
 )

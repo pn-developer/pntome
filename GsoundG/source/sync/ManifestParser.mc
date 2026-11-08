@@ -81,7 +81,31 @@ module ManifestParser {
         putIfNumber(track, raw, Messages.FIELD_DURATION_MS);
         putIfNumber(track, raw, Messages.FIELD_SIZE_BYTES);
 
+        // Audiobook fields (spec gsound-audiobooks AB-3.1). Optional: an older phone omits
+        // them (→ music folder, index order). `seq` may arrive as a Long from the phone's
+        // JSON bridge, so it is normalised to a Number.
+        var seq = seqOf(raw.get(Messages.FIELD_SEQ));
+        if (seq != null) {
+            track.put(Messages.FIELD_SEQ, seq);
+        }
+        var book = raw.get(Messages.FIELD_BOOK);
+        if (book instanceof Boolean) {
+            track.put(Messages.FIELD_BOOK, book);
+        }
+
         return track;
+    }
+
+    //! A non-negative Number from a Number or Long value, else null.
+    function seqOf(value as Object?) as Number? {
+        if (value instanceof Number) {
+            return ((value as Number) >= 0) ? (value as Number) : null;
+        }
+        if (value instanceof Long) {
+            var n = (value as Long).toNumber();
+            return (n >= 0) ? n : null;
+        }
+        return null;
     }
 
     //! Copy `key` from `raw` into `dest` only if present as a String. Keeps

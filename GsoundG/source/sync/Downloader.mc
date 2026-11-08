@@ -486,6 +486,14 @@ class Downloader {
             "album"   => stringField(track, Messages.FIELD_ALBUM),
             "mime"    => stringField(track, Messages.FIELD_MIME)
         };
+        // Audiobook metadata (spec gsound-audiobooks AB-3.3): play order + book flag, when sent.
+        var seq = track.get(Messages.FIELD_SEQ);
+        if (seq instanceof Number) {
+            entry.put("seq", seq);
+        }
+        if (Repo.isTrue(track.get(Messages.FIELD_BOOK))) {
+            entry.put("book", true);
+        }
         var trackId = stringField(track, Messages.FIELD_ID);
         // Storage-full guard (Req 4.9): Repo.putTrack writes the track entry (and
         // its index/folders updates) via Application.Storage.setValue, which the

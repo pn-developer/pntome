@@ -115,12 +115,13 @@ class ScanAndCacheUseCase @Inject constructor(
             }
             folderRepository.upsertTracks(reconciliation.toUpsert)
 
-            // Req 2.1: keep the folder's shown count/size in step with the cache.
-            folderRepository.upsertFolder(
-                folder.copy(
-                    trackCount = reconciliation.trackCount,
-                    totalBytes = reconciliation.totalBytes
-                )
+            // Req 2.1: keep the folder's shown count/size in step with the cache. Aggregates
+            // only — a full-row write of the pre-scan `folder` would clobber a flag (audiobook)
+            // toggled while the scan ran.
+            folderRepository.updateFolderAggregates(
+                id = folder.id,
+                trackCount = reconciliation.trackCount,
+                totalBytes = reconciliation.totalBytes
             )
 
             ScanAndCacheResult.Success(

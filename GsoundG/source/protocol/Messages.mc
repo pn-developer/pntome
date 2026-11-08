@@ -95,6 +95,11 @@ module Messages {
     const FIELD_SIZE_BYTES = "sizeBytes";
     const FIELD_MIME = "mime";
     const FIELD_PATH = "path";
+    //! 0-based play order within the track's folder (natural file-name order; optional,
+    //! spec gsound-audiobooks AB-3.1).
+    const FIELD_SEQ = "seq";
+    //! True when the track's folder is an audiobook (optional, AB-3.1).
+    const FIELD_BOOK = "book";
 
     //! True when `type` is one of the known control-message types above. Used by
     //! Protocol.validate to reject messages of an unrecognized type (Req 8.4).
