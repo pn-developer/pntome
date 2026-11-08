@@ -125,6 +125,7 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         try {
             var control = new ControlChannel();
             control.setHandler(Messages.TYPE_PING, method(:onPing));
+            control.setHandler(Messages.TYPE_BOOKMARK, method(:onBookmark));
 
             // Bring up pairing: the PairingManager registers its own PAIR_REQUEST/
             // PAIR_CONFIRM/UNPAIR handlers on the channel and drives the pairing
@@ -156,6 +157,12 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         }
     }
 
+    //! BOOKMARK handler: thin delegator (the message already passed validation and the pairing
+    //! filter in ControlChannel). See BookmarkApply.
+    function onBookmark(msg as Dictionary) as Void {
+        BookmarkApply.handle(msg);
+    }
+
     //! PING handler: reply with a PONG carrying our stored pairingId, then send a
     //! STATS message alongside it so the phone always has current library stats
     //! whenever it pings (Req 5.3, overview §5.1). Only reached for messages that
@@ -184,6 +191,10 @@ class GsoundGApp extends Application.AudioContentProviderApp {
         // Best-effort STATS alongside the PONG — never let a failure here affect
         // the PONG that already went out (Req 5.3, 8.5).
         sendStats(control, pairingId);
+
+        // Audiobook bookmarks, one BOOKMARK message per book, strictly one in flight
+        // (PL-4.1). Best-effort; never throws.
+        BookmarkSender.sendAll(control.method(:transmit), pairingId);
 
         // Debug aid: forward unsent watch log lines to the phone, one per message (logcat tag
         // Gsound.Watch). Only from here — the phone's "Refresh stats" PING — never from the

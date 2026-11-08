@@ -26,6 +26,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.gsound.a.ui.folders.FolderListScreen
 import dev.gsound.a.ui.pairing.PairingScreen
+import dev.gsound.a.ui.player.PlayerScreen
+import dev.gsound.a.ui.player.PlayerViewModel
 import dev.gsound.a.ui.sync.SyncScreen
 import dev.gsound.a.ui.theme.StatusOffline
 import dev.gsound.a.ui.theme.StatusOnline
@@ -41,8 +43,11 @@ import dev.gsound.a.ui.theme.StatusOnline
 fun GsoundApp(
     modifier: Modifier = Modifier,
     navStatusViewModel: NavBarStatusViewModel = hiltViewModel(),
+    // Activity-scoped: one controller shared by the Folders mini-player and the player screen.
+    playerViewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
+    val playerState by playerViewModel.uiState.collectAsState()
     val pairingStatus by navStatusViewModel.pairingStatus.collectAsState()
 
     Scaffold(
@@ -94,9 +99,33 @@ fun GsoundApp(
             startDestination = Route.Folders,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable<Route.Folders> { FolderListScreen() }
+            composable<Route.Folders> {
+                FolderListScreen(
+                    playerState = playerState,
+                    onPlayFolder = {
+                        playerViewModel.playFolder(it)
+                        navController.navigate(Route.Player)
+                    },
+                    onTogglePlayPause = playerViewModel::togglePlayPause,
+                    onOpenPlayer = { navController.navigate(Route.Player) },
+                    onAttachPlayer = { playerViewModel.connectIfRunning() },
+                )
+            }
             composable<Route.Pairing> { PairingScreen() }
             composable<Route.Sync> { SyncScreen() }
+            composable<Route.Player> {
+                PlayerScreen(
+                    state = playerState,
+                    onBack = { navController.popBackStack() },
+                    onTogglePlayPause = playerViewModel::togglePlayPause,
+                    onPrevious = playerViewModel::previous,
+                    onNext = playerViewModel::next,
+                    onSkipBack = playerViewModel::skipBack30,
+                    onSkipForward = playerViewModel::skipForward30,
+                    onSeekTo = playerViewModel::seekTo,
+                    onMessageShown = playerViewModel::onMessageShown,
+                )
+            }
         }
     }
 }

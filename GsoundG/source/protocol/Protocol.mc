@@ -149,6 +149,26 @@ module Protocol {
         return null;
     }
 
+    //! Read a Boolean field from a message dict, or null if the message is not a
+    //! dict, the key is absent, or the value is not a Boolean.
+    function getBoolean(msg as Object?, key as String) as Boolean? {
+        if (!(msg instanceof Dictionary)) {
+            return null;
+        }
+        var value = (msg as Dictionary).get(key);
+        if (value instanceof Boolean) {
+            return value as Boolean;
+        }
+        return null;
+    }
+
+    //! Read a Boolean field, returning `dflt` when absent or of the wrong type
+    //! (BOOKMARK `fin` defaults to false).
+    function getBooleanOr(msg as Object?, key as String, dflt as Boolean) as Boolean {
+        var value = getBoolean(msg, key);
+        return (value == null) ? dflt : (value as Boolean);
+    }
+
     //! Read an Array field (e.g. `tracks`) from a message dict, or null if the
     //! message is not a dict, the key is absent, or the value is not an Array.
     function getArray(msg as Object?, key as String) as Array? {

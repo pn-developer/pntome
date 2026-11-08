@@ -41,6 +41,9 @@ import kotlinx.serialization.Serializable
  *   spec gsound-audiobooks AB-2.3, AB-3.1). Optional/additive: a watch that doesn't know it
  *   ignores it; null from an older phone means "index order".
  * @property book true when the track's folder is marked as an audiobook (AB-3.1). Optional.
+ * @property fid id of the owning phone folder ([dev.gsound.a.domain.model.Folder.id]); the
+ *   stable join key for bookmarks (spec gsound-player PL-4.3, design R2). [folder] is not
+ *   usable for that: it is a sub-folder path for nested files. Optional/additive.
  */
 @Serializable
 data class ManifestTrack(
@@ -54,5 +57,6 @@ data class ManifestTrack(
     @SerialName("mime") val mime: String,
     @SerialName("path") val path: String,
     @SerialName("seq") val seq: Int? = null,
-    @SerialName("book") val book: Boolean? = null
+    @SerialName("book") val book: Boolean? = null,
+    @SerialName("fid") val fid: String? = null
 )

@@ -22,8 +22,13 @@ class GsoundApplication : Application() {
     @Inject
     lateinit var watchSyncRequestListener: WatchSyncRequestListener
 
+    /** App-lifetime collector of watch `BOOKMARK` messages (gsound-player PL-4.3). */
+    @Inject
+    lateinit var bookmarkSync: dev.gsound.a.domain.bookmarks.BookmarkSync
+
     override fun onCreate() {
         super.onCreate()
+        bookmarkSync.start()
         watchSyncRequestListener.start()
     }
 }

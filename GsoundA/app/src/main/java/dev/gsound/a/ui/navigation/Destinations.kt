@@ -20,6 +20,10 @@ sealed interface Route {
 
     @Serializable
     data object Sync : Route
+
+    /** Full-screen player; reached from the Folders mini-player, not a bottom-bar tab. */
+    @Serializable
+    data object Player : Route
 }
 
 /**

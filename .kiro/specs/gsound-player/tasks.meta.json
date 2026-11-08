@@ -1,0 +1,1003 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Confirm what the sync manifest sends as the folder name and that it matches the": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376731
+      },
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141382701
+      },
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141448454
+      }
+    ],
+    "1.2 Add Media3 (`exoplayer`, `session`, optionally `ui`) to `libs.versions.toml` and": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376766
+      },
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141451100
+      },
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141491254
+      }
+    ],
+    "2.1 Spike: `PlaybackService : MediaLibraryService` plays one SAF `content://` track": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376801
+      },
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141494070
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142077898
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142083748
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142166976
+      }
+    ],
+    "2.2 `QueueBuilder`: queue from a folder (natural order for books, stored order for": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376836
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142077935
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142169307
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142232031
+      }
+    ],
+    "2.3 Audio focus, becoming-noisy pause, wake mode, 30 s seek increments for books,": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376911
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142077979
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142236014
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142327897
+      }
+    ],
+    "2.4 Manifest: service entry, `FOREGROUND_SERVICE_MEDIA_PLAYBACK`, Hilt wiring.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376946
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078014
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142331502
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142406236
+      }
+    ],
+    "2.5 JVM tests for `QueueBuilder` order and ids.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141376979
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078082
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142409502
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142462601
+      }
+    ],
+    "3.1 `PlayerViewModel` + `MediaController`, `PlayerUiState`.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377012
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078115
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142465086
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142593923
+      }
+    ],
+    "3.2 `PlayerScreen` (title, folder, position, seek, prev/next, ±30 s for books) and a": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377046
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078147
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142596885
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142704108
+      }
+    ],
+    "3.3 ViewModel and Compose tests (Robolectric, like the existing UI tests).": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377082
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078180
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142706563
+      }
+    ],
+    "4.1 `BookmarkEntity` + `BookmarkDao`, DB v3, `MIGRATION_2_3`, export `3.json`.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377116
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078214
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142834433
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142879966
+      }
+    ],
+    "4.2 Delete bookmarks when a folder is removed or un-marked as an audiobook.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377149
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078246
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142883953
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142960853
+      }
+    ],
+    "4.3 `BookmarkResolver` (rewind, finished, missing chapter) + unit tests.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377181
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078279
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142963880
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143021458
+      }
+    ],
+    "4.4 Migration tests: JVM (from `2.json`) and instrumented `MigrationTestHelper`.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377215
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078309
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143024392
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143090805
+      }
+    ],
+    "5.1 `BookmarkRecorder` listener: pause/stop, transition, seek, 15 s ticker, final write": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377249
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078343
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143094718
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143213947
+      }
+    ],
+    "5.2 Chapter complete → next chapter at 0; last chapter → `finished`.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377282
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078368
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143216564
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143290783
+      }
+    ],
+    "5.3 Non-blocking writes (conflated channel on IO).": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377320
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078401
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143293387
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143354255
+      }
+    ],
+    "5.4 JVM tests with a fake player: triggers, throttling, completion, non-books ignored.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377354
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078434
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143357119
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145275273
+      }
+    ],
+    "6.1 `automotive_app_desc.xml`, manifest meta-data.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377394
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078468
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145278453
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145318437
+      }
+    ],
+    "6.2 `MediaLibrarySession.Callback`: root, `onGetChildren` with paging (Audiobooks,": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377421
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078501
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145321886
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145484949
+      }
+    ],
+    "6.3 `onSetMediaItems`: expand a folder into a queue, start at the bookmark for books.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377462
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078533
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145488205
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145599507
+      }
+    ],
+    "6.4 Custom layout with ±30 s for book queues.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377484
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078562
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145602564
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145718887
+      }
+    ],
+    "6.5 Search/voice: title match, fallback to the last book.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377515
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078593
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145721954
+      }
+    ],
+    "6.6 Unit tests for the browse tree and the resume start; document DHU and developer": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377549
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078617
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145860069
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145972538
+      }
+    ],
+    "6.7 Manual: DHU browse/play/skip/resume; then in the car (voice, steering wheel).": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377582
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078650
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148232536
+      }
+    ],
+    "7.1 Watch `Messages.mc`: `TYPE_BOOKMARK`, fields, `buildBookmark`, `isValidType`;": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377616
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078680
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148235670
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148291951
+      }
+    ],
+    "7.2 Phone: `Bookmark` message class and `MessageCodec` entry.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377649
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078711
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148294753
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148358952
+      }
+    ],
+    "7.3 Tests: codec round trip (phone), builder/validation (`source/test`, watch);": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377682
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078736
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148361952
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155071634
+      }
+    ],
+    "8.1 Watch `BookmarkSender`: one in flight, chained on complete, stops on error, guard": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377715
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078768
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155074782
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155220434
+      }
+    ],
+    "8.2 Phone `BookmarkSync`: collect `BOOKMARK`, validate pairing and folder, merge, store": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377748
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078800
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155223835
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155333204
+      }
+    ],
+    "8.3 Refresh stats UI: per-book \"Ch N · mm:ss\" and the source device.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377782
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078830
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155336548
+      }
+    ],
+    "8.4 Tests: phone sync with the fake `ControlChannel`; watch sender chain with a fake": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377816
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078863
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155483690
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155679067
+      }
+    ],
+    "9.1 Kotlin `BookmarkMerge` and Monkey C `BookmarkMerge` with the same case table": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377849
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078896
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155682901
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155758423
+      }
+    ],
+    "9.2 `lastSentAt` bookkeeping so a taken bookmark is not echoed back.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377882
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078928
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155762050
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155915577
+      }
+    ],
+    "9.3 Tests on both platforms using the same cases.": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377915
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078952
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155918835
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156038466
+      }
+    ],
+    "10.1 Phone: after Refresh stats and after a sync, send newer phone bookmarks": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377949
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142078985
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156041926
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156182865
+      }
+    ],
+    "10.2 Watch: `onBookmark` handler → validate (book folder, known track), merge, save": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141377982
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079020
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156186452
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156305635
+      }
+    ],
+    "10.3 Live-session marker (`bm:live`) set/cleared by `BookSession`; ignore incoming": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378016
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079053
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156308972
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156420786
+      }
+    ],
+    "10.4 Watch tests: apply rules (unknown folder/track, live marker, older bookmark),": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378048
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079086
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156423952
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156513537
+      }
+    ],
+    "11.1 Build both apps; run JVM and watch unit tests; check the watch release memory": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378081
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079119
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156516842
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157857276
+      }
+    ],
+    "11.2 Manual flow: listen on the watch, pause, Refresh stats → the phone shows the": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378115
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079152
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157861773
+      }
+    ],
+    "11.3 Manual flow: listen in the car, Refresh stats → the watch Resume shows the car": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378149
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079185
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157865284
+      }
+    ],
+    "11.4 Manual: conflicting edits (both played since the last refresh) → the newest wins": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378184
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079218
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157869320
+      }
+    ],
+    "11.5 Update `INSTALL.md` (player, Android Auto setup, bookmark sync, limitations) and": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141378218
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142079251
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157872576
+      },
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157922678
+      }
+    ],
+    "1. Decisions and prerequisites": [
+      {
+        "executionId": "42f468d0-190e-49fd-8aa2-8895caf29647",
+        "chatSessionId": "sess_1b09ec53-9f61-4897-98c6-39117aca7722",
+        "timestamp": 1794141491297
+      }
+    ],
+    "2. Phone playback service (spike, then feature)": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794142462638
+      }
+    ],
+    "4. Bookmark storage on the phone": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794143090851
+      }
+    ],
+    "5. Bookmark recorder": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794145275337
+      }
+    ],
+    "6. Android Auto": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794148232605
+      }
+    ],
+    "7. Protocol: BOOKMARK message": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155071732
+      }
+    ],
+    "8. Watch → phone (Refresh stats)": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794155679153
+      }
+    ],
+    "9. Merge rule": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156038544
+      }
+    ],
+    "10. Phone → watch": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794156513563
+      }
+    ],
+    "11. Checkpoint and end-to-end": [
+      {
+        "executionId": "23af5304-6243-49e0-8088-fed5c533b2fb",
+        "chatSessionId": "sess_0e9cb436-91a8-45b7-a50f-9565ccc62df2",
+        "timestamp": 1794157922730
+      }
+    ]
+  }
+}

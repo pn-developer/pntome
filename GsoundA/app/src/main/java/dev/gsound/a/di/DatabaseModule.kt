@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.gsound.a.data.folders.BookmarkDao
 import dev.gsound.a.data.folders.FolderDao
 import dev.gsound.a.data.folders.GsoundDatabase
 import dev.gsound.a.data.folders.TrackDao
@@ -27,7 +28,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): GsoundDatabase =
         Room.databaseBuilder(context, GsoundDatabase::class.java, GsoundDatabase.NAME)
-            .addMigrations(GsoundDatabase.MIGRATION_1_2)
+            .addMigrations(GsoundDatabase.MIGRATION_1_2, GsoundDatabase.MIGRATION_2_3)
             .build()
 
     @Provides
@@ -35,4 +36,7 @@ object DatabaseModule {
 
     @Provides
     fun provideTrackDao(db: GsoundDatabase): TrackDao = db.trackDao()
+
+    @Provides
+    fun provideBookmarkDao(db: GsoundDatabase): BookmarkDao = db.bookmarkDao()
 }

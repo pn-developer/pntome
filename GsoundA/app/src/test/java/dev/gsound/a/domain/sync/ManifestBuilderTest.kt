@@ -169,4 +169,13 @@ class ManifestBuilderTest {
         assertEquals("Fallback", mt.title)
         assertEquals(true, mt.book)
     }
+
+    @Test
+    fun `manifest carries the owning folder id as fid even for nested sub-folders`() {
+        val mt = ManifestBuilder.build(
+            listOf(file("b1", "01.mp3", relativeFolder = "Book/CD1", folderId = "book"))
+        ).tracks.single()
+        assertEquals("book", mt.fid)
+        assertEquals("Book/CD1", mt.folder)   // `folder` is a sub-folder path, not the display name
+    }
 }

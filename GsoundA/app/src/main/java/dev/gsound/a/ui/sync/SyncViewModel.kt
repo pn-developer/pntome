@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.gsound.a.data.folders.BookmarkDao
 import dev.gsound.a.data.folders.FolderRepository
 import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.data.sync.SyncSummaryStore
@@ -17,6 +18,7 @@ import dev.gsound.a.net.garmin.ControlChannel
 import dev.gsound.a.net.garmin.messages.Ping
 import dev.gsound.a.net.garmin.messages.Stats
 import dev.gsound.a.service.SyncForegroundService
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +58,7 @@ data class SyncUiState(
     val hasFolders: Boolean = false,
     val lastSummary: SyncSummary? = null,
     val watchStats: WatchStats? = null,
+    val bookmarks: List<BookmarkRow> = emptyList(),
 ) {
 
     /** True while a sync is in a non-terminal, active phase (Preparing or Running). */
@@ -117,6 +120,7 @@ data class SyncUiState(
             hasFolders: Boolean,
             lastSummary: SyncSummary?,
             watchStats: WatchStats? = null,
+            bookmarks: List<BookmarkRow> = emptyList(),
         ): SyncUiState = SyncUiState(
             syncState = syncState,
             isPaired = isPaired,
@@ -125,6 +129,8 @@ data class SyncUiState(
             // Req 7.3: watch stats are only meaningful while paired. When unpaired, force
             // "unknown" (null) so a previous watch's counts can never be shown as if current.
             watchStats = if (isPaired) watchStats else null,
+            // PL-4.6: the phone's own bookmarks do not depend on pairing or STATS.
+            bookmarks = bookmarks,
         )
     }
 }
@@ -171,6 +177,8 @@ class SyncViewModel @Inject constructor(
     folderRepository: FolderRepository,
     summaryStore: SyncSummaryStore,
     private val controlChannel: ControlChannel,
+    bookmarkDao: BookmarkDao,
+    private val bookmarkPusher: dev.gsound.a.domain.bookmarks.BookmarkPusher,
 ) : ViewModel() {
 
     /**
@@ -203,20 +211,25 @@ class SyncViewModel @Inject constructor(
         }
     }
 
+    /** Phone bookmarks joined with folder names; independent of the watch (PL-4.6). */
+    private val bookmarkRows: Flow<List<BookmarkRow>> =
+        combine(bookmarkDao.observeAll(), folderRepository.observeFolders(), BookmarkRows::from)
+
     val uiState: StateFlow<SyncUiState> =
         combine(
             orchestrator.state,
             pairingStore.pairing,
             folderRepository.observeFolders(),
             summaryStore.summary,
-            watchStats,
-        ) { syncState, pairing, folders, summary, stats ->
+            combine(watchStats, bookmarkRows) { stats, rows -> stats to rows },
+        ) { syncState, pairing, folders, summary, (stats, rows) ->
             SyncUiState.from(
                 syncState = syncState,
                 isPaired = pairing != null,
                 hasFolders = folders.isNotEmpty(),
                 lastSummary = summary,
                 watchStats = stats,
+                bookmarks = rows,
             )
         }.stateIn(
             scope = viewModelScope,
@@ -271,7 +284,8 @@ class SyncViewModel @Inject constructor(
                 return@launch
             }
             GsoundLog.i(syncTag, "refreshStats: sending PING to request STATS (pairingId=${pairing.pairingId})")
-            controlChannel.send(Ping(pairingId = pairing.pairingId))
+            // PL-5.1: after STATS and the watch's BOOKMARKs have landed, push newer phone bookmarks.
+            bookmarkPusher.pushAfterStats { controlChannel.send(Ping(pairingId = pairing.pairingId)) }
         }
     }
 }

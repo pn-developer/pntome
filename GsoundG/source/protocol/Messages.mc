@@ -60,6 +60,9 @@ module Messages {
     //! One watch diagnostic log line: payload line. G → A only (debugging aid, see DebugLog).
     const TYPE_LOG = "LOG";
 
+    //! One folder's playback bookmark, either direction (gsound-player design §5):
+    //! payload folder, fid?, trk, idx, pos, fin?, at. Flat: strings/numbers/booleans only.
+    const TYPE_BOOKMARK = "BOOKMARK";
 
     // --- payload field key names (overview §5.1) -------------------------------
     //
@@ -79,6 +82,23 @@ module Messages {
     const FIELD_FOLDER_COUNT = "folderCount";
     const FIELD_LAST_SYNC_AT = "lastSyncAt";
     const FIELD_LINE = "line";
+
+    // --- BOOKMARK field keys (gsound-player design §5) -------------------------
+    //! Display label (the manifest's `folder` string). NOT a reliable join key.
+    const FIELD_BM_FOLDER = FIELD_FOLDER;
+    //! Folder id (GsoundA `Folder.id`, manifest `fid`): the JOIN KEY between watch and phone
+    //! (design R2 resolution). Optional; absent for folders synced before `fid` existed.
+    const FIELD_BM_FID = "fid";
+    //! Track id of the current chapter.
+    const FIELD_BM_TRK = "trk";
+    //! 0-based chapter index (seq).
+    const FIELD_BM_IDX = "idx";
+    //! Absolute position within the chapter (see design R7).
+    const FIELD_BM_POS = "pos";
+    //! Book finished; optional, defaults to false.
+    const FIELD_BM_FIN = "fin";
+    //! Bookmark time, epoch seconds.
+    const FIELD_BM_AT = "at";
 
     // --- per-track manifest field keys (ManifestTrack, design §8.0) ------------
     //
@@ -116,7 +136,8 @@ module Messages {
             || type.equals(TYPE_SYNC_STATUS)
             || type.equals(TYPE_STATS)
             || type.equals(TYPE_PING)
-            || type.equals(TYPE_PONG);
+            || type.equals(TYPE_PONG)
+            || type.equals(TYPE_BOOKMARK);
     }
 
     //! Build the common envelope { "v": PROTOCOL_VERSION, "type": type,
@@ -222,6 +243,31 @@ module Messages {
     function buildLogLine(pairingId as String, line as String) as Dictionary {
         var msg = envelope(TYPE_LOG, pairingId);
         msg.put(FIELD_LINE, line);
+        return msg;
+    }
+
+    //! Build a BOOKMARK { v, type, pairingId, folder, fid?, trk, idx, pos, fin, at }.
+    //! `fid` (folder id) is the join key on the phone; `folder` is only a display label.
+    //! `fid` is omitted when null (folder has no stored id). `fin` is always sent.
+    function buildBookmark(
+            pairingId as String,
+            folder as String,
+            fid as String?,
+            trk as String,
+            idx as Number,
+            pos as Number,
+            fin as Boolean,
+            at as Number) as Dictionary {
+        var msg = envelope(TYPE_BOOKMARK, pairingId);
+        msg.put(FIELD_BM_FOLDER, folder);
+        if (fid != null) {
+            msg.put(FIELD_BM_FID, fid);
+        }
+        msg.put(FIELD_BM_TRK, trk);
+        msg.put(FIELD_BM_IDX, idx);
+        msg.put(FIELD_BM_POS, pos);
+        msg.put(FIELD_BM_FIN, fin);
+        msg.put(FIELD_BM_AT, at);
         return msg;
     }
 

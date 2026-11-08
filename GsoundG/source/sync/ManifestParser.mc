@@ -76,6 +76,8 @@ module ManifestParser {
         putIfString(track, raw, Messages.FIELD_TITLE);
         putIfString(track, raw, Messages.FIELD_ARTIST);
         putIfString(track, raw, Messages.FIELD_ALBUM);
+        // Phone folder id (join key for BOOKMARK; absent from older phones).
+        putIfString(track, raw, Messages.FIELD_BM_FID);
 
         // Optional numeric fields — likewise present-or-absent.
         putIfNumber(track, raw, Messages.FIELD_DURATION_MS);

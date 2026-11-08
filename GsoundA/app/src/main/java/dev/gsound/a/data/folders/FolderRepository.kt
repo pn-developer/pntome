@@ -76,13 +76,13 @@ class FolderRepository @Inject constructor(
     suspend fun updateFolderAggregates(id: String, trackCount: Int, totalBytes: Long) =
         folderDao.updateAggregates(id, trackCount, totalBytes)
 
-    /** Mark/unmark a folder as an audiobook (spec gsound-audiobooks AB-1.2). */
+    /** Mark/unmark a folder as an audiobook (spec gsound-audiobooks AB-1.2); un-marking deletes its bookmark (PL-3.6). */
     suspend fun setAudiobook(id: String, isAudiobook: Boolean) =
-        folderDao.setAudiobook(id, isAudiobook)
+        folderDao.setAudiobookAndPruneBookmark(id, isAudiobook)
 
-    /** Remove a folder and its cached tracks (cascade via the entity foreign key, Req 2.2). */
+    /** Remove a folder and its cached tracks (cascade via the entity foreign key, Req 2.2) and its bookmark (PL-3.6). */
     suspend fun removeFolder(id: String) =
-        folderDao.deleteById(id)
+        folderDao.deleteWithBookmark(id)
 
     /** Replace the cached tracks for a folder with a fresh scan result. */
     suspend fun replaceTracks(folderId: String, tracks: List<Track>) {

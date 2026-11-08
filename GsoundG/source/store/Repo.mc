@@ -523,6 +523,47 @@ module Repo {
             }
         }
         saveBookFolders(books);
+        // Forget the folder ids of folders that stopped being books.
+        var fids = loadBookFids();
+        var keys = fids.keys();
+        var dirty = false;
+        for (var i = 0; i < keys.size(); i++) {
+            if (!containsValue(books, keys[i] as String)) {
+                fids.remove(keys[i]);
+                dirty = true;
+            }
+        }
+        if (dirty) {
+            saveBookFids(fids);
+        }
+    }
+    //! Storage key: { folder name => phone folder id } for audiobook folders (BOOKMARK join key).
+    const KEY_BOOK_FIDS = "bk:fids";
+    //! The stored folder-name -> folder-id map, or an empty one.
+    function loadBookFids() as Dictionary {
+        var raw = Application.Storage.getValue(KEY_BOOK_FIDS);
+        return (raw instanceof Dictionary) ? (raw as Dictionary) : ({} as Dictionary);
+    }
+    //! Persist the map (cleared when empty).
+    function saveBookFids(fids as Dictionary) as Void {
+        if (fids.size() == 0) {
+            Application.Storage.deleteValue(KEY_BOOK_FIDS);
+        } else {
+            Application.Storage.setValue(KEY_BOOK_FIDS, fids as Application.Storage.ValueType);
+        }
+    }
+    //! The phone folder id for `folder`, or null when unknown. Never throws.
+    function folderFid(folder as String) as String? {
+        try {
+            var fid = loadBookFids().get(folder);
+            return (fid instanceof String) ? (fid as String) : null;
+        } catch (ex) {
+            return null;
+        }
+    }
+    //! The audiobook folder names (alias of loadBookFolders).
+    function bookFolders() as Array<Object?> {
+        return loadBookFolders();
     }
 
     //! True only for a Boolean `true` (stored flags may be absent or of another type).
@@ -555,21 +596,118 @@ module Repo {
     }
 
     //! Persist the bookmark for `folder`. Never throws (AB-8.2): a failed write just keeps
-    //! the previous bookmark.
+    //! the previous bookmark. Stamped with the current time.
     function saveBookmark(folder as String, trackId as String, pos as Number, index as Number,
             finished as Boolean) as Void {
+        saveBookmarkAt(folder, trackId, pos, index, finished, null);
+    }
+
+    //! Like saveBookmark, with an explicit `at` (epoch seconds; null = now). Monkey C has no
+    //! default arguments, hence a separate function. An incoming phone bookmark is saved with its
+    //! own `at` (PL-6, design §7).
+    function saveBookmarkAt(folder as String, trackId as String, pos as Number, index as Number,
+            finished as Boolean, at as Number?) as Void {
         try {
             var value = {
                 "trk" => trackId,
                 "pos" => (pos < 0) ? 0 : pos,
                 "idx" => index,
                 "fin" => finished,
-                "at" => Time.now().value()
+                "at" => (at != null) ? at : Time.now().value()
             };
             Application.Storage.setValue(KEY_BOOKMARK_PREFIX + folder, value as Application.Storage.ValueType);
         } catch (ex) {
             DebugLog.log("REPO", "saveBookmark FAILED " + DebugLog.describe(ex));
         }
+    }
+
+    //! Storage key: { folder name => `at` of the last bookmark received from the phone }.
+    //! Deliberately NOT under the "bm:" prefix, which is "bm:" + folder name (a folder named
+    //! "rx" would collide). One small dict keeps the per-folder records memory-lean.
+    const KEY_BOOKMARK_RX = "bmrx";
+
+    //! The `at` of the bookmark last received from the phone for `folder`, or null.
+    function loadBookmarkRx(folder as String) as Number? {
+        try {
+            var raw = Application.Storage.getValue(KEY_BOOKMARK_RX);
+            if (raw instanceof Dictionary) {
+                var v = (raw as Dictionary).get(folder);
+                if (v instanceof Number) {
+                    return v as Number;
+                }
+            }
+        } catch (ex) {
+        }
+        return null;
+    }
+
+    //! Remember that the bookmark of `folder` with this `at` came from the phone. Never throws.
+    function saveBookmarkRx(folder as String, at as Number) as Void {
+        try {
+            var raw = Application.Storage.getValue(KEY_BOOKMARK_RX);
+            var d = (raw instanceof Dictionary) ? (raw as Dictionary) : ({} as Dictionary);
+            d.put(folder, at);
+            Application.Storage.setValue(KEY_BOOKMARK_RX, d as Application.Storage.ValueType);
+        } catch (ex) {
+            DebugLog.log("REPO", "saveBookmarkRx FAILED " + DebugLog.describe(ex));
+        }
+    }
+
+    //! Forget the received-at record of `folder`. Never throws.
+    function clearBookmarkRx(folder as String) as Void {
+        try {
+            var raw = Application.Storage.getValue(KEY_BOOKMARK_RX);
+            if (raw instanceof Dictionary) {
+                var d = raw as Dictionary;
+                d.remove(folder);
+                if (d.size() == 0) {
+                    Application.Storage.deleteValue(KEY_BOOKMARK_RX);
+                } else {
+                    Application.Storage.setValue(KEY_BOOKMARK_RX, d as Application.Storage.ValueType);
+                }
+            }
+        } catch (ex) {
+        }
+    }
+
+    //! Storage key of the live-session marker { "f" => folder, "at" => epoch seconds of the last
+    //! refresh }. The design called it "bm:live", but that would collide with the bookmark key of
+    //! a folder named "live" ("bm:" + folder), so it is "bmlive" (cf. "bmrx").
+    const KEY_LIVE = "bmlive";
+
+    //! Mark `folder` as being played right now, refreshed at `now` (epoch seconds). Never throws.
+    function setLive(folder as String, now as Number) as Void {
+        try {
+            var d = {} as Dictionary;
+            d.put("f", folder);
+            d.put("at", now);
+            Application.Storage.setValue(KEY_LIVE, d as Application.Storage.ValueType);
+        } catch (ex) {
+            DebugLog.log("REPO", "setLive FAILED " + DebugLog.describe(ex));
+        }
+    }
+
+    //! Remove the live-session marker. Never throws.
+    function clearLive() as Void {
+        try {
+            Application.Storage.deleteValue(KEY_LIVE);
+        } catch (ex) {
+        }
+    }
+
+    //! The live marker as { "f", "at" }, or null when absent / malformed.
+    function loadLive() as Dictionary? {
+        try {
+            var raw = Application.Storage.getValue(KEY_LIVE);
+            if (raw instanceof Dictionary) {
+                var d = raw as Dictionary;
+                if (d.get("f") instanceof String && d.get("at") instanceof Number) {
+                    return d;
+                }
+            }
+        } catch (ex) {
+        }
+        return null;
     }
 
     //! Delete the bookmark for `folder`. Never throws.
@@ -578,6 +716,7 @@ module Repo {
             Application.Storage.deleteValue(KEY_BOOKMARK_PREFIX + folder);
         } catch (ex) {
         }
+        clearBookmarkRx(folder);
     }
 
     // --- pending manifest (chunked) --------------------------------------------

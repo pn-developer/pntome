@@ -18,6 +18,7 @@ room = "2.6.1"
 kotlinxSerialization = "1.7.3"
 ktor = "2.3.12"
 connectIq = "2.4.0"
+media3 = "1.5.1"
 junit = "4.13.2"
 androidxJunit = "1.2.1"
 espressoCore = "3.6.1"
@@ -75,6 +76,11 @@ ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", ver
 
 # Garmin Connect IQ Mobile SDK (companion app) — AAR from Maven Central
 connectiq-companion-app-sdk = { group = "com.garmin.connectiq", name = "ciq-companion-app-sdk", version.ref = "connectIq" }
+
+# Media3 (phone player: ExoPlayer + MediaLibraryService/MediaSession). media3-ui is omitted:
+# the player UI is Compose, so the stock View-based controls are not needed.
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-session = { group = "androidx.media3", name = "media3-session", version.ref = "media3" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }

@@ -270,4 +270,97 @@ class MessageCodecTest {
         val result = MessageCodec.decodeAndValidate(json, expectedPairingId = pairingId)
         assertTrue(result is DecodeResult.Valid)
     }
+
+    // --- BOOKMARK (spec gsound-player PL-4.2, PL-7.5, design §5) -------------------------------
+
+    private fun decode(json: String) = MessageCodec.decodeAndValidate(json, pairingId)
+
+    private fun bookmarkJson(extra: String = "", fid: String = """"fid":"f1",""", fin: String = """"fin":true,""") =
+        """{"type":"BOOKMARK","v":1,"pairingId":"$pairingId","folder":"Dune",$fid"trk":"t1",""" +
+            """"idx":2,"pos":95,$fin$extra"at":1700000000}"""
+
+    @Test
+    fun `BOOKMARK round-trips with fid and fin`() {
+        val original = Bookmark(pairingId, "Dune", "f1", "t1", 2, 95, true, 1_700_000_000L)
+
+        val json = MessageCodec.encode(original)
+        val result = decode(json)
+
+        assertTrue(json.contains("\"type\":\"BOOKMARK\""))
+        assertEquals(original, (result as DecodeResult.Valid).message)
+    }
+
+    @Test
+    fun `BOOKMARK round-trips without fid`() {
+        val original = Bookmark(pairingId, "Dune", null, "t1", 0, 0, false, 5L)
+
+        val result = decode(MessageCodec.encode(original))
+
+        assertEquals(original, (result as DecodeResult.Valid).message)
+    }
+
+    @Test
+    fun `BOOKMARK fin defaults to false when absent and fid to null`() {
+        val json = bookmarkJson(fid = "", fin = "")
+
+        val msg = (decode(json) as DecodeResult.Valid).message as Bookmark
+
+        assertEquals(false, msg.fin)
+        assertEquals(null, msg.fid)
+    }
+
+    @Test
+    fun `BOOKMARK with explicit null fid decodes`() {
+        val msg = (decode(bookmarkJson(fid = """"fid":null,""")) as DecodeResult.Valid).message as Bookmark
+
+        assertEquals(null, msg.fid)
+        assertEquals("t1", msg.trk)
+        assertEquals(95, msg.pos)
+    }
+
+    @Test
+    fun `BOOKMARK ignores unknown extra fields`() {
+        val result = decode(bookmarkJson(extra = """"future":"x","n":{"a":1},"""))
+
+        assertTrue("expected Valid, got $result", result is DecodeResult.Valid)
+    }
+
+    @Test
+    fun `BOOKMARK with wrong field types is Invalid`() {
+        assertTrue(decode(bookmarkJson().replace("\"idx\":2", "\"idx\":\"two\"")) is DecodeResult.Invalid)
+        assertTrue(decode(bookmarkJson().replace("\"fin\":true", "\"fin\":\"yes\"")) is DecodeResult.Invalid)
+        assertTrue(decode(bookmarkJson().replace("\"pos\":95", "\"pos\":1.5")) is DecodeResult.Invalid)
+        assertTrue(decode(bookmarkJson().replace("\"trk\":\"t1\"", "\"trk\":7")) is DecodeResult.Invalid)
+    }
+
+    @Test
+    fun `BOOKMARK missing a required field is Invalid`() {
+        for (key in listOf("folder", "trk", "idx", "pos", "at")) {
+            val json = bookmarkJson().replace(Regex(""""$key":("[^"]*"|\d+),?"""), "").replace(",}", "}")
+            assertTrue("$key: expected Invalid for $json", decode(json) is DecodeResult.Invalid)
+        }
+    }
+
+    @Test
+    fun `BOOKMARK with mismatched pairingId is dropped as UnpairedPeer`() {
+        val json = MessageCodec.encode(Bookmark(otherPairingId, "Dune", null, "t1", 0, 0, false, 5L))
+
+        assertTrue(decode(json) is DecodeResult.UnpairedPeer)
+    }
+
+    @Test
+    fun `STATS from an old watch is unaffected by the BOOKMARK type`() {
+        val original = Stats(pairingId = pairingId, fileCount = 4, folderCount = 2)
+
+        val result = decode(MessageCodec.encode(original))
+
+        assertEquals(original, (result as DecodeResult.Valid).message)
+    }
+
+    @Test
+    fun `unknown type next to BOOKMARK is still Invalid`() {
+        val json = bookmarkJson().replace("\"BOOKMARK\"", "\"BOOKMARKS\"")
+
+        assertTrue(decode(json) is DecodeResult.Invalid)
+    }
 }

@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.Media;
 import Toybox.System;
+import Toybox.Time;
 
 //! Bookmarks — per-book resume position (spec gsound-audiobooks AB-5, AB-6; design §4.5).
 //!
@@ -171,6 +172,7 @@ class BookSession {
                     DebugLog.log("BM", "complete idx=" + idx.toString() + " -> next at 0");
                 } else {
                     save(trk, 0, true);
+                    Repo.clearLive();
                     DebugLog.log("BM", "complete last chapter -> finished");
                 }
                 return;
@@ -179,6 +181,9 @@ class BookSession {
             // PAUSE (6), STOP (5), SKIP_NEXT (1), SKIP_PREVIOUS (2), skip fwd/back (8/9 on 4.2.4+).
             var abs = absolutePosition(trk, playbackPosition);
             save(trk, abs, false);
+            if (songEvent == Media.SONG_EVENT_STOP) {
+                Repo.clearLive(); // session ended (PL-5.5)
+            }
         } catch (ex) {
             DebugLog.log("BM", "onSong FAILED " + DebugLog.describe(ex));
         }
@@ -207,5 +212,8 @@ class BookSession {
 
     private function save(trk as String, pos as Number, finished as Boolean) as Void {
         Repo.saveBookmark(_folder, trk, pos, indexOf(trk), finished);
+        // PL-5.5: (re)mark this book live on every save so the 2 min staleness limit only
+        // expires once the session has really gone quiet (one small Storage write, no timers).
+        Repo.setLive(_folder, Time.now().value());
     }
 }

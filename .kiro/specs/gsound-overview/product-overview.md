@@ -81,6 +81,7 @@ All messages: `{ "v": 1, "type": <string>, "pairingId": <uuid>, ... }`.
 | `SYNC_STATUS` | G → A | `state`, `done`, `total`, `bytesDone`, `error?` | Progress reporting. |
 | `STATS` | G → A | `fileCount`, `folderCount`, `lastSyncAt` | Watch-side stats for display in A. |
 | `PING` / `PONG` | both | — | Liveness / connectivity check. |
+| `BOOKMARK` | both | `folder`, `fid`, `trk`, `idx`, `pos`, `fin`, `at` | Audiobook position of one book (see below). |
 
 `serverUrl` example: `http://192.168.1.42:8080`. Each `track` entry:
 
@@ -107,6 +108,37 @@ Optional, additive fields (protocol stays `v: 1`; peers that don't know them ign
   without its extension.
 
 Defined in `../gsound-audiobooks/`.
+
+#### BOOKMARK (audiobook position sync)
+
+Flat message (strings, numbers, booleans only), same in both directions:
+
+```json
+{ "v": 1, "type": "BOOKMARK", "pairingId": "<uuid>",
+  "folder": "My Book", "fid": "<folder id>", "trk": "<track id>", "idx": 2, "pos": 760, "fin": false,
+  "at": 1790000000 }
+```
+
+- `folder`: display name of the book folder (label, and join fallback).
+- `fid`: phone folder id from the manifest track entry. Primary join key; if absent, the
+  receiver falls back to matching `folder` by name.
+- `trk`: track id of the current chapter. `idx`: chapter index in play order.
+- `pos`: position in the chapter, seconds. `fin`: book finished (optional, default false).
+- `at`: epoch seconds of the last position change on the sender.
+
+Sequencing:
+- Watch → phone: on `PING`, after `STATS`, the watch sends one `BOOKMARK` per book, one in
+  flight at a time (next one after the previous is delivered; stops on error).
+- Phone → watch: after the user's Refresh stats and after a sync, the phone sends the
+  bookmarks that are newer than the watch's, sequentially, one in flight.
+
+Merge rule (both sides, same case table): the newer `at` wins; equal keeps the local value;
+`at` more than 5 minutes in the future is clamped; a taken bookmark is not echoed back. The
+watch ignores incoming bookmarks for a book it is playing live, and for an unknown folder or
+track. Playback resumes 5 s before the stored position.
+
+Backward compatibility: `v` stays 1. A peer that doesn't know `BOOKMARK` ignores it, so an
+old watch still answers `PING` with `STATS` only. Defined in `../gsound-player/`.
 
 ### 5.2 Data channel (HTTP)
 

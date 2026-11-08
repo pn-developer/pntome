@@ -258,3 +258,117 @@ Building and unit-testing GsoundA needs none of the following, but a real pair/s
 
 The complete manual checklist is in
 [`docs/manual-e2e-checklist.md`](docs/manual-e2e-checklist.md).
+
+---
+## 8. Android Auto (Desktop Head Unit)
+
+GsoundA exposes its library to Android Auto as a media app (Audiobooks, Music, Recently
+played). The steps below set up a test bench on the development computer. They describe the
+intended procedure; they have not been verified on a device or in a car as part of this
+guide (tracked as task 6.7 in `.kiro/specs/gsound-player/tasks.md`).
+
+### 8.1 Enable Android Auto developer mode (phone)
+
+1. Install/update **Android Auto** on the phone (it is built in on Android 10+; open
+   *Settings → Apps → Android Auto*).
+2. Open Android Auto settings and tap **Version** (or *Version and permission info*)
+   **10 times**; confirm the prompt to enable developer mode.
+3. Open the three-dot menu → **Developer settings**.
+4. Turn on **Unknown sources**. GsoundA is installed from a debug APK, not from Google Play,
+   so Android Auto lists it only with this switch on.
+
+### 8.2 Install the Desktop Head Unit (computer)
+
+1. In `sdkmanager` (or Android Studio *SDK Manager → SDK Tools*) install
+   **Android Auto Desktop Head Unit Emulator**:
+   ```bash
+   sdkmanager "extras;google;auto"
+   ```
+   The binary is `$ANDROID_HOME/extras/google/auto/desktop-head-unit`.
+2. If it fails to start because of a missing shared library, install the package your
+   distribution names in the error message yourself (for example `sudo apt install <pkg>`);
+   this guide does not install system packages.
+
+### 8.3 Run it
+
+1. Connect the phone by USB (USB debugging on) and install GsoundA (section 5.2). Add at
+   least one folder and, for books, mark it as an audiobook.
+2. Forward the head-unit port:
+   ```bash
+   adb forward tcp:5277 tcp:5277
+   ```
+3. On the phone: Android Auto → three-dot menu → **Start head unit server**.
+4. On the computer:
+   ```bash
+   $ANDROID_HOME/extras/google/auto/desktop-head-unit
+   ```
+   The head unit window opens and mirrors the Android Auto car UI.
+
+### 8.4 Browse, play, skip, resume
+
+- Open the media launcher in the head unit and pick **Gsound**.
+- **Audiobooks** / **Music** list the marked folders; **Recently played** lists the last
+  books with a saved position (newest first).
+- Tap a book: the whole book is queued and playback starts at the saved position, minus a
+  5 second rewind. A finished book, or a book without a bookmark, starts at chapter 1.
+  Tapping a chapter inside a book starts that chapter at 0. Music folders start at track 1.
+- Next/previous skip chapters or tracks. Book queues also show **-30 s** and **+30 s**
+  buttons.
+- Resume: pause or disconnect, reopen **Gsound** (or **Recently played**) and tap the book;
+  playback continues from where it stopped. The same position is shown on the phone.
+- Voice ("play <title> in Gsound") matches a folder or chapter title; an unknown or empty
+  request continues the last book.
+
+### 8.5 Known limitations
+
+- Sideload only: Android Auto shows the app only with *Unknown sources* enabled. The app is
+  not published on Google Play and has not gone through Google's media-app review for cars.
+- Artwork is the default app icon for every item; no per-book cover art.
+- Browsing is limited to the three top-level lists, folders and chapters; there is no
+  in-car settings screen.
+- Real cars may behave differently from the Desktop Head Unit (voice, steering wheel keys).
+
+---
+
+## 9. Phone player
+
+- On the **Folders** screen tap the play button of a folder to play it. A **mini-player** at
+  the bottom shows the current item; tap it to open the full player (title, folder,
+  position, seek, previous/next).
+- Playback continues in the background with a media notification. Play/pause, previous/next
+  and seek work from the notification and the lock screen.
+- Folders marked as an audiobook play in natural file order (`2` before `10`) and show
+  **-30 s** / **+30 s** buttons. Music folders play in their stored order.
+- Positions of audiobooks are saved automatically (on pause, chapter change, seek, every
+  15 s, and when the app is closed).
+
+## 10. Bookmark sync (phone ↔ watch)
+
+Audiobook positions are shared between the phone, Android Auto and the watch.
+
+- Open the **Sync** screen and tap **Refresh stats**. The phone pulls the bookmarks of the
+  watch and pushes its own newer ones. A sync also pushes newer phone bookmarks.
+- Each book is listed as **Ch N · mm:ss** with the device it came from (**Phone** or
+  **Watch**).
+- The bookmark with the newest time (`at`) wins; on a tie the local one is kept.
+- Resume starts 5 s before the saved position, on both devices.
+- A book that is playing on the watch right now is not overwritten.
+- Books are matched by folder id (`fid`), with the folder name as a fallback.
+
+## 11. Limitations and still to check
+
+- The watch saves its position on events (pause, chapter change, exit), so it can be stale
+  (risk R4); a fresher phone position wins over it.
+- Android Auto works only for sideloaded builds with *Unknown sources* on (section 8.1).
+- Phone and watch clocks should agree. Timestamps more than 5 minutes in the future are
+  clamped.
+- Only folders marked as an audiobook sync bookmarks; music folders do not.
+- None of this has been verified on a real phone, watch or car as part of this guide.
+  Checks for you to do (see `.kiro/specs/gsound-player/tasks.md`):
+  - [ ] 6.7 DHU browse/play/skip/resume, then in a car (voice, steering wheel keys).
+  - [ ] 11.2 Listen on the watch, pause, Refresh stats; the phone shows the position and
+        resumes from it.
+  - [ ] 11.3 Listen in the car, Refresh stats; the watch Resume shows the car position
+        (about 5 s earlier).
+  - [ ] 11.4 Play on both devices between refreshes; the newest wins and the Refresh stats
+        list names the device.

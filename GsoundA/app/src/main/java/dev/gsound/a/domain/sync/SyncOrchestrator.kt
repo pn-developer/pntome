@@ -95,6 +95,7 @@ class SyncOrchestrator @Inject constructor(
     private val wifiGuard: WifiGuard,
     private val libraryRefresher: LibraryRefresher,
     private val logger: Logger = GsoundLog,
+    private val bookmarkPusher: dev.gsound.a.domain.bookmarks.BookmarkPusher? = null,
 ) {
 
     private val _state = MutableStateFlow<SyncState>(SyncState.Idle)
@@ -267,7 +268,10 @@ class SyncOrchestrator @Inject constructor(
                 networkKind = networkKind
             )
             logger.i(tag, "sync terminal: ${terminal::class.simpleName}")
-            return transition(terminal)
+            val result = transition(terminal)
+            // PL-5.2: after a successful sync, push newer phone bookmarks (never throws).
+            if (terminal is SyncState.Completed) bookmarkPusher?.pushPending()
+            return result
         } catch (c: CancellationException) {
             // Structured-concurrency cancellation (e.g. the foreground service's lifecycleScope
             // being torn down) is NOT a sync failure. Re-throw so cancellation propagates and is

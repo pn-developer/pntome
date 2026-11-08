@@ -18,6 +18,7 @@ module MetaUpdater {
     function apply(cleanTracks as Array<Dictionary>) as Number {
         var changed = 0;
         try {
+            storeFids(cleanTracks);
             for (var i = 0; i < cleanTracks.size(); i++) {
                 var track = cleanTracks[i];
                 var id = track.get(Messages.FIELD_ID);
@@ -43,6 +44,31 @@ module MetaUpdater {
         return changed;
     }
 
+    //! Remember the phone folder id (`fid`) of every audiobook folder named in the manifest, so
+    //! BOOKMARK can carry it (design R2). Writes only when something changed. Never throws.
+    function storeFids(cleanTracks as Array<Dictionary>) as Void {
+        try {
+            var fids = Repo.loadBookFids();
+            var dirty = false;
+            for (var i = 0; i < cleanTracks.size(); i++) {
+                var track = cleanTracks[i];
+                var folder = track.get(Messages.FIELD_FOLDER);
+                var fid = track.get(Messages.FIELD_BM_FID);
+                if (folder instanceof String && fid instanceof String && Repo.isTrue(track.get(Messages.FIELD_BOOK))) {
+                    var old = fids.get(folder);
+                    if (!(old instanceof String) || !(old as String).equals(fid)) {
+                        fids.put(folder, fid);
+                        dirty = true;
+                    }
+                }
+            }
+            if (dirty) {
+                Repo.saveBookFids(fids);
+            }
+        } catch (ex) {
+            DebugLog.log("META", "storeFids FAILED " + DebugLog.describe(ex));
+        }
+    }
     //! Copy the metadata fields from `track` into `entry`; true when anything changed.
     function applyTo(entry as Dictionary, track as Dictionary) as Boolean {
         var changed = false;

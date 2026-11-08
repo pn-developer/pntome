@@ -54,6 +54,8 @@
          FOREGROUND_SERVICE_DATA_SYNC is required on API 34+ for the dataSync service type. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Phone player service (PlaybackService, foregroundServiceType=mediaPlayback), API 34+. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Shows the sync progress notification (the foreground service posts it). API 33+ requires a
          runtime grant: it is requested when the user starts a sync, with a rationale, and the sync
@@ -70,6 +72,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.GsoundA">
+
+        <!-- Android Auto: advertises GsoundA as a media app (gsound-player PL-2.1, design §3). -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
 
         <activity
             android:name=".MainActivity"
@@ -88,6 +95,18 @@
             android:name=".service.SyncForegroundService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <!-- Phone player (gsound-player design §2, task 2.1): Media3 MediaLibraryService that owns
+             the ExoPlayer and posts the media notification. Exported with the Media3 intent filter
+             so MediaControllers (and later Android Auto) can bind. -->
+        <service
+            android:name=".service.PlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

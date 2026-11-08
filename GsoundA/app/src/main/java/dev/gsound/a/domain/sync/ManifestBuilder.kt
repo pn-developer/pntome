@@ -29,6 +29,7 @@ import dev.gsound.a.net.garmin.messages.ManifestTrack
  * - `title` ← [Track.title]; for an audiobook folder the file name without extension instead
  *   (chapter titles must not depend on ID3 tags, AB-2.4).
  * - `artist`/`album`/`durationMs`/`sizeBytes`/`mime` ← copied verbatim.
+ * - `fid` ← [Track.folderId], the stable bookmark join key (gsound-player PL-4.3, design R2).
  * - `path` ← [MEDIA_PATH_PREFIX]`{id}` (e.g. `/media/abc123`).
  * - `seq` ← position within the folder group; `book` ← whether the owning folder
  *   ([Track.folderId]) is in `audiobookFolderIds`.
@@ -83,6 +84,7 @@ object ManifestBuilder {
             mime = track.mime,
             path = "$MEDIA_PATH_PREFIX${track.id}",
             seq = seq,
-            book = book
+            book = book,
+            fid = track.folderId
         )
 }

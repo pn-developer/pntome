@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 
@@ -58,4 +59,22 @@ interface FolderDao {
     /** Set only the audiobook flag, leaving counts/metadata untouched (AB-1.2). */
     @Query("UPDATE folders SET isAudiobook = :isAudiobook WHERE id = :id")
     suspend fun setAudiobook(id: String, isAudiobook: Boolean)
+
+    /** Delete the bookmark of a folder; used inside the transactional helpers below (PL-3.6). */
+    @Query("DELETE FROM bookmarks WHERE folderId = :folderId")
+    suspend fun deleteBookmarkFor(folderId: String)
+
+    /** Remove a folder and its bookmark atomically (PL-3.6). */
+    @Transaction
+    suspend fun deleteWithBookmark(id: String) {
+        deleteBookmarkFor(id)
+        deleteById(id)
+    }
+
+    /** Set the audiobook flag; un-marking also drops the bookmark, atomically (PL-3.6). */
+    @Transaction
+    suspend fun setAudiobookAndPruneBookmark(id: String, isAudiobook: Boolean) {
+        if (!isAudiobook) deleteBookmarkFor(id)
+        setAudiobook(id, isAudiobook)
+    }
 }

@@ -144,6 +144,10 @@ dependencies {
     // Garmin Connect IQ Mobile SDK (companion app AAR from Maven Central)
     implementation(libs.connectiq.companion.app.sdk)
 
+    // Media3: ExoPlayer + MediaLibraryService/MediaSession for the phone player (PL-1, PL-4.3)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

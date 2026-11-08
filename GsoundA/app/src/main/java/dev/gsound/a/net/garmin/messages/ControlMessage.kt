@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
  * instance). Concrete subtypes pin their discriminator value with [SerialName] so the wire
  * strings match the shared contract exactly:
  * `PAIR_REQUEST`, `PAIR_CONFIRM`, `UNPAIR`, `SYNC_MANIFEST`, `SYNC_STATUS`, `STATS`,
- * `PING`, `PONG`.
+ * `PING`, `PONG`, `BOOKMARK`.
  *
  * These are the wire types; keep them separate from the domain models (task 2.1).
  *
@@ -140,6 +140,32 @@ data class Stats(
 data class WatchLogLine(
     @SerialName("pairingId") override val pairingId: String,
     @SerialName("line") val line: String = "",
+    @SerialName("v") override val v: Int = PROTOCOL_VERSION
+) : ControlMessage()
+
+/**
+ * `BOOKMARK` (both directions): one audiobook folder's listening position (gsound-player
+ * design §5). Flat payload (strings, numbers, boolean).
+ *
+ * @property folder folder display name (label; join falls back to it when [fid] is absent).
+ * @property fid optional phone `Folder.id` used as the join key.
+ * @property trk track id of the chapter.
+ * @property idx chapter index at save time.
+ * @property pos absolute position in seconds within the chapter.
+ * @property fin book finished; defaults to false when absent.
+ * @property at bookmark time, epoch seconds.
+ */
+@Serializable
+@SerialName("BOOKMARK")
+data class Bookmark(
+    @SerialName("pairingId") override val pairingId: String,
+    @SerialName("folder") val folder: String,
+    @SerialName("fid") val fid: String? = null,
+    @SerialName("trk") val trk: String,
+    @SerialName("idx") val idx: Int,
+    @SerialName("pos") val pos: Int,
+    @SerialName("fin") val fin: Boolean = false,
+    @SerialName("at") val at: Long,
     @SerialName("v") override val v: Int = PROTOCOL_VERSION
 ) : ControlMessage()
 

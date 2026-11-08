@@ -263,3 +263,76 @@ function testSessionEventsUpdateBookmark(logger as Test.Logger) as Boolean {
     }
     return ok;
 }
+
+// --- BOOKMARK protocol (spec gsound-player PL-4.2, PL-7.5, design §5) -------------------------
+
+(:test)
+function testBuildBookmarkShape(logger as Test.Logger) as Boolean {
+    var m = Messages.buildBookmark("pid", "Dune", "f1", "t1", 2, 95, true, 1700000000);
+    var ok = T.check(logger, m.size() == 10, "10 flat keys, got " + m.size().toString());
+    ok = T.check(logger, T.num(m, "v") == Protocol.PROTOCOL_VERSION, "v") && ok;
+    ok = T.check(logger, T.str(m, "type").equals("BOOKMARK"), "type") && ok;
+    ok = T.check(logger, T.str(m, "pairingId").equals("pid"), "pairingId") && ok;
+    ok = T.check(logger, T.str(m, "folder").equals("Dune"), "folder") && ok;
+    ok = T.check(logger, T.str(m, "fid").equals("f1"), "fid") && ok;
+    ok = T.check(logger, T.str(m, "trk").equals("t1"), "trk") && ok;
+    ok = T.check(logger, T.num(m, "idx") == 2, "idx") && ok;
+    ok = T.check(logger, T.num(m, "pos") == 95, "pos") && ok;
+    ok = T.check(logger, m.get("fin") == true, "fin true") && ok;
+    ok = T.check(logger, T.num(m, "at") == 1700000000, "at") && ok;
+    // Flat: no nested containers.
+    var keys = m.keys();
+    for (var i = 0; i < keys.size(); i++) {
+        var v = m.get(keys[i]);
+        ok = T.check(logger, !(v instanceof Dictionary) && !(v instanceof Array), "flat: " + keys[i].toString()) && ok;
+    }
+    return ok;
+}
+
+(:test)
+function testBuildBookmarkOmitsNullFidAndKeepsFin(logger as Test.Logger) as Boolean {
+    var m = Messages.buildBookmark("pid", "Dune", null, "t1", 0, 0, false, 5);
+    var ok = T.check(logger, !m.hasKey("fid"), "fid omitted when null");
+    ok = T.check(logger, m.hasKey("fin") && m.get("fin") == false, "fin always present (false)") && ok;
+    ok = T.check(logger, m.size() == 9, "9 keys, got " + m.size().toString()) && ok;
+    return ok;
+}
+
+(:test)
+function testBookmarkIsKnownTypeAndValidates(logger as Test.Logger) as Boolean {
+    var ok = T.check(logger, Messages.isKnownType(Messages.TYPE_BOOKMARK), "BOOKMARK known");
+    ok = T.check(logger, Messages.isKnownType("BOOKMARK"), "literal BOOKMARK known") && ok;
+    ok = T.check(logger, Messages.isKnownType("STATS") && Messages.isKnownType("PING"), "old types still known") && ok;
+    ok = T.check(logger, !Messages.isKnownType("BOOKMARKS"), "near-miss rejected") && ok;
+    ok = T.check(logger, !Messages.isKnownType("NOPE") && !Messages.isKnownType("") && !Messages.isKnownType(null), "unknown rejected") && ok;
+    var m = Messages.buildBookmark("pid", "Dune", null, "t1", 0, 0, false, 5);
+    ok = T.check(logger, Protocol.validate(m) == Protocol.VALID_OK, "built bookmark validates") && ok;
+    m.put("type", "FUTURE_TYPE");
+    ok = T.check(logger, Protocol.validate(m) == Protocol.INVALID_TYPE, "unknown type -> INVALID_TYPE") && ok;
+    return ok;
+}
+
+(:test)
+function testProtocolGetBoolean(logger as Test.Logger) as Boolean {
+    var d = { "t" => true, "f" => false, "s" => "true", "n" => 1 } as Dictionary;
+    var ok = T.check(logger, Protocol.getBoolean(d, "t") == true, "true");
+    ok = T.check(logger, Protocol.getBoolean(d, "f") == false, "false") && ok;
+    ok = T.check(logger, Protocol.getBoolean(d, "s") == null, "string -> null") && ok;
+    ok = T.check(logger, Protocol.getBoolean(d, "n") == null, "number -> null") && ok;
+    ok = T.check(logger, Protocol.getBoolean(d, "missing") == null, "absent -> null") && ok;
+    ok = T.check(logger, Protocol.getBoolean(null, "t") == null, "null msg -> null") && ok;
+    ok = T.check(logger, Protocol.getBoolean("str", "t") == null, "non-dict -> null") && ok;
+    return ok;
+}
+
+(:test)
+function testProtocolGetBooleanOr(logger as Test.Logger) as Boolean {
+    var d = { "t" => true, "f" => false, "s" => "true", "n" => 1 } as Dictionary;
+    var ok = T.check(logger, Protocol.getBooleanOr(d, "t", false) == true, "true kept");
+    ok = T.check(logger, Protocol.getBooleanOr(d, "f", true) == false, "false kept (not defaulted)") && ok;
+    ok = T.check(logger, Protocol.getBooleanOr(d, "s", false) == false, "string -> default false") && ok;
+    ok = T.check(logger, Protocol.getBooleanOr(d, "n", true) == true, "number -> default true") && ok;
+    ok = T.check(logger, Protocol.getBooleanOr(d, "missing", false) == false, "absent -> default") && ok;
+    ok = T.check(logger, Protocol.getBooleanOr(null, "t", true) == true, "null msg -> default") && ok;
+    return ok;
+}

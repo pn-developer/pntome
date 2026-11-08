@@ -131,6 +131,26 @@ class SyncUiStateTest {
     }
 
     @Test
+    fun `old watch - STATS only - still shows stats and the phone's own bookmarks (PL-4_6)`() {
+        val stats = WatchStats(fileCount = 7, folderCount = 2, lastSyncAt = null)
+        val rows = listOf(BookmarkRow("f1", "Dune", "Ch 2 · 01:30", "Phone"))
+        val mapped = SyncUiState.from(
+            SyncState.Idle, isPaired = true, hasFolders = true, lastSummary = null,
+            watchStats = stats, bookmarks = rows,
+        )
+        assertEquals(stats, mapped.watchStats)
+        assertEquals(rows, mapped.bookmarks)
+    }
+
+    @Test
+    fun `phone bookmarks are shown even when watch stats are unknown (PL-4_6)`() {
+        val rows = listOf(BookmarkRow("f1", "Dune", "Finished", "Phone"))
+        val mapped = SyncUiState.from(SyncState.Idle, true, true, null, null, rows)
+        assertNull(mapped.watchStats)
+        assertEquals(rows, mapped.bookmarks)
+    }
+
+    @Test
     fun `watchStats is forced to unknown when not paired (Req 7_3)`() {
         val stats = WatchStats(fileCount = 42, folderCount = 3, lastSyncAt = null)
         // Even if stats were somehow supplied, an unpaired state must not surface them as current.

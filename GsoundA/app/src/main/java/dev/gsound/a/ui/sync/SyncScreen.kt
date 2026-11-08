@@ -2,6 +2,7 @@ package dev.gsound.a.ui.sync
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,6 +23,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -141,6 +146,9 @@ fun SyncContent(
                 canRefresh = state.isPaired,
                 onRefresh = onRefreshStatsClicked,
             )
+
+            // Bookmarks per book with the device they came from (PL-4.5); hidden when none.
+            BookmarkSection(rows = state.bookmarks)
         }
     }
 }
@@ -185,6 +193,49 @@ private fun WatchStatsSection(
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text("Refresh stats")
+            }
+        }
+    }
+}
+
+/** "Bookmarks" card: one row per book with "Ch N · mm:ss" and the source device (PL-4.5, 4.6). */
+@Composable
+internal fun BookmarkSection(rows: List<BookmarkRow>) {
+    if (rows.isEmpty()) return
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Bookmarks",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { heading() },
+            )
+            rows.forEach { row ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clearAndSetSemantics { contentDescription = row.description },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = row.title, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = row.position,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Text(
+                        text = row.device,
+                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
             }
         }
     }
