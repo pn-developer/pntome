@@ -5,3 +5,5 @@ build/
 *.iq
 bin/
 gen/
+# monkeyc intermediate output (*.mir) when building with -o dist/...
+dist/
