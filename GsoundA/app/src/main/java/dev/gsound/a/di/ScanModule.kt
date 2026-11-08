@@ -4,6 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.gsound.a.domain.folders.LibraryRefresher
+import dev.gsound.a.domain.folders.ScanLibraryRefresher
 import dev.gsound.a.domain.scan.FolderScanner
 import dev.gsound.a.domain.scan.TrackScanner
 import javax.inject.Singleton
@@ -22,4 +24,9 @@ abstract class ScanModule {
     @Binds
     @Singleton
     abstract fun bindTrackScanner(impl: FolderScanner): TrackScanner
+
+    /** Rescan-before-sync seam used by SyncOrchestrator. */
+    @Binds
+    @Singleton
+    abstract fun bindLibraryRefresher(impl: ScanLibraryRefresher): LibraryRefresher
 }

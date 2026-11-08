@@ -3,6 +3,7 @@ import Toybox.Communications;
 import Toybox.PersistedContent;
 import Toybox.Media;
 import Toybox.Timer;
+import Toybox.System;
 
 //! Downloader — sequential per-track media download for a sync
 //! (design.md §8.3–§8.4; Req 4.2–4.9, 8.1–8.3).
@@ -126,6 +127,17 @@ class Downloader {
     //! never re-issue a request after the sync has been cancelled (Req 4.8, 8.5).
     //! Null whenever no retry is scheduled.
     private var _retryTimer as Timer.Timer?;
+
+    //! Diagnostic: how many stored handles have been verified via getCachedContentObj so far
+    //! (capped to keep the debug log small). See verifyStoredHandle.
+    private var _diagVerified as Number = 0;
+
+    //! Set once finish() has run, so the sync is completed (notifySyncComplete) exactly once.
+    private var _finished as Boolean = false;
+
+    //! Diagnostic: media cache size before the current download, and the last logged progress step.
+    private var _cacheBefore as Long = 0l;
+    private var _lastProgressLogged as Number = -1;
 
     //! Maximum download attempts for a single track before its failure is recorded
     //! and the loop moves on (Req 4.7). A small fixed bound: the initial try plus
@@ -321,10 +333,50 @@ class Downloader {
             :headers => { "X-Gsound-Secret" => secret },
             :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_AUDIO,
             :mediaEncoding => encoding,
-            :context => trackId
+            :context => trackId,
+            // Diagnostic: the SDK reports bytes RECEIVED by the watch for this file download.
+            :fileDownloadProgressCallback => method(:onDownloadProgress)
         };
 
+        // Diagnostic: record the media cache size before the download so handleOk can log how many
+        // bytes this track actually added (observed: new downloads seemed to add 0 bytes).
+        _cacheBefore = cacheSize();
+        _lastProgressLogged = -1;
+        var expected = track.get(Messages.FIELD_SIZE_BYTES);
+        DebugLog.log("DL", "GET idx=" + _cursor.toString() + " mime=" + DebugLog.shape(track.get(Messages.FIELD_MIME))
+            + " enc=" + DebugLog.shape(encoding) + " expectBytes=" + DebugLog.shape(expected)
+            + " cacheBefore=" + _cacheBefore.toString());
+
         Communications.makeWebRequest(serverUrl + path, null, options, method(:onDownloaded));
+    }
+
+    //! Media cache "size" in bytes from Media.getCacheStatistics(), or -1 when unavailable.
+    private function cacheSize() as Long {
+        try {
+            return Media.getCacheStatistics().size;
+        } catch (ex) {
+            return -1l;
+        }
+    }
+
+    //! :fileDownloadProgressCallback — bytes received so far for the current file and its size (may
+    //! be null). Logged at most once per 25% step (or per 1 MB when the size is unknown) to keep the
+    //! log small. Public so the SDK can invoke it by symbol. Never throws.
+    function onDownloadProgress(totalBytesTransferred as Number, fileSize as Number or Null) as Void {
+        try {
+            var step;
+            if (fileSize != null && fileSize > 0) {
+                step = (totalBytesTransferred * 4) / fileSize; // 0..4 quarters
+            } else {
+                step = totalBytesTransferred / 1048576;        // per MB
+            }
+            if (step != _lastProgressLogged) {
+                _lastProgressLogged = step;
+                DebugLog.log("DL", "progress " + totalBytesTransferred.toString() + "/"
+                    + (fileSize == null ? "?" : fileSize.toString()) + "B");
+            }
+        } catch (ex) {
+        }
     }
 
     //! makeWebRequest callback — one track per call (design §8.3), with the full
@@ -364,6 +416,9 @@ class Downloader {
             responseCode as Number,
             data as Dictionary or String or PersistedContent.Iterator or Null,
             context as Object) as Void {
+        // Diagnostic: the HTTP status of every track download (non-200 codes explain skipped tracks;
+        // negative codes are Connect IQ transport errors such as BLE_CONNECTION_UNAVAILABLE).
+        DebugLog.log("DL", "resp code=" + responseCode.toString() + " idx=" + _cursor.toString());
         try {
             if (responseCode == 200) {
                 // Pass as a plain Object? so the handle-extraction stays duck-typed
@@ -399,10 +454,19 @@ class Downloader {
     //! useless) rather than a crash.
     private function handleOk(data as Object?) as Void {
         var track = currentTrack();
+        // Diagnostic (non-sensitive): capture the RUNTIME SHAPE of the 200 audio response and the
+        // resolved media handle. The mediaId round-trip has never been verified on hardware (see
+        // extractMediaId's "HARDWARE ASSUMPTION"); this tells us whether `data` is the expected
+        // PersistedContent.Iterator and what getId() actually yields, which decides whether a
+        // non-playing track is a format problem or a bad handle.
+        DebugLog.log("DL", "200 data=" + DebugLog.shape(data));
         var mediaId = extractMediaId(data);
+        DebugLog.log("DL", "mediaId=" + DebugLog.shape(mediaId));
         if (track == null || mediaId == null) {
             // No usable handle / no track dict → can't record a playable entry.
             // Count it as a failure and move on (Req 4.7 spirit; never crash).
+            DebugLog.log("DL", "track NOT stored (track null?=" + (track == null).toString()
+                + " mediaId null?=" + (mediaId == null).toString() + ")");
             _failed++;
             _done++;
             advanceCursor();
@@ -447,6 +511,17 @@ class Downloader {
             return;
         }
 
+        // Verify RIGHT NOW (for the first few tracks) that the system can resolve the handle we
+        // just stored. If this throws, the stored id is not a playable reference and no later
+        // playback attempt can work — which pinpoints the bug to the download/handle step.
+        verifyStoredHandle(mediaId);
+
+        // Diagnostic: how many bytes this track actually added to the media cache. 0 means the
+        // download "succeeded" (200 + a media handle) but no audio was stored.
+        var cacheAfter = cacheSize();
+        DebugLog.log("DL", "stored idx=" + _cursor.toString() + " cacheAfter=" + cacheAfter.toString()
+            + " added=" + (cacheAfter - _cacheBefore).toString() + "B");
+
         _done++;
         Communications.notifySyncProgress(progressPercent());
         // Mirror progress to the phone via a periodic SYNC_STATUS, throttled to
@@ -455,6 +530,22 @@ class Downloader {
         emitProgress();
         advanceCursor();
         issueNext();
+    }
+
+    //! Diagnostic: ask the system for the persisted Content behind `mediaId`, for the first few
+    //! tracks only (keeps the log small). Logs success or the exact exception. Never throws.
+    private function verifyStoredHandle(mediaId as Object) as Void {
+        if (_diagVerified >= 3) {
+            return;
+        }
+        _diagVerified += 1;
+        try {
+            var ref = new Media.ContentRef(mediaId, Media.CONTENT_TYPE_AUDIO);
+            var content = Media.getCachedContentObj(ref);
+            DebugLog.log("DL", "verify OK getCachedContentObj -> " + DebugLog.shape(content));
+        } catch (ex) {
+            DebugLog.log("DL", "verify FAILED " + DebugLog.shape(mediaId) + " " + DebugLog.describe(ex));
+        }
     }
 
     //! 401 handler: the pairing secret is stale (Req 8.2). Stop the whole sync —
@@ -587,8 +678,11 @@ class Downloader {
         // PersistedContent namespace.
         if (data has :next) {
             var item = (data as MediaHandleSource).next();
+            DebugLog.log("DL", "iterator.next() -> " + DebugLog.shape(item));
             if (item != null && (item has :getId)) {
-                return (item as MediaHandleSource).getId();
+                var itemId = (item as MediaHandleSource).getId();
+                DebugLog.log("DL", "item.getId() -> " + DebugLog.shape(itemId));
+                return itemId;
             }
             return null;
         }
@@ -721,7 +815,21 @@ class Downloader {
     //! (Req 8.5): reconcile / status / stats failures are swallowed and the system
     //! sync is still released via notifySyncComplete. The secret is never logged
     //! (Req 7.3) — nothing here prints.
+    //! Complete the sync now as a cancel (called from GsoundSyncDelegate.onStopSync after
+    //! cancel() + cancelAllRequests). Keeps stored tracks and sends the "cancelled" status.
+    function finishCancelled() as Void {
+        _cancelled = true;
+        stopRetryTimer();
+        finish(null);
+    }
+
     private function finish(error as String?) as Void {
+        // Idempotent: onStopSync completes the sync directly, and a request callback that lands
+        // afterwards would otherwise call notifySyncComplete a second time.
+        if (_finished) {
+            return;
+        }
+        _finished = true;
         try {
             if (error != null) {
                 // Failure: one final SYNC_STATUS with the non-null error. No
@@ -748,10 +856,22 @@ class Downloader {
             } else {
                 // Clean completion (design §8.4 order: reconcile → stats →
                 // completion).
-                Reconciler.deleteMissing(_manifest);
+                var reconcile = Reconciler.deleteMissing(_manifest);
+                DebugLog.log("DL", "reconcile deleted=" + DebugLog.shape(reconcile.get("deleted"))
+                    + " errored=" + DebugLog.shape(reconcile.get("errored")));
+                // Now that the index matches the manifest, remove every cached audio file the
+                // library no longer references (clears leftovers from earlier syncs).
+                Repo.sweepOrphanedMedia();
                 transmitFinalSuccess();
                 updateAndSendStats();
             }
+            // Diagnostic wrap-up BEFORE releasing the sync: outcome counts and what the SYSTEM
+            // media cache really holds (size + cached ids). Compare with the stored mediaIds above.
+            DebugLog.log("DL", "finish err=" + (error == null ? "none" : error)
+                + " done=" + _done.toString() + "/" + _total.toString()
+                + " failed=" + _failed.toString() + " unsupported=" + _skippedUnsupported.toString());
+            MediaDiag.snapshot("DL");
+
             Communications.notifySyncComplete(error);
         } catch (ex) {
             // Never let completion crash the sync process (Req 8.5). A reconcile /
@@ -784,9 +904,17 @@ class Downloader {
             if (!(pairingId instanceof String) || (pairingId as String).equals("")) {
                 return;
             }
-            // done == total (use _total for both) → unambiguous success counts.
+            // done == total → unambiguous success counts. Report the larger of the work-set size
+            // and the MANIFEST size: when every track was already on the watch the work set is 0,
+            // and a "0 of 0" status never completes on the phone (it falls back to its own count).
+            // After a clean pass every manifest track is on the watch, so N of N is accurate.
+            var count = _total;
+            var manifestTracks = _manifest.get(Messages.FIELD_TRACKS);
+            if (manifestTracks instanceof Array && (manifestTracks as Array).size() > count) {
+                count = (manifestTracks as Array).size();
+            }
             var msg = Messages.buildSyncStatus(
-                pairingId as String, "done", _total, _total, 0, null);
+                pairingId as String, "done", count, count, 0, null);
             control.transmit(msg, null, null);
         } catch (ex) {
             // Progress to the phone is best-effort (Req 8.5).

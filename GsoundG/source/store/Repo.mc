@@ -1,5 +1,6 @@
 import Toybox.Application;
 import Toybox.Lang;
+import Toybox.Media;
 
 //! Repo — Application.Storage persistence facade (design.md §8.3, §10).
 //!
@@ -179,6 +180,34 @@ module Repo {
 
     // --- folders ---------------------------------------------------------------
 
+    // --- last playback selection ------------------------------------------------
+    //
+    // The folder + start index the user last picked in the playback-config track list. The native
+    // player only passes our startPlayback() args when OUR list starts playback; when it starts or
+    // resumes on its own (its own Play button, after the headphone prompt, after a reboot) it calls
+    // getContentDelegate(null). Persisting the selection lets that null-args call still play it.
+
+    //! Storage key: last playback selection { "folder" => String, "startIndex" => Number }.
+    const KEY_LAST_PLAYBACK = "pb:last";
+
+    //! Persist the last playback selection.
+    function savePlaybackSelection(folder as String, startIndex as Number) as Void {
+        var selection = {
+            "folder" => folder,
+            "startIndex" => startIndex
+        };
+        Application.Storage.setValue(KEY_LAST_PLAYBACK, selection as Application.Storage.ValueType);
+    }
+
+    //! The last playback selection, or null when none was saved / it is malformed.
+    function loadPlaybackSelection() as Dictionary? {
+        var raw = Application.Storage.getValue(KEY_LAST_PLAYBACK);
+        if (raw instanceof Dictionary && (raw as Dictionary).get("folder") instanceof String) {
+            return raw as Dictionary;
+        }
+        return null;
+    }
+
     //! Load the distinct-folder-name list, or an empty array when none persisted.
     function loadFolders() as Array<Object?> {
         var folders = Application.Storage.getValue(KEY_FOLDERS);
@@ -270,6 +299,13 @@ module Repo {
         if (id == null || id.equals("")) {
             return;
         }
+        // Delete the downloaded AUDIO too, not just our bookkeeping. Previously only the trk:
+        // entry / index were removed, so every removed or replaced track stayed in the system
+        // media cache forever (seen on device: 12+ cached files, ~295 MB, for 2 tracks).
+        var entry = getTrack(id);
+        if (entry != null) {
+            deleteCachedMedia(entry.get("mediaId"));
+        }
         Application.Storage.deleteValue(trackKey(id));
 
         // Remove the id from the index (preserving order of the rest).
@@ -285,6 +321,116 @@ module Repo {
 
         // Rebuild the distinct folders list from what remains.
         rebuildFolders();
+    }
+
+    //! Delete one downloaded audio item from the system media cache by its stored mediaId.
+    //! Best effort: a missing/already-deleted item or an unsupported context must not stop the
+    //! caller. Returns true when the delete call succeeded.
+    function deleteCachedMedia(mediaId as Object?) as Boolean {
+        if (mediaId == null) {
+            return false;
+        }
+        try {
+            Media.deleteCachedItem(new Media.ContentRef(mediaId, Media.CONTENT_TYPE_AUDIO));
+            return true;
+        } catch (ex) {
+            DebugLog.log("REPO", "deleteCachedItem FAILED id=" + DebugLog.shape(mediaId) + " " + DebugLog.describe(ex));
+            return false;
+        }
+    }
+
+    //! Delete every audio item in the system media cache that no stored track references
+    //! (orphans from earlier syncs, removed/replaced tracks, or interrupted downloads).
+    //! Run after a clean sync, once the index matches the manifest. Returns how many were deleted.
+    //! Never throws.
+    function sweepOrphanedMedia() as Number {
+        var deleted = 0;
+        try {
+            // mediaIds still referenced by our library.
+            var keep = [] as Array<Object?>;
+            var ids = loadIndex();
+            for (var i = 0; i < ids.size(); i++) {
+                var id = ids[i];
+                if (id instanceof String) {
+                    var entry = getTrack(id as String);
+                    if (entry != null && entry.get("mediaId") != null) {
+                        keep.add(entry.get("mediaId"));
+                    }
+                }
+            }
+
+            // Collect first, delete after: don't mutate the cache while iterating it.
+            var orphans = [] as Array<Media.ContentRef>;
+            var it = Media.getContentRefIter({ :contentType => Media.CONTENT_TYPE_AUDIO });
+            var ref = it.next();
+            var scanned = 0;
+            while (ref != null && scanned < 500) {
+                scanned += 1;
+                if (!containsObject(keep, ref.getId())) {
+                    orphans.add(ref);
+                }
+                ref = it.next();
+            }
+
+            for (var i = 0; i < orphans.size(); i++) {
+                try {
+                    Media.deleteCachedItem(orphans[i]);
+                    deleted += 1;
+                } catch (ex) {
+                    DebugLog.log("REPO", "orphan delete FAILED " + DebugLog.describe(ex));
+                }
+            }
+            DebugLog.log("REPO", "orphan sweep: cached=" + scanned.toString()
+                + " kept=" + keep.size().toString() + " deleted=" + deleted.toString());
+        } catch (ex) {
+            DebugLog.log("REPO", "orphan sweep FAILED " + DebugLog.describe(ex));
+        }
+        return deleted;
+    }
+
+    //! True when the system media cache holds audio that no stored track references, i.e. there is
+    //! something for sweepOrphanedMedia to clean. Used by SyncNeed so a cleanup sync runs even
+    //! when no track is new. Never throws (false on any error).
+    function hasOrphanedMedia() as Boolean {
+        try {
+            var keep = [] as Array<Object?>;
+            var ids = loadIndex();
+            for (var i = 0; i < ids.size(); i++) {
+                var id = ids[i];
+                if (id instanceof String) {
+                    var entry = getTrack(id as String);
+                    if (entry != null && entry.get("mediaId") != null) {
+                        keep.add(entry.get("mediaId"));
+                    }
+                }
+            }
+            var it = Media.getContentRefIter({ :contentType => Media.CONTENT_TYPE_AUDIO });
+            var ref = it.next();
+            var scanned = 0;
+            while (ref != null && scanned < 500) {
+                scanned += 1;
+                if (!containsObject(keep, ref.getId())) {
+                    return true;
+                }
+                ref = it.next();
+            }
+        } catch (ex) {
+        }
+        return false;
+    }
+
+    //! True when `list` contains a value equal to `value` (works for Number media ids).
+    function containsObject(list as Array<Object?>, value as Object?) as Boolean {
+        if (value == null) {
+            return false;
+        }
+        for (var i = 0; i < list.size(); i++) {
+            var item = list[i];
+            if (item != null && item.equals(value)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     //! Derive the distinct folder names from all persisted track entries and

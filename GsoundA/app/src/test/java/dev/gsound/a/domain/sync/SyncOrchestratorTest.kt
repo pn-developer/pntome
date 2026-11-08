@@ -130,9 +130,23 @@ class SyncOrchestratorTest {
             sessionHolder = sessionHolder,
             transferMonitor = transferMonitor,
             wifiGuard = wifiGuard,
+            libraryRefresher = refresher,
             logger = NoopLogger,
         )
     }
+
+    /** Fake rescan: counts calls and runs an optional action (to mutate the cache mid-refresh). */
+    private class FakeRefresher : dev.gsound.a.domain.folders.LibraryRefresher {
+        var calls = 0
+        var onRefresh: suspend () -> Unit = {}
+        override suspend fun refreshAll(): Int {
+            calls++
+            onRefresh()
+            return 0
+        }
+    }
+
+    private val refresher = FakeRefresher()
 
     @After
     fun tearDown() {
@@ -225,6 +239,27 @@ class SyncOrchestratorTest {
             val persisted = summaryStore.get()
             assertNotNull(persisted)
             assertEquals(2, persisted!!.syncedCount)
+        }
+
+    // --- Rescan before manifest ------------------------------------------------------------------
+
+    @Test
+    fun `library is rescanned before the manifest is built so deleted files are not sent`() =
+        runBlocking {
+            pairingStore.save(pairing)
+            seedTracks(track("keep"), track("gone"))
+            // Simulate the rescan finding that "gone" was deleted on disk.
+            refresher.onRefresh = { repository.removeTracks(listOf("gone")) }
+
+            val run = startSyncAsync()
+            val manifestMsg = awaitSent() as SyncManifest
+
+            assertEquals(1, refresher.calls)
+            assertEquals(listOf("keep"), manifestMsg.tracks.map { it.id })
+
+            channel.emitIncoming(terminalStatus(done = 1, total = 1, bytes = 10L))
+            awaitTerminal(run)
+            Unit
         }
 
     // --- Progress -------------------------------------------------------------------------------

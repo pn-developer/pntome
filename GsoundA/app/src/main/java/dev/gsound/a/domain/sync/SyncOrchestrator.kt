@@ -3,6 +3,7 @@ package dev.gsound.a.domain.sync
 import dev.gsound.a.data.folders.FolderRepository
 import dev.gsound.a.data.pairing.PairingStore
 import dev.gsound.a.data.sync.SyncSummaryStore
+import dev.gsound.a.domain.folders.LibraryRefresher
 import dev.gsound.a.domain.model.PairingRecord
 import dev.gsound.a.domain.model.SyncState
 import dev.gsound.a.domain.model.SyncSummary
@@ -31,6 +32,9 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.sync.Mutex
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** Minimum gap between projected server-progress updates (logs/notification), unless a track finished. */
+private const val SERVER_PROGRESS_INTERVAL_MS = 1000L
 
 /**
  * Orchestration core of a sync (design §5.6; Req 5.6, 5.7, 6.1–6.6, 8.3).
@@ -88,6 +92,7 @@ class SyncOrchestrator @Inject constructor(
     private val sessionHolder: SyncSessionHolder,
     private val transferMonitor: ServerTransferMonitor,
     private val wifiGuard: WifiGuard,
+    private val libraryRefresher: LibraryRefresher,
     private val logger: Logger = GsoundLog,
 ) {
 
@@ -158,9 +163,16 @@ class SyncOrchestrator @Inject constructor(
                 }
             logger.i(tag, "startSync: pairing ok (pairingId=${pairing.pairingId})")
 
-            // Build the manifest from the current Room track cache (pure mapping). A "fresh scan
-            // if stale" is intentionally driven elsewhere (ScanAndCacheUseCase / the Folders UI);
-            // this uses the latest cached snapshot to stay minimal.
+            // Re-scan every folder first so the manifest reflects the files on disk NOW. Previously
+            // this used whatever was cached when the Folders tab was last opened, so deleted or
+            // replaced files could still be sent to the watch. A folder that fails to scan keeps
+            // its cached tracks (never treated as empty, which would delete music on the watch).
+            val failedScans = libraryRefresher.refreshAll()
+            if (failedScans > 0) {
+                logger.w(tag, "startSync: $failedScans folder(s) failed to rescan; using their cached tracks")
+            }
+
+            // Build the manifest from the (now refreshed) Room track cache (pure mapping).
             val tracks = folderRepository.getAllTracks()
             if (tracks.isEmpty()) {
                 logger.w(tag, "startSync abort: no cached tracks (add a folder/scan first)")
@@ -306,6 +318,9 @@ class SyncOrchestrator @Inject constructor(
         var watchDone = 0
         var watchBytes = 0L
         var serverProgress: TransferProgress? = null
+        // Server-progress throttle state (see the ProgressEvent.Server branch).
+        var lastServerEmitMs = 0L
+        var lastServerComplete = -1
 
         val watchEvents = controlChannel.incoming
             .filterIsInstance<SyncStatus>()
@@ -343,6 +358,19 @@ class SyncOrchestrator @Inject constructor(
 
                 is ProgressEvent.Server -> {
                     serverProgress = event.progress
+                    val p0 = event.progress
+                    // Throttle: the monitor emits on every ~4 KB chunk. Projecting each one meant a
+                    // log line + notification update hundreds of times per second (Android started
+                    // shedding notifications, UI dropped frames). Only project when a track finished
+                    // or SERVER_PROGRESS_INTERVAL_MS has passed; completion is still checked below.
+                    val now = System.currentTimeMillis()
+                    val trackFinished = p0.tracksComplete != lastServerComplete
+                    val allDone = p0.tracksTotal > 0 && p0.tracksComplete >= p0.tracksTotal
+                    if (!trackFinished && !allDone && now - lastServerEmitMs < SERVER_PROGRESS_INTERVAL_MS) {
+                        return@collectUntil
+                    }
+                    lastServerEmitMs = now
+                    lastServerComplete = p0.tracksComplete
                     logger.i(
                         tag,
                         "server transfer: complete=${event.progress.tracksComplete}/${event.progress.tracksTotal} " +
