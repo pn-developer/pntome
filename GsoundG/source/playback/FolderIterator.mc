@@ -121,14 +121,16 @@ class FolderIterator extends Media.ContentIterator {
         DebugLog.log("PB", "iter.getPlaybackProfile");
         var profile = new Media.PlaybackProfile();
         profile.attemptSkipAfterThumbsDown = false;
-        // PLAYBACK FIRST: the SDK notes "the first entry in the array may be used as a hotkey in
-        // the media player (device dependent)". The previous list started with SKIP_BACKWARD
-        // ("skip backward x seconds", a seek), so on a fēnix the START hotkey could seek instead
-        // of play. Track-level previous/next replace the seconds-based skips (we play music).
+        // NEXT FIRST: the SDK notes "the first entry in the array may be used as a hotkey in the
+        // media player (device dependent)". On the fēnix 6S Pro that hotkey is the bottom-left
+        // (DOWN) button; with NEXT first it skips to the next song, matching the built-in music
+        // player. This is the ONLY physical-button influence an ACP has — the player UI and the
+        // other buttons are system-owned and cannot be remapped. Play/pause and previous stay
+        // available as on-screen controls. Track-level previous/next, not seconds-based skips.
         profile.playbackControls = [
+            Media.PLAYBACK_CONTROL_NEXT,
             Media.PLAYBACK_CONTROL_PLAYBACK,
-            Media.PLAYBACK_CONTROL_PREVIOUS,
-            Media.PLAYBACK_CONTROL_NEXT
+            Media.PLAYBACK_CONTROL_PREVIOUS
         ];
         // Ask the player to report song events right away (threshold 0 = as soon as a song
         // begins). With this false we never saw onSong, so we couldn't tell whether a track

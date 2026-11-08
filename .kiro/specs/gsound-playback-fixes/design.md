@@ -73,8 +73,12 @@ catch  log; return new Media.Content(ref, metadataFromIndex)   // fallback
 
 ### 3.3 Playback profile
 
-`[PLAYBACK, PREVIOUS, NEXT]`. The first entry may become the device hotkey, and a seconds-skip
-control there would seek instead of play. Also set: `requirePlaybackNotification = true`,
+`[NEXT, PLAYBACK, PREVIOUS]`. The first entry may become the device hotkey: bottom-left (DOWN)
+on fēnix 6S Pro, confirmed on hardware with `PLAYBACK` first, where it toggled play. `NEXT`
+first matches the built-in player's skip-next. That hotkey is the only physical-button
+influence an ACP has. The player UI and the other buttons (including bottom-right BACK) are
+system-owned, and no API remaps them. Play/pause and previous remain on-screen controls.
+Also set: `requirePlaybackNotification = true`,
 threshold 0 (so `onSong` is observable), `skipPreviousThreshold = 5`, and
 `attemptSkipAfterThumbsDown = false`.
 

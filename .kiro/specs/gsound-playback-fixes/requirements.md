@@ -41,8 +41,10 @@ hear music, not a frozen 0:00 timer.
    the player.
 3. The iterator SHALL implement `repeatMode()` explicitly (`REPEAT_MODE_OFF`), plus `canSkip()`
    (true) and `shuffling()` (false).
-4. The playback profile SHALL list `PLAYBACK_CONTROL_PLAYBACK` first, then `PREVIOUS` and
-   `NEXT`. It SHALL set `requirePlaybackNotification = true` with
+4. The playback profile SHALL list `PLAYBACK_CONTROL_NEXT` first, so that the device hotkey
+   (bottom-left on fēnix 6S Pro) skips to the next song like the built-in player. It SHALL
+   then list `PLAYBACK` and `PREVIOUS` as on-screen controls. Other physical buttons are
+   system-owned and SHALL NOT be assumed remappable. It SHALL set `requirePlaybackNotification = true` with
    `playbackNotificationThreshold = 0`, so that `onSong` reports START/PAUSE/RESUME/STOP/
    COMPLETE, and `skipPreviousThreshold = 5`.
 5. Playback SHALL walk one folder in index order from the selected start index, with no wrap
