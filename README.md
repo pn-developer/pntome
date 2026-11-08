@@ -24,7 +24,8 @@ leaves your local network. See [PRIVACY.md](PRIVACY.md).
 | Build from source | both | See [INSTALL.md](INSTALL.md). |
 
 PNTomeGo requires PNTome on the phone and Garmin Connect Mobile. Release builds are
-described in [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md).
+described in [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md). The release
+procedure, CI secrets and manual steps are in [`docs/RELEASING.md`](docs/RELEASING.md).
 
 ## Repository layout
 
@@ -54,12 +55,13 @@ pn_gsound/
 │   └── garmin/                   # Connect IQ Store listing, images, submission checklist
 ├── fdroid/                       # self-hosted F-Droid repo: metadata + config example
 ├── docs/
+│   ├── RELEASING.md              # release procedure, CI secrets, manual steps
 │   └── RELEASE_CHECKLIST.md      # release steps
 ├── .kiro/specs/                  # specs (see "Specs" below)
 ├── CHANGELOG.md                  # release notes (Keep a Changelog)
 ├── PRIVACY.md                    # privacy policy
 ├── THIRD_PARTY.md                # third-party dependencies and licenses
-├── LICENSE                       # GPL-3.0-or-later
+├── LICENSE                       # Apache-2.0
 ├── README.md                     # this file
 └── INSTALL.md                    # install index, links to PNTome / PNTomeGo guides
 ```
@@ -148,8 +150,8 @@ PNTomeGo and still use the old names and paths.
 
 ## License
 
-PNTome and PNTomeGo are licensed under **GPL-3.0-or-later**
-(SPDX: `GPL-3.0-or-later`). See [LICENSE](LICENSE).
+PNTome and PNTomeGo are licensed under **Apache-2.0**
+(SPDX: `Apache-2.0`). See [LICENSE](LICENSE).
 
 - [PRIVACY.md](PRIVACY.md): privacy policy
 - [CHANGELOG.md](CHANGELOG.md): release notes

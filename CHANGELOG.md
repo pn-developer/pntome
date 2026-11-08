@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- License changed from GPL-3.0-or-later to Apache-2.0
+
 ## [0.1.0] - Unreleased
 
 First public release.
@@ -23,7 +27,7 @@ First public release.
 - Release signing from environment variables or `keystore.properties`, release APK and AAB builds.
 - Connect IQ Store export (`./build.sh --export`).
 - Store metadata for Google Play, a self-hosted F-Droid repository and the Connect IQ Store.
-- `LICENSE` (GPL-3.0-or-later), `PRIVACY.md`, `THIRD_PARTY.md`, `CHANGELOG.md`, `docs/RELEASE_CHECKLIST.md`.
+- `LICENSE` (Apache-2.0), `PRIVACY.md`, `THIRD_PARTY.md`, `CHANGELOG.md`, `docs/RELEASE_CHECKLIST.md`.
 
 ### Upgrade notes
 

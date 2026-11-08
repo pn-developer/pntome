@@ -2,7 +2,8 @@ import Toybox.Lang;
 
 //! AppVersion — the PNTomeGo app version, surfaced in the watch UI.
 //!
-//! [SEMVER] is the hand-maintained semantic version (bump it on releases).
+//! [SEMVER] is the semantic version, written by `scripts/set-version.sh` from the
+//! repository `VERSION` file (do not edit it by hand; it may carry a `-rc.N` suffix).
 //! [COMMIT] is the short git commit the build was produced from; `build.sh`
 //! rewrites the COMMIT line from `git rev-parse --short HEAD` at build time (and
 //! restores this file afterward so the working tree isn't dirtied). The value

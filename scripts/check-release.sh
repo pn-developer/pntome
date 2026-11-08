@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # check-release.sh -- offline repository invariants for the PNTome store release.
 #
-# Usage: scripts/check-release.sh [--release]
-#   --release  stricter mode (used by later checks, e.g. remaining placeholders fail).
+# Usage: scripts/check-release.sh [--release] [--tag <refname>]
+#   --release      stricter mode (used by later checks, e.g. remaining placeholders fail).
+#   --tag <ref>    additionally require <ref> == "v" + contents of VERSION.
 #
 # Every check_* function appends lines to VIOLATIONS in the form
 #   [check-name] file:line message
@@ -11,16 +12,25 @@
 set -euo pipefail
 
 RELEASE=0
-for arg in "$@"; do
-  case "$arg" in
+TAG_REF=""
+TAG_GIVEN=0
+while (($#)); do
+  case "$1" in
     --release) RELEASE=1 ;;
-    -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
-    *) echo "unknown argument: $arg" >&2; exit 2 ;;
+    --tag)
+      [[ $# -ge 2 ]] || { echo "--tag needs a value" >&2; exit 2; }
+      TAG_REF="$2"; TAG_GIVEN=1; shift ;;
+    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
+  shift
 done
 
 ROOT="${CHECK_RELEASE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$ROOT"
+
+# shellcheck source=lib/version.sh
+source "$ROOT/scripts/lib/version.sh"
 
 APP_PACKAGE="dev.pntome.app"
 ANDROID_DIR="PNTome"
@@ -225,17 +235,68 @@ check_contract_constants() {
   fi
 }
 
-# Property 4: Android versionName == Version.mc SEMVER == Garmin manifest version.
+# Version helpers. VERSION_OK=1 only when VERSION holds one valid line.
+VERSION_FILE="VERSION"
+CUR_VERSION=""
+VERSION_OK=0
+CHANGELOG_MD="CHANGELOG.md"
+
+# [version-file] VERSION exists, has exactly one line and a valid Version.
+check_version_file() {
+  if [[ ! -f "$VERSION_FILE" ]]; then
+    violation "[version-file] $VERSION_FILE:0 file not found"; return
+  fi
+  local lines v
+  lines=$(awk 'END{print NR}' "$VERSION_FILE")
+  if ((lines != 1)); then
+    violation "[version-file] $VERSION_FILE:0 must contain exactly one line, found $lines"; return
+  fi
+  v=$(head -n1 "$VERSION_FILE")
+  if ! valid_version "$v"; then
+    violation "[version-file] $VERSION_FILE:1 '$v' is not a valid version (MAJOR.MINOR.PATCH[-rc.N], limits 209/99/99/98)"; return
+  fi
+  CUR_VERSION="$v"; VERSION_OK=1
+}
+
+# [versions] Android versionName/versionCode, Version.mc SEMVER and manifest version agree with VERSION.
 check_versions() {
-  local a w m
+  ((VERSION_OK)) || return 0
+  local a ac w m exp_code exp_core
   a=$(first_match "$GRADLE_KTS" '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]*)".*')
+  ac=$(first_match "$GRADLE_KTS" '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*([0-9]+).*')
   w=$(first_match "$WATCH_VERSION" '.*const SEMVER[[:space:]]*=[[:space:]]*"([^"]*)".*')
   m=$(awk '/<iq:application/{t=1} t&&/[[:space:]]version="/{match($0,/[[:space:]]version="[^"]*"/); s=substr($0,RSTART,RLENGTH); sub(/^[^"]*"/,"",s); sub(/"$/,"",s); print s; exit} t&&/>/{exit}' "$WATCH_MANIFEST" 2>/dev/null || true)
+  exp_code=$(version_code "$CUR_VERSION")
+  exp_core=$(core_version "$CUR_VERSION")
   [[ -n "$a" ]] || violation "[versions] $GRADLE_KTS:0 cannot find versionName"
+  [[ -n "$ac" ]] || violation "[versions] $GRADLE_KTS:0 cannot find versionCode"
   [[ -n "$w" ]] || violation "[versions] $WATCH_VERSION:0 cannot find SEMVER"
   [[ -n "$m" ]] || violation "[versions] $WATCH_MANIFEST:0 cannot find application version"
-  if [[ -n "$a" && -n "$w" && -n "$m" && ( "$a" != "$w" || "$a" != "$m" ) ]]; then
-    violation "[versions] version mismatch: android versionName='$a' ($GRADLE_KTS), Version.mc SEMVER='$w' ($WATCH_VERSION), manifest version='$m' ($WATCH_MANIFEST)"
+  if [[ -n "$a" && -n "$ac" && -n "$w" && -n "$m" ]] &&
+     [[ "$a" != "$CUR_VERSION" || "$ac" != "$exp_code" || "$w" != "$CUR_VERSION" || "$m" != "$exp_core" ]]; then
+    violation "[versions] version mismatch: VERSION='$CUR_VERSION' (expected versionCode '$exp_code', manifest '$exp_core'); android versionName='$a' versionCode='$ac' ($GRADLE_KTS), Version.mc SEMVER='$w' ($WATCH_VERSION), manifest version='$m' ($WATCH_MANIFEST)"
+  fi
+}
+
+# [changelog] '## [Unreleased]' always; '## [VERSION]' for stable versions.
+check_changelog() {
+  if [[ ! -f "$CHANGELOG_MD" ]]; then violation "[changelog] $CHANGELOG_MD:0 file not found"; return; fi
+  grep -qE '^## \[Unreleased\]' "$CHANGELOG_MD" ||
+    violation "[changelog] $CHANGELOG_MD:0 no '## [Unreleased]' heading"
+  if ((VERSION_OK)) && ! is_prerelease "$CUR_VERSION"; then
+    grep -qF -- "## [$CUR_VERSION]" "$CHANGELOG_MD" ||
+      violation "[changelog] $CHANGELOG_MD:0 no '## [$CUR_VERSION]' heading for stable version $CUR_VERSION"
+  fi
+}
+
+# [tag] --tag <ref> must equal "v" + VERSION.
+check_tag() {
+  ((TAG_GIVEN)) || return 0
+  if ((VERSION_OK)); then
+    [[ "$TAG_REF" == "v$CUR_VERSION" ]] ||
+      violation "[tag] $VERSION_FILE:1 tag '$TAG_REF' != 'v$CUR_VERSION' (VERSION='$CUR_VERSION')"
+  else
+    violation "[tag] $VERSION_FILE:0 cannot compare tag '$TAG_REF': VERSION is missing or invalid"
   fi
 }
 
@@ -243,6 +304,10 @@ check_versions() {
 check_fdroid_metadata() {
   local f="$FDROID_YML" k
   if [[ ! -f "$f" ]]; then violation "[fdroid] $f:0 file not found"; return; fi
+  if ((VERSION_OK)) && is_prerelease "$CUR_VERSION"; then
+    warning "[fdroid] $f:0 version comparison skipped: VERSION '$CUR_VERSION' is a pre-release (metadata tracks the last stable release)"
+    return
+  fi
 
   for k in Categories License AuthorName WebSite SourceCode IssueTracker Changelog AutoName RepoType Repo \
            Builds AutoUpdateMode UpdateCheckMode UpdateCheckData CurrentVersion CurrentVersionCode; do
@@ -328,7 +393,7 @@ check_store_text_limits() {
       n=$(char_count "$file")
       ((n <= limit)) || violation "[store-text] $file:1 $n characters exceeds limit $limit"
     done
-    if [[ -n "$code" ]]; then
+    if [[ -n "$code" ]] && ! { ((VERSION_OK)) && is_prerelease "$CUR_VERSION"; }; then
       file="$loc/changelogs/$code.txt"
       if [[ ! -f "$file" ]]; then
         violation "[store-text] $file:0 changelog for versionCode $code not found"
@@ -382,11 +447,150 @@ check_placeholders() {
     done < <(grep -nIF -- 'example.invalid' "$f" || true)
   done < <(list_files)
 }
+# [license] Apache-2.0 repository: LICENSE text, NOTICE, F-Droid field, no stray GPL mentions.
+LICENSE_FILE="LICENSE"
+NOTICE_FILE="NOTICE"
+GPL_REGEX='\bL?GPL\b|GNU General Public|GPL-[0-9]'
+# Files where GPL may be named (shell globs): historical specs, gradle wrapper,
+# and the check script / its tests, which must spell the pattern.
+GPL_ALLOW_PATH_GLOBS=(
+  ".kiro/specs/*"
+  "PNTome/gradlew*"
+  "scripts/check-release.sh"
+  "scripts/test-check-release.sh"
+  "scripts/tests/*"
+)
+# Single CHANGELOG.md line allowed to name the old license: the relicensing note.
+GPL_ALLOW_CHANGELOG_RE='License changed from .*to Apache-2\.0'
+
+check_license() {
+  if [[ ! -f "$LICENSE_FILE" ]]; then
+    violation "[license] $LICENSE_FILE:0 file not found"
+  else
+    grep -q 'Apache License' "$LICENSE_FILE" ||
+      violation "[license] $LICENSE_FILE:0 does not contain 'Apache License'"
+    grep -q 'Version 2.0' "$LICENSE_FILE" ||
+      violation "[license] $LICENSE_FILE:0 does not contain 'Version 2.0'"
+    if grep -q 'GNU GENERAL PUBLIC LICENSE' "$LICENSE_FILE"; then
+      violation "[license] $LICENSE_FILE:$(grep -n -m1 'GNU GENERAL PUBLIC LICENSE' "$LICENSE_FILE" | cut -d: -f1) contains 'GNU GENERAL PUBLIC LICENSE'"
+    fi
+  fi
+  [[ -f "$NOTICE_FILE" ]] || violation "[license] $NOTICE_FILE:0 file not found"
+
+  if [[ -f "$FDROID_YML" ]]; then
+    local lic
+    lic=$(first_match "$FDROID_YML" '^License:[[:space:]]*"?([^"[:space:]]*)"?.*')
+    [[ "$lic" == "Apache-2.0" ]] ||
+      violation "[license] $FDROID_YML:0 License '$lic' != 'Apache-2.0'"
+  else
+    violation "[license] $FDROID_YML:0 file not found"
+  fi
+
+  local f g skip hit lineno text
+  while IFS= read -r f; do
+    skip=0
+    for g in "${GPL_ALLOW_PATH_GLOBS[@]}"; do
+      # shellcheck disable=SC2053
+      [[ "$f" == $g ]] && { skip=1; break; }
+    done
+    ((skip)) && continue
+    while IFS= read -r hit; do
+      [[ -n "$hit" ]] || continue
+      lineno="${hit%%:*}"; text="${hit#*:}"
+      if [[ "$f" == "$CHANGELOG_MD" ]] && printf '%s' "$text" | grep -qE -- "$GPL_ALLOW_CHANGELOG_RE"; then
+        continue
+      fi
+      violation "[license] $f:$lineno GPL mention outside allowlist: $(printf '%s' "$text" | sed -E 's/^[[:space:]]+//' | cut -c1-100)"
+    done < <(grep -nIE -- "$GPL_REGEX" "$f" || true)
+  done < <(list_files)
+}
+
+# [workflows] GitHub Actions hygiene, checked with grep/awk only (no YAML parser).
+#  - at least one workflow file;
+#  - every `uses:` is actions/* or gradle/* at @v<N>, a local ./ path, or pinned to a 40-hex SHA;
+#  - no pull_request_target; top-level `permissions:` in each file;
+#  - no `${{ secrets.` on a run: line or inside a run: block scalar;
+#  - every job has timeout-minutes.
+# This function's own text and the test scripts that inject these patterns are exempt from the
+# other checks through ALLOW_PATH_GLOBS / GPL_ALLOW_PATH_GLOBS / the placeholder skip list above.
+WORKFLOWS_DIR=".github/workflows"
+check_workflows() {
+  local files=() f out
+  while IFS= read -r f; do
+    case "$f" in "$WORKFLOWS_DIR"/*.yml|"$WORKFLOWS_DIR"/*.yaml) files+=("$f") ;; esac
+  done < <(list_files)
+  if ((${#files[@]} == 0)); then
+    violation "[workflows] $WORKFLOWS_DIR:0 no workflow files found"; return
+  fi
+  for f in "${files[@]}"; do
+    while IFS= read -r out; do
+      [[ -n "$out" ]] && violation "$out"
+    done < <(awk -v F="$f" '
+      function indent_of(s,   t) { t = s; sub(/[^ ].*$/, "", t); return length(t) }
+      function v(n, m) { printf "[workflows] %s:%d %s\n", F, n, m }
+      function flush_job() {
+        if (job != "" && !job_timeout) v(job_line, "job \"" job "\" has no timeout-minutes")
+      }
+      BEGIN { in_jobs = 0; job = ""; blk = -1; has_perm = 0 }
+      {
+        line = $0
+        sub(/\r$/, "", line)
+        is_blank = (line ~ /^[ \t]*$/)
+        # Leave a run: block scalar when indentation drops back to the key level.
+        if (blk >= 0 && !is_blank && indent_of(line) <= blk) blk = -1
+        if (blk >= 0) {
+          if (line ~ /\$\{\{[ ]*secrets\./) v(NR, "secret expression inside a run: block")
+          next
+        }
+        if (line ~ /^[ ]*#/ || is_blank) next
+        if (line ~ /^permissions:/) has_perm = 1
+        if (line ~ /pull_request_target/) v(NR, "pull_request_target trigger is not allowed")
+
+        if (line ~ /^jobs:/) { in_jobs = 1; next }
+        if (in_jobs && line ~ /^[^ #]/) { flush_job(); job = ""; in_jobs = 0 }
+        if (in_jobs) {
+          if (line ~ /^  [A-Za-z0-9_-]+:[ ]*(#.*)?$/) {
+            flush_job()
+            job = line; sub(/^  /, "", job); sub(/:.*$/, "", job)
+            job_line = NR; job_timeout = 0
+          } else if (line ~ /^    timeout-minutes:/) job_timeout = 1
+        }
+
+        if (line ~ /^[ ]*(- )?run:/) {
+          ind = indent_of(line)
+          if (line ~ /^[ ]*- /) ind += 2
+          rest = line; sub(/^[ ]*(- )?run:[ ]*/, "", rest)
+          if (rest ~ /^[|>][-+0-9]*[ ]*(#.*)?$/) blk = ind
+          else if (rest ~ /\$\{\{[ ]*secrets\./) v(NR, "secret expression on a run: line")
+        }
+
+        if (line ~ /^[ ]*(- )?uses:/) {
+          u = line; sub(/^[ ]*(- )?uses:[ ]*/, "", u)
+          sub(/[ ]+#.*$/, "", u); gsub(/["\047]/, "", u); sub(/[ ]+$/, "", u)
+          ok = 0
+          if (u ~ /^\.\//) ok = 1
+          else if (u ~ /@[0-9a-f]{40}$/) ok = 1
+          else if (u ~ /^(actions|gradle)\/[^@ ]+@v[0-9]+$/) ok = 1
+          if (!ok) v(NR, "action \"" u "\" must be actions/* or gradle/* at @v<N>, or pinned to a 40-hex commit SHA")
+        }
+      }
+      END {
+        flush_job()
+        if (!has_perm) v(0, "no top-level permissions: block")
+      }' "$f")
+  done
+}
+
 # ---------------------------------------------------------------------------
 check_legacy_names
 check_package_matches_dir
 check_contract_constants
+check_version_file
 check_versions
+check_changelog
+check_tag
+check_license
+check_workflows
 check_fdroid_metadata
 check_store_text_limits
 check_permissions_documented

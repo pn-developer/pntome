@@ -583,7 +583,9 @@ class SyncOrchestratorTest {
     }
 
     private companion object {
-        const val POLL_TIMEOUT_MS = 10_000L
+        // Generous: slow/loaded CI or install boxes (parallel KSP/lint, cold Room + Ktor bind)
+        // can exceed 10s on the first test; a real hang still fails, just later.
+        const val POLL_TIMEOUT_MS = 30_000L
         const val POLL_STEP_MS = 10L
     }
 }

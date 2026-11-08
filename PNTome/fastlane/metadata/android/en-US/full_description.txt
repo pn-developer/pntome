@@ -16,4 +16,4 @@ Requirements
 Privacy
 PNTome does not collect or share any data. Your files, pairing information and settings stay on your phone. Audio is sent to your watch directly over your local network.
 
-PNTome is free software released under the GPL-3.0-or-later license. It uses the proprietary Garmin Connect IQ Mobile SDK to talk to Garmin Connect Mobile. PNTome is an independent project and is not affiliated with or endorsed by Garmin.
+PNTome is free software released under the Apache-2.0 license. It uses the proprietary Garmin Connect IQ Mobile SDK to talk to Garmin Connect Mobile. PNTome is an independent project and is not affiliated with or endorsed by Garmin.

@@ -17,3 +17,6 @@ fdroid/repo/
 fdroid/archive/
 fdroid/config.yml
 fdroid/keystore*
+
+# Release/CI output directory
+out/

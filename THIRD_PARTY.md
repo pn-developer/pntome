@@ -30,18 +30,27 @@ repositories before a release.
 license terms, not under a free-software license. Its source is not available. It is
 published on Maven Central and is linked into the PNTome APK and AAB.
 
-## Open item: GPL-3.0-or-later with a proprietary SDK
+## License compatibility notes
 
-PNTome is licensed under `GPL-3.0-or-later` (see `LICENSE`), yet it links a proprietary
-SDK. Whether this combination is compatible with the GPL, and whether Garmin's terms allow
-redistribution inside a GPL-licensed app, depends on the exact Garmin license text and on
-how the SDK is linked. This file does not settle that question and is not legal advice.
+PNTome and PNTomeGo are licensed under `Apache-2.0` (see `LICENSE` and `NOTICE`). These
+notes are engineering notes, not legal advice.
 
-Decision needed from the project owner:
+- Apache-2.0 is permissive and has no copyleft clause, so linking a proprietary library does
+  not require that library to be licensed under Apache-2.0.
+- Apache-2.0 code can be included in a GPLv3 project (one-way compatibility). Apache-2.0 is
+  not compatible with GPLv2-only. This matters only for people who want to reuse PNTome code.
+- The Apache-2.0 license covers only the code in this repository. It does not relicense the
+  Garmin SDKs and grants no rights to them.
+- Earlier project snapshots were published under the previous license (GPLv3 or later).
+  Anyone who received those snapshots keeps the rights granted by that license for them.
+  The Apache-2.0 license applies to new commits.
+- F-Droid: the `NonFreeDep` anti-feature remains, because the app still links the proprietary
+  Garmin Connect IQ Mobile SDK.
 
-- Confirm that `GPL-3.0-or-later` is the intended license given the Garmin SDK, or
-- choose another approach (for example, add a GPL linking exception for the SDK, or pick a
-  different license), after reading Garmin's SDK terms and, if needed, taking legal advice.
+### Owner verification list
 
-Until this is confirmed, the F-Droid metadata marks the app with the `NonFreeDep`
-anti-feature.
+- Garmin Connect IQ SDK License Agreement: terms on redistribution and hosting of SDK
+  materials and of apps built with it (for example, publishing the `.iq` as a release asset).
+- Connect IQ Mobile SDK terms: whether the library may ship inside an APK/AAB distributed
+  under Apache-2.0.
+- Copyright holder name and year in `NOTICE`.

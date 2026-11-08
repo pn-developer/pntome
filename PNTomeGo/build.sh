@@ -127,8 +127,11 @@ if [ -f "$VERSION_FILE" ] && [ -f "$JUNGLE" ] && [ -f manifest.xml ]; then
   if [ -z "$SEMVER_MANIFEST" ]; then
     die "manifest.xml has no <iq:application version=\"...\"> attribute (add one matching $VERSION_FILE's SEMVER=$SEMVER_CODE)"
   fi
-  if [ "$SEMVER_CODE" != "$SEMVER_MANIFEST" ]; then
-    die "version mismatch: Version.mc SEMVER=$SEMVER_CODE but manifest.xml version=$SEMVER_MANIFEST — bump both together."
+  # The manifest carries only the Core_Version (MAJOR.MINOR.PATCH); SEMVER may add a
+  # pre-release suffix such as -rc.N, which is stripped before comparing.
+  SEMVER_CORE="${SEMVER_CODE%%-*}"
+  if [ "$SEMVER_CORE" != "$SEMVER_MANIFEST" ]; then
+    die "version mismatch: Version.mc SEMVER=$SEMVER_CODE (core $SEMVER_CORE) but manifest.xml version=$SEMVER_MANIFEST — bump both together (scripts/set-version.sh)."
   fi
 fi
 

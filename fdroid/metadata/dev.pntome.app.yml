@@ -1,6 +1,6 @@
 Categories:
   - Multimedia
-License: GPL-3.0-or-later
+License: Apache-2.0
 AuthorName: PNTome contributors
 WebSite: https://example.invalid/pntome
 SourceCode: https://example.invalid/pntome
@@ -18,7 +18,7 @@ Repo: https://example.invalid/pntome.git
 
 Builds:
   - versionName: 0.1.0
-    versionCode: 1
+    versionCode: 10099
     commit: v0.1.0
     subdir: PNTome/app
     gradle:
@@ -26,7 +26,9 @@ Builds:
     # No prebuild steps: the Connect IQ AAR is fetched from Maven Central by Gradle.
 
 AutoUpdateMode: Version
-UpdateCheckMode: Tags
+# Syntax "Tags <regex>" per https://f-droid.org/docs/Build_Metadata_Reference/ (UpdateCheckMode).
+# The trailing $ is required so pre-release tags such as v1.2.3-rc.1 are not matched.
+UpdateCheckMode: Tags v[0-9]+\.[0-9]+\.[0-9]+$
 UpdateCheckData: PNTome/app/build.gradle.kts|versionCode\s*=\s*(\d+)|.|versionName\s*=\s*"([^"]+)"
 CurrentVersion: 0.1.0
-CurrentVersionCode: 1
+CurrentVersionCode: 10099

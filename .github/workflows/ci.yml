@@ -1,0 +1,127 @@
+# CI for pull requests and pushes to main.
+#
+# Rules (docs: .kiro/specs/apache-license-ci-release, requirements 8, 11.10, 13):
+#   - no secrets are used anywhere in this file;
+#   - actions/* and gradle/* are pinned to a major tag, no other actions are used;
+#   - no pull_request_target.
+#
+# Sources checked while writing this file (current majors, looked up via the GitHub
+# releases API / action READMEs; re-check when bumping):
+#   - actions/checkout          v7  https://github.com/actions/checkout  (latest release v7.0.1)
+#   - actions/setup-java        v6  https://github.com/actions/setup-java (latest release v6.2.0)
+#   - actions/upload-artifact   v7  https://github.com/actions/upload-artifact (latest release v7.0.2)
+#   - gradle/actions/setup-gradle and gradle/actions/wrapper-validation: v6
+#     https://github.com/gradle/actions (latest release v6.4.1; both sub-actions share the repo tag)
+#
+# Throwaway Connect IQ developer key (watch job): RSA 4096 PEM converted to unencrypted
+# PKCS#8 DER, the format monkeyc -y expects. Garmin's developer pages
+# (developer.garmin.com/connect-iq/...) could not be fetched as text during authoring
+# (JavaScript-rendered), so the commands are NOT confirmed against Garmin's own page.
+# They match these public sources; confirm against Garmin's "Monkey C command line setup"
+# page before relying on them:
+#   - https://github.com/qheath/connectiq-boilerplates
+#   - https://github.com/adamjalkemo/garmin_watch
+#   - https://github.com/nbr23/garmin-gymcode
+# The key is compile-check only. It is generated per run, lives in $RUNNER_TEMP and is
+# deleted at the end of the job. It is not the Connect IQ Store key.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-release:
+    runs-on: ubuntu-latest
+    # The full property suites take ~7 min (check-release) and ~16 min (set-version) at the
+    # default 100 cases on a dev machine; CI runs 20 cases per property to stay practical.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Test check-release.sh
+        env:
+          ITER: 20
+        run: scripts/test-check-release.sh
+      - name: Test set-version.sh
+        env:
+          ITER: 20
+        run: scripts/test-set-version.sh
+      - name: Check release consistency
+        run: scripts/check-release.sh
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: PNTome
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Unit tests, lint, androidTest compile, unsigned release build
+        run: ./gradlew testDebugUnitTest lintRelease assembleDebugAndroidTest assembleRelease --stacktrace
+      - name: Upload Gradle reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-reports
+          path: PNTome/app/build/reports
+          retention-days: 7
+          if-no-files-found: ignore
+
+  watch:
+    # Enabled by repository variable CIQ_BUILD=true. Fork pull requests are skipped so that
+    # fork code never runs on a (possibly self-hosted) runner that has the SDK.
+    if: >-
+      vars.CIQ_BUILD == 'true' &&
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ${{ vars.CIQ_RUNS_ON || 'ubuntu-latest' }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Pull requests: build the real branch head, not GitHub's synthetic merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Locate Connect IQ SDK
+        run: scripts/ci/ciq-sdk.sh
+      - name: Create throwaway developer key
+        run: |
+          openssl genrsa -out "$RUNNER_TEMP/dk.pem" 4096
+          openssl pkcs8 -topk8 -inform PEM -outform DER -in "$RUNNER_TEMP/dk.pem" -out "$RUNNER_TEMP/developer_key.der" -nocrypt
+          chmod 600 "$RUNNER_TEMP/dk.pem" "$RUNNER_TEMP/developer_key.der"
+          echo "CIQ_DEVKEY=$RUNNER_TEMP/developer_key.der" >> "$GITHUB_ENV"
+      - name: Build default device
+        working-directory: PNTomeGo
+        run: ./build.sh 2>&1 | tee "$RUNNER_TEMP/build-default.log"
+      - name: Build debug flavor for fenix847mm
+        working-directory: PNTomeGo
+        run: ./build.sh --debug fenix847mm 2>&1 | tee "$RUNNER_TEMP/build-debug.log"
+      - name: Check stamped version and commit
+        run: |
+          version="$(cat VERSION)"
+          commit="$(git rev-parse --short HEAD)"
+          scripts/ci/collect-watch.sh --check-only "$version" "$commit" "$RUNNER_TEMP/build-default.log"
+          scripts/ci/collect-watch.sh --check-only "$version" "$commit" "$RUNNER_TEMP/build-debug.log"
+      - name: Remove developer key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/dk.pem" "$RUNNER_TEMP/developer_key.der"

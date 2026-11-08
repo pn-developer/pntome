@@ -1,0 +1,11 @@
+PNTome and PNTomeGo
+Copyright 2026 Pavel Nemec
+
+This product is licensed under the Apache License, Version 2.0
+(see the LICENSE file).
+
+The Garmin Connect IQ SDKs (the Connect IQ SDK used to build PNTomeGo and the
+Connect IQ Mobile SDK used by PNTome) are proprietary software of Garmin and
+are not covered by this license. This license grants no rights to them.
+
+Third-party components and their licenses are listed in THIRD_PARTY.md.

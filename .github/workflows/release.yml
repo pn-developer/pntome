@@ -1,0 +1,156 @@
+# Release workflow: a pushed tag v*.*.* builds, verifies and publishes a GitHub Release.
+# Action majors were checked against the official release pages (checkout v7, setup-java v6,
+# upload-artifact v7, download-artifact v8, gradle/actions v6) and must match ci.yml.
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']   # also matches v1.2.3-rc.1; the verify job rejects names that are not valid versions
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      version_code: ${{ steps.v.outputs.version_code }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+      commit: ${{ steps.v.outputs.commit }}
+      commit_full: ${{ steps.v.outputs.commit_full }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: v
+        name: Verify tag, ancestry and repository consistency
+        run: |
+          set -euo pipefail
+          scripts/check-release.sh --tag "$GITHUB_REF_NAME"
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag commit is not on main"; exit 1; }
+          . scripts/lib/version.sh
+          version="$(cat VERSION)"
+          {
+            echo "version=$version"
+            echo "version_code=$(version_code "$version")"
+            echo "prerelease=$([[ $version == *-* ]] && echo true || echo false)"
+            echo "commit=$(git rev-parse --short "$GITHUB_SHA")"
+            echo "commit_full=$GITHUB_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+  android:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 60
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      COMMIT: ${{ needs.verify.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Prepare signing
+        id: sign
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: scripts/ci/prepare-signing.sh
+      - name: Build APK and AAB
+        working-directory: PNTome
+        env:
+          PNTOME_KEYSTORE_FILE: ${{ steps.sign.outputs.keystore_path }}
+          PNTOME_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PNTOME_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          PNTOME_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease bundleRelease --stacktrace
+      - name: Verify signature and collect artifacts
+        env:
+          SIGNED: ${{ steps.sign.outputs.signed }}
+        run: scripts/ci/collect-android.sh "$SIGNED"
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: android
+          path: out/android/*
+          if-no-files-found: error
+          retention-days: 7
+
+  watch:
+    needs: verify
+    if: vars.CIQ_BUILD == 'true'
+    runs-on: ${{ vars.CIQ_RUNS_ON || 'ubuntu-latest' }}
+    environment: release
+    timeout-minutes: 20
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      COMMIT: ${{ needs.verify.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Locate Connect IQ SDK
+        run: scripts/ci/ciq-sdk.sh
+      - name: Decode developer key
+        env:
+          DK_B64: ${{ secrets.CIQ_DEVELOPER_KEY_B64 }}
+        run: scripts/ci/prepare-ciq-key.sh
+      - name: Export .iq
+        working-directory: PNTomeGo
+        run: |
+          set -euo pipefail
+          ./build.sh --export | tee "$RUNNER_TEMP/build.log"
+      - name: Check stamped commit and collect
+        run: scripts/ci/collect-watch.sh "$RUNNER_TEMP/build.log"
+      - name: Remove developer key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/developer_key.der" "$RUNNER_TEMP/dk.pem"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: watch
+          path: out/watch/*
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: [verify, android, watch]
+    if: ${{ !cancelled() && needs.verify.result == 'success' && needs.android.result == 'success' && (needs.watch.result == 'success' || needs.watch.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: out
+          merge-multiple: true
+      - name: Checksums, notes and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.verify.outputs.version }}
+          COMMIT: ${{ needs.verify.outputs.commit }}
+          COMMIT_FULL: ${{ needs.verify.outputs.commit_full }}
+          PRERELEASE: ${{ needs.verify.outputs.prerelease }}
+          OUT_DIR: out
+        run: scripts/ci/publish.sh
