@@ -285,7 +285,11 @@ class SyncOrchestratorTest {
                 error = null
             )
         )
-        awaitUntil("state becomes Running") { orchestrator.state.value is SyncState.Running }
+        // Wait for the watch status itself: the transfer monitor can project an earlier
+        // Running(tracksDone = 0) from its own progress, which on a slow runner lands first.
+        awaitUntil("state becomes Running with the watch's progress") {
+            (orchestrator.state.value as? SyncState.Running)?.tracksDone == 1
+        }
 
         val running = orchestrator.state.value as SyncState.Running
         assertEquals(1, running.tracksDone)
