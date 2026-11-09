@@ -33,8 +33,8 @@ import dev.pntome.app.ui.theme.StatusOffline
 import dev.pntome.app.ui.theme.StatusOnline
 
 /**
- * Root composable: a Material 3 [Scaffold] with a bottom [NavigationBar] hosting the three
- * top-level destinations (Folders, Pairing, Sync) wired through Navigation-Compose.
+ * Root composable: a Material 3 [Scaffold] with a bottom [NavigationBar] hosting the four
+ * top-level destinations (Folders, Pairing, Sync, Player) wired through Navigation-Compose.
  *
  * Screens are empty placeholder stubs for task 1.3; feature content and ViewModels arrive
  * in later tasks.
@@ -43,11 +43,12 @@ import dev.pntome.app.ui.theme.StatusOnline
 fun PNTomeApp(
     modifier: Modifier = Modifier,
     navStatusViewModel: NavBarStatusViewModel = hiltViewModel(),
-    // Activity-scoped: one controller shared by the Folders mini-player and the player screen.
+    // Activity-scoped: keeps one controller alive while switching tabs.
     playerViewModel: PlayerViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
     val playerState by playerViewModel.uiState.collectAsState()
+    val playerFolders by playerViewModel.folders.collectAsState()
     val pairingStatus by navStatusViewModel.pairingStatus.collectAsState()
 
     Scaffold(
@@ -100,23 +101,19 @@ fun PNTomeApp(
             modifier = Modifier.padding(innerPadding),
         ) {
             composable<Route.Folders> {
-                FolderListScreen(
-                    playerState = playerState,
-                    onPlayFolder = {
-                        playerViewModel.playFolder(it)
-                        navController.navigate(Route.Player)
-                    },
-                    onTogglePlayPause = playerViewModel::togglePlayPause,
-                    onOpenPlayer = { navController.navigate(Route.Player) },
-                    onAttachPlayer = { playerViewModel.connectIfRunning() },
-                )
+                FolderListScreen()
             }
             composable<Route.Pairing> { PairingScreen() }
             composable<Route.Sync> { SyncScreen() }
             composable<Route.Player> {
                 PlayerScreen(
                     state = playerState,
-                    onBack = { navController.popBackStack() },
+                    folders = playerFolders,
+                    onAddFolder = playerViewModel::addFolder,
+                    onPlayFolder = playerViewModel::playFolder,
+                    onClearQueue = playerViewModel::clearQueue,
+                    onPlayQueueItem = playerViewModel::playQueueItem,
+                    onAttachPlayer = { playerViewModel.connectIfRunning() },
                     onTogglePlayPause = playerViewModel::togglePlayPause,
                     onPrevious = playerViewModel::previous,
                     onNext = playerViewModel::next,

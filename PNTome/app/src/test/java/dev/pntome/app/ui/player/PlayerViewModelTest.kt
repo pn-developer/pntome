@@ -7,6 +7,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import dev.pntome.app.data.folders.BookmarkRepository
 import dev.pntome.app.data.folders.FolderRepository
 import dev.pntome.app.data.folders.PNTomeDatabase
 import dev.pntome.app.domain.model.Folder
@@ -106,7 +107,10 @@ class PlayerViewModelTest {
         repository = FolderRepository(db.folderDao(), db.trackDao())
         state = FakePlayerState()
         connector = FakeConnector(state)
-        viewModel = PlayerViewModel(connector, repository, QueueBuilder())
+        viewModel = PlayerViewModel(
+            connector, repository, QueueBuilder(),
+            BookmarkRepository(db.bookmarkDao(), repository), CoverArtSource { null },
+        )
         runBlocking {
             repository.upsertFolder(
                 Folder(

@@ -23,18 +23,36 @@ import dev.pntome.app.domain.sync.NaturalOrder
  * `content://` document URI as `uri`, and [MediaMetadata] with title, artist, album = folder
  * display name, and the default artwork.
  *
+ * When a [ResumePoint] is given (audiobooks only), chapters before it are flagged
+ * [EXTRA_DONE] and the resume chapter carries [EXTRA_RESUME_MS] so playback can seek to the
+ * right position when it reaches that chapter (see [QueueResumeListener]).
+ *
  * @param artworkUri default artwork shown for every item (a bundled icon); null for none.
  */
 class QueueBuilder(private val artworkUri: Uri? = null) {
     /** Loads the folder and its tracks; returns an empty list if the folder is unknown. */
-    suspend fun build(repository: FolderRepository, folderId: String): List<MediaItem> {
+    suspend fun build(
+        repository: FolderRepository,
+        folderId: String,
+        resume: ResumePoint? = null,
+    ): List<MediaItem> {
         val folder = repository.findFolder(folderId) ?: return emptyList()
-        return build(folder, repository.getTracks(folderId))
+        return build(folder, repository.getTracks(folderId), resume)
     }
 
     /** Pure mapping used by [build] and by tests. */
-    fun build(folder: Folder, tracks: List<Track>): List<MediaItem> =
-        order(folder, tracks).map { toMediaItem(folder, it) }
+    fun build(folder: Folder, tracks: List<Track>, resume: ResumePoint? = null): List<MediaItem> {
+        val nonce = System.nanoTime().toString()
+        return order(folder, tracks).mapIndexed { index, track ->
+            val mark = if (folder.isAudiobook) resume else null
+            toMediaItem(
+                folder, track,
+                done = mark != null && index < mark.index,
+                resumeMs = if (mark != null && index == mark.index) mark.positionMs else 0L,
+                nonce = nonce,
+            )
+        }
+    }
 
     internal fun order(folder: Folder, tracks: List<Track>): List<Track> {
         if (!folder.isAudiobook) return tracks
@@ -46,7 +64,13 @@ class QueueBuilder(private val artworkUri: Uri? = null) {
 
     private fun sortName(t: Track): String = t.fileName.ifBlank { t.title }
 
-    private fun toMediaItem(folder: Folder, t: Track): MediaItem {
+    private fun toMediaItem(
+        folder: Folder,
+        t: Track,
+        done: Boolean,
+        resumeMs: Long,
+        nonce: String,
+    ): MediaItem {
         val title = if (folder.isAudiobook && t.fileName.isNotBlank()) {
             t.fileName.substringBeforeLast('.', t.fileName).ifBlank { t.title }
         } else {
@@ -61,6 +85,11 @@ class QueueBuilder(private val artworkUri: Uri? = null) {
             .setExtras(Bundle().apply {
                 putBoolean(EXTRA_AUDIOBOOK, folder.isAudiobook)
                 putString(EXTRA_FOLDER_ID, folder.id)
+                if (done) putBoolean(EXTRA_DONE, true)
+                if (resumeMs > 0) {
+                    putLong(EXTRA_RESUME_MS, resumeMs)
+                    putString(EXTRA_RESUME_NONCE, nonce)
+                }
             })
         if (artworkUri != null) metadata.setArtworkUri(artworkUri)
         return MediaItem.Builder()
@@ -76,5 +105,14 @@ class QueueBuilder(private val artworkUri: Uri? = null) {
 
         /** [MediaMetadata] extras key: `Folder.id` of the item's folder (the bookmark key). */
         const val EXTRA_FOLDER_ID = "dev.pntome.app.extra.FOLDER_ID"
+
+        /** [MediaMetadata] extras key: true for a chapter already finished when it was queued. */
+        const val EXTRA_DONE = "dev.pntome.app.extra.DONE"
+
+        /** [MediaMetadata] extras key: position (ms) to seek to when this chapter starts. */
+        const val EXTRA_RESUME_MS = "dev.pntome.app.extra.RESUME_MS"
+
+        /** [MediaMetadata] extras key: unique id of the queueing that set [EXTRA_RESUME_MS]. */
+        const val EXTRA_RESUME_NONCE = "dev.pntome.app.extra.RESUME_NONCE"
     }
 }

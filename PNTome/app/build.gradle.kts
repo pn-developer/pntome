@@ -102,6 +102,17 @@ android {
     testOptions {
         // Robolectric JVM unit tests need access to merged Android resources/manifest.
         unitTests.isIncludeAndroidResources = true
+        // Print failing tests (name + full stack trace) to the console, so a CI failure is
+        // readable in the job log without downloading the report artifact.
+        unitTests.all { test ->
+            test.testLogging {
+                events("failed", "skipped")
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+                showStackTraces = true
+                showCauses = true
+                showExceptions = true
+            }
+        }
     }
 
     // Room MigrationTestHelper (instrumented migration test) reads the exported schemas

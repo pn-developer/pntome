@@ -85,6 +85,7 @@ class PlaybackService : MediaLibraryService() {
             .build()
         player = exo
         exo.addListener(UnreadableFileSkipper(exo) { showMessage(it) })
+        exo.addListener(QueueResumeListener(exo))
         recorder = BookmarkRecorder(exo, bookmarkDao, tickerScope, writeScope)
         val seekPlayer = BookSeekPlayer(exo)
         session = MediaLibrarySession.Builder(

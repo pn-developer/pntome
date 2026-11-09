@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Player tab (4th tab): add a folder to the queue or replace the queue with it, clear the queue, cover art, album name and transport controls. Audiobooks resume at the next chapter and position, with finished chapters marked by a green dot.
+
 ### Changed
+
+- Playback moved from the Folders screen (play buttons and mini-player) to the Player tab.
 
 - License changed from GPL-3.0-or-later to Apache-2.0
 

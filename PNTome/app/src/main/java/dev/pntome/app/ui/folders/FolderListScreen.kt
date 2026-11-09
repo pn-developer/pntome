@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,8 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import dev.pntome.app.ui.player.MiniPlayer
-import dev.pntome.app.ui.player.PlayerUiState
 
 /**
  * Folders destination (Req 1, 2).
@@ -63,11 +59,6 @@ import dev.pntome.app.ui.player.PlayerUiState
 fun FolderListScreen(
     modifier: Modifier = Modifier,
     viewModel: FolderListViewModel = hiltViewModel(),
-    playerState: PlayerUiState = PlayerUiState(),
-    onPlayFolder: (String) -> Unit = {},
-    onTogglePlayPause: () -> Unit = {},
-    onOpenPlayer: () -> Unit = {},
-    onAttachPlayer: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val addFolderLauncher = rememberAddFolderLauncher(onFolderSelected = viewModel::onFolderSelected)
@@ -77,8 +68,6 @@ fun FolderListScreen(
     // without the user tapping refresh. keyed on Unit = once per entry into the composition.
     LaunchedEffect(Unit) {
         viewModel.refresh()
-        // Attach to playback already running so the mini-player reflects it (PL-1.4).
-        onAttachPlayer()
     }
 
     FolderListContent(
@@ -89,10 +78,6 @@ fun FolderListScreen(
         onMessageShown = viewModel::onMessageShown,
         onRefresh = viewModel::refresh,
         onToggleAudiobook = viewModel::onAudiobookToggled,
-        playerState = playerState,
-        onPlayFolder = onPlayFolder,
-        onTogglePlayPause = onTogglePlayPause,
-        onOpenPlayer = onOpenPlayer,
     )
 }
 
@@ -110,10 +95,6 @@ fun FolderListContent(
     onMessageShown: () -> Unit,
     onRefresh: () -> Unit,
     onToggleAudiobook: (id: String, isAudiobook: Boolean) -> Unit = { _, _ -> },
-    playerState: PlayerUiState = PlayerUiState(),
-    onPlayFolder: (String) -> Unit = {},
-    onTogglePlayPause: () -> Unit = {},
-    onOpenPlayer: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -156,13 +137,6 @@ fun FolderListContent(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            MiniPlayer(
-                state = playerState,
-                onOpen = onOpenPlayer,
-                onTogglePlayPause = onTogglePlayPause,
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddFolder) {
                 Icon(Icons.Filled.Add, contentDescription = "Add folder")
@@ -177,7 +151,6 @@ fun FolderListContent(
                 contentPadding = innerPadding,
                 onRequestRemove = { pendingRemoval = it },
                 onToggleAudiobook = onToggleAudiobook,
-                onPlay = onPlayFolder,
             )
         }
     }
@@ -200,7 +173,6 @@ private fun FolderList(
     contentPadding: PaddingValues,
     onRequestRemove: (FolderListItem) -> Unit,
     onToggleAudiobook: (id: String, isAudiobook: Boolean) -> Unit,
-    onPlay: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -249,22 +221,11 @@ private fun FolderList(
                     }
                 },
                 trailingContent = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { onPlay(folder.id) },
-                            enabled = folder.trackCount > 0,
-                        ) {
-                            Icon(
-                                Icons.Filled.PlayArrow,
-                                contentDescription = "Play ${folder.displayName}",
-                            )
-                        }
-                        IconButton(onClick = { onRequestRemove(folder) }) {
-                            Icon(
-                                Icons.Filled.Delete,
-                                contentDescription = "Remove ${folder.displayName}",
-                            )
-                        }
+                    IconButton(onClick = { onRequestRemove(folder) }) {
+                        Icon(
+                            Icons.Filled.Delete,
+                            contentDescription = "Remove ${folder.displayName}",
+                        )
                     }
                 },
             )

@@ -8,8 +8,12 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 import dev.pntome.app.R
+import dev.pntome.app.data.folders.FolderRepository
 import dev.pntome.app.service.QueueBuilder
+import dev.pntome.app.ui.player.CoverArtLoader
+import dev.pntome.app.ui.player.CoverArtSource
 import dev.pntome.app.ui.player.MediaControllerConnector
 import dev.pntome.app.ui.player.PlayerConnector
 
@@ -30,6 +34,13 @@ object PlayerModule {
     @Provides
     fun providePlayerConnector(@ApplicationContext context: Context): PlayerConnector =
         MediaControllerConnector(context)
+
+    @Provides
+    @Singleton
+    fun provideCoverArtSource(
+        @ApplicationContext context: Context,
+        folders: FolderRepository,
+    ): CoverArtSource = CoverArtLoader(context, folders)
 
     internal fun defaultArtworkUri(context: Context): Uri =
         Uri.Builder()
